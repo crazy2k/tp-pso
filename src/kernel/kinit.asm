@@ -6,7 +6,11 @@ section .text
 %define seg_data_0 16
 %define GDT_COUNT 32 ; WARNING, must match value defined in gdt.h
 extern kernel_init
-extern GDT_DESC
+
+; Compatibilidad con codigo de Zafio
+extern gdtr
+GDT_DESC: equ gdtr
+
 extern enable_A20
 
 global start
