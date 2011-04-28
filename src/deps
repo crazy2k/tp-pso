@@ -1,0 +1,28 @@
+# DO NOT DELETE
+
+kernel/debug.o: include/debug.h include/isr.h include/gdt.h include/tipos.h
+kernel/debug.o: include/idt.h include/vga.h include/i386.h include/mm.h
+kernel/debug.o: include/sched.h include/tss.h include/syscalls.h
+kernel/gdt.o: include/tipos.h include/gdt.h
+kernel/idt.o: include/tipos.h include/i386.h include/gdt.h include/isr.h
+kernel/idt.o: include/idt.h
+kernel/kernel.o: include/pic.h include/tipos.h include/i386.h include/idt.h
+kernel/kernel.o: include/vga.h include/mm.h include/sched.h include/tss.h
+kernel/kernel.o: include/syscalls.h include/gdt.h include/debug.h
+kernel/kernel.o: include/isr.h include/loader.h include/pso_file.h
+kernel/loader.o: include/loader.h include/pso_file.h include/tipos.h
+kernel/loader.o: include/tss.h include/syscalls.h
+kernel/mm.o: include/mm.h include/tipos.h
+kernel/pic.o: include/pic.h include/tipos.h include/i386.h
+kernel/sched.o: include/idt.h include/sched.h include/tss.h include/tipos.h
+kernel/sched.o: include/syscalls.h include/loader.h include/pso_file.h
+kernel/sem.o: include/sem.h include/tipos.h
+kernel/vga.o: include/i386.h include/tipos.h include/vga.h
+kernel/isr.o: kernel/isr.asm
+
+kernel/kinit.o: kernel/kinit.asm include/bios.mac
+
+kernel/syscalls.o: kernel/syscalls.asm
+
+kernel/tasks.o: kernel/tasks.asm tasks/task1.pso
+
