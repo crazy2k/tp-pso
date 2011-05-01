@@ -13,6 +13,7 @@ extern void* _end;
 /* Entry-point del modo protegido luego de cargar los registros de
  * segmento y armar un stack */
 void kernel_init(void) {
+    vga_init();
 	breakpoint();
 	return;
 }
