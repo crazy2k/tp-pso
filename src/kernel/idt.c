@@ -19,7 +19,10 @@ void idt_init(void) {
     lidt(&idtr);
 
     remap_PIC(PIC1_OFFSET, PIC2_OFFSET);
-    
+
+    // Desenmascaramos interrupciones en el PIC
+    outb(PIC1_DATA, PIC_ALL_ENABLED);
+
 	return;
 }
 
