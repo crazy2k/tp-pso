@@ -9,6 +9,8 @@ void idt_init(void);
 /* Para registrar una ISR */
 void idt_register(int intr, void (*isr)(void), int pl);
 
+int idt_set_isr(uint32_t index, void (*handler)(), uint64_t attr);
+
 extern uint64_t idt[];
 typedef gdtr_t idtr_t;
 extern idtr_t idtr;

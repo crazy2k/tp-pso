@@ -7,7 +7,6 @@ void debug_init(void);
 
 void debug_kernelpanic(const uint_32* stack, const exp_state* expst);
 
-
 #include <vga.h>
 #include <i386.h>
 
