@@ -1,77 +1,44 @@
 #ifndef __IDT_H__
 #define __IDT_H__
 
+#include <gdt.h>
+
 /* Para inicializar la IDT del sistema. */
 void idt_init(void);
 
 /* Para registrar una ISR */
 void idt_register(int intr, void (*isr)(void), int pl);
 
-/* Números de interrupciones de la IDT */
-#define ISR_DIVIDE     0		// divide error
-#define ISR_DEBUG      1		// debug exception
-#define ISR_NMI        2		// non-maskable interrupt
-#define ISR_BRKPT      3		// breakpoint
-#define ISR_OFLOW      4		// overflow
-#define ISR_BOUND      5		// bounds check
-#define ISR_ILLOP      6		// illegal opcode
-#define ISR_DEVICE     7		// device not available 
-#define ISR_DBLFLT     8		// double fault
-#define ISR_COPRO      9		// coprocesor (WTF!!)
-#define ISR_TSS       10		// invalid task switch segment
-#define ISR_SEGNP     11		// segment not present
-#define ISR_STACK     12		// stack exception
-#define ISR_GPFLT     13		// genernal protection fault
-#define ISR_PGFLT     14		// page fault
-/* #define ISR_RES    15 */	// reserved
-#define ISR_FPERR     16		// floating point error
-#define ISR_ALIGN     17		// aligment check
-#define ISR_MCHK      18		// machine check
-#define ISR_SIMDERR   19		// SIMD floating point error
+extern uint64_t idt[];
+typedef gdtr_t idtr_t;
+extern idtr_t idtr;
 
-/* Número de interrupciones para las PIC */
-#define ISR_IRQ0    0x20		// Timer tick
-#define ISR_IRQ1    0x21		// Teclado
-#define ISR_IRQ2    0x22		// Cascada de la IRQ9
-#define ISR_IRQ3    0x23		// Default COM2 y COM4
-#define ISR_IRQ4    0x24		// Default COM1 y COM3
-#define ISR_IRQ5    0x25		// LPT2
-#define ISR_IRQ6    0x26		// Floppy Drive Controller
-#define ISR_IRQ7    0x27		// LPT1
+// Campos de descriptores de la IDT
 
-#define ISR_IRQ8    0x28		// Real Time Clock
-#define ISR_IRQ9    0x29		// 
-#define ISR_IRQ10   0x2A		// Reserved
-#define ISR_IRQ11   0x2B		// Reserved
-#define ISR_IRQ12   0x2C		// PS/2 mouse
-#define ISR_IRQ13   0x2D		// Math coprocessor
-#define ISR_IRQ14   0x2E		// Primary IDE
-#define ISR_IRQ15   0x2F		// Secondary IDE
+#define IDT_DESC_P ((uint64_t)0x1 << (32 + 15))
+#define IDT_DESC_DPL(dpl) ((uint64_t)(__LOW2_BITS__ & (dpl)) << (32 + 13))
+#define IDT_DESC_D ((uint64_t)0x1 << (32 + 11))
+#define IDT_DESC_INT ((uint64_t)0x6 << (32 + 8))
+#define IDT_DESC_TRAP ((uint64_t)0x7 << (32 + 8))
+#define IDT_DESC_SEL(segsel) ((__LOW16_BITS__ & (uint64_t)(segsel)) << 16)
+#define IDT_DESC_OFFSET(offset) ((uint64_t)(__LOW16_BITS__ & (uint32_t)(offset)) | \
+    ((uint64_t)(__HIGH16_BITS__ & (uint32_t)(offset)) << 32))
+
+// Codigos de error y datos varios
+
+#define IDT_BAD_INDEX   0x1
+#define IDT_BUSY        0x2
+
+// Recordar que puede hacer falta actualizar estos valores en idt_handlers.S si
+// son alterados aqui
+#define IDT_LENGTH      256
+#define IDT_LAST_INDEX  (IDT_LENGTH - 1)
 
 
-/* Struct de descriptor de IDT */
-typedef struct str_idt_descriptor {
-	unsigned short idt_length;
-	unsigned int idt_addr;
-} __attribute__((__packed__)) idt_descriptor;
+/*
+ * Constantes de los atributos (dejadas por compatibilidad)
+ */
 
-/* Struct de una entrada de la IDT */
-typedef union str_idt_entry {
-	struct str_idt_entry_vl {
-		unsigned int vl0, vl1;
-	} vl;
-	struct str_idt_entry_fld {
-		unsigned short offset_0;
-		unsigned short segsel;
-		unsigned short attr;
-		unsigned short offset_1;
-	} fld;
-} __attribute__((__packed__, aligned (8))) idt_entry;
-
-extern idt_entry idt[];
-extern idt_descriptor IDT_DESC;
-
-/** Constantes de los atributos **/
 /* Masks */
 #define IDT_ATTR_P    0x8000
 #define IDT_ATTR_DPL  0x6000
@@ -96,5 +63,6 @@ extern idt_descriptor IDT_DESC;
 /* TYPE Field */
 #define IDT_ATTR_TYPE_INT 0x0600
 #define IDT_ATTR_TYPE_EXP 0x0700
+
 
 #endif
