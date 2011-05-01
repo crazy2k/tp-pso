@@ -14,6 +14,7 @@ extern void* _end;
  * segmento y armar un stack */
 void kernel_init(void) {
     vga_init();
+    idt_init();
 	breakpoint();
 	return;
 }
