@@ -3,10 +3,6 @@
 
 #include <tipos.h>
 
-extern uint_8* vga_addr;
-extern const uint_16 vga_cols;
-extern const uint_16 vga_rows;
-
 void vga_init(void);
 
 void vga_write(uint_16 f, uint_16 c, const char* msg, uint_8 attr);
