@@ -27,4 +27,7 @@ typedef struct str_exp_state {
 	uint_32 org_ss;
 } __attribute__((__packed__)) exp_state;
 
+extern void gather_and_panic_noerrcode();
+extern void gather_and_panic_errcode();
+
 #endif
