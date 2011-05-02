@@ -32,8 +32,8 @@ extern debug_kernelpanic
     push esp
     pushfd
     push cs
-    push dword [esp - 6*4]
-    push dword [esp - 7*4]    ; errcode
+    push dword [esp + 6*4]
+    push dword [esp + 7*4]    ; errcode
     push eax
     push ecx
     push edx
@@ -49,9 +49,9 @@ extern debug_kernelpanic
     push gs
 
     ; Escribimos el valor de esp correcto
-    mov ebx, [esp - 19*4]
+    mov ebx, [esp + 19*4]
     sub ebx, 8
-    mov [esp - 8*4], ebx
+    mov [esp + 8*4], ebx
 
     ; Pasamos los parametros a la funcion de C
     push esp
