@@ -6,17 +6,6 @@ global gather_and_panic_errcode
 
 extern debug_kernelpanic
 
-%macro SAVE_REGS 20
-    %assign displacement 0
-    %assign i 0
-    %rep (%0 - 1)
-        mov [%1 + displacement], %i
-
-        %assign displacement (displacement + 4)
-        %assign i (i + 1)
-    %endrep
-%endmacro
-
 %macro SAVE_REGS 0-1 0
     ; Si la excepcion no admite codigo de error, escribimos cero como codigo
     ; de error
