@@ -47,7 +47,7 @@ void debug_kernelpanic(const uint_32* stack, const exp_state* expst) {
 
     uint16_t regs_row = 3;
     int i;
-    for (i = 0; i < (sizeof(regs)/sizeof(char)); i++)
+    for (i = 0; i < (sizeof(regs)/sizeof(char *)); i++)
         vga_printf(regs_row++, REGS_COL, regs[i], 0x0F, regs_values[i]);
 
 }
