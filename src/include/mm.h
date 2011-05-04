@@ -43,7 +43,6 @@
 #define CR4_PVI		0x00000002	// Protected-Mode Virtual Interrupts
 #define CR4_VME		0x00000001	// V86 Mode Extensions
 
-#define PAGE_SIZE 4096
 typedef struct str_mm_page {
 	uint_32 attr:12;
 	uint_32 base:20;
@@ -51,6 +50,18 @@ typedef struct str_mm_page {
 
 #define make_mm_entry(base, attr) (mm_page){(uint_32)(attr), (uint_32)(base)}
 #define make_mm_entry_addr(addr, attr) (mm_page){(uint_32)(attr), (uint_32)(addr) >> 12}
+
+
+#define PAGE_NUM_TO_PHADDR(page_number) ((void*)(page_number * PAGE_SIZE))
+#define PAGE_NUM_TO_PAGE_T(page_number) ((void*)(FIRST_FREE_PAGE_ADDR + page_number * sizeof(page_t)))
+
+
+#define PAGE_SIZE 0x1000
+#define FIRST_FREE_PAGE 0x100
+#define FIRST_FREE_PAGE_ADDR (PAGE_NUM_TO_PHADDR(FIRST_FREE_PAGE))
+#define LAST_POSIBLE_PAGE 0x100000
+#define TEST_WORD 0xAAAAAAAA
+
 
 void mm_init(void);
 void* mm_mem_alloc();
@@ -60,6 +71,17 @@ void mm_mem_free(void* page);
 /* Manejador de directorios de página */
 mm_page* mm_dir_new(void);
 void mm_dir_free(mm_page* d);
+
+typedef struct page_t page_t;
+
+struct page_t {
+    int count;
+    page_t *next;
+    page_t *prev;
+};
+
+
+extern page_t* page_list;
 
 /* Syscalls */
 // void* palloc(void);
