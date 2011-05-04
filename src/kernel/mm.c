@@ -31,7 +31,7 @@ extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD
 void mm_init(void) {
         uint32_t page;
 
-        //if (!valid_phisical_page(FIRST_FREE_PAGE)) kpanic();
+        //if (!valid_phisical_page(FIRST_FREE_PAGE)) kpanic("No hay suficiente memoria física disponible");
         page_list = (page_t*)FIRST_FREE_PAGE_ADDR;
         memset(page_list, 0, sizeof(page_t));
         
