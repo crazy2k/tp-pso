@@ -53,7 +53,7 @@ typedef struct str_mm_page {
 
 
 #define PAGE_NUM_TO_PHADDR(page_number) ((void*)(page_number * PAGE_SIZE))
-#define PAGE_NUM_TO_PAGE_T(page_number) ((void*)(FIRST_FREE_PAGE_ADDR + page_number * sizeof(page_t)))
+#define PAGE_NUM_TO_PAGE_T(page_number) ((page_t*)(FIRST_FREE_PAGE_ADDR + page_number * sizeof(page_t)))
 
 
 #define PAGE_SIZE 0x1000
