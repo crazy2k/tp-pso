@@ -29,11 +29,14 @@ uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 
 
 void* mm_mem_alloc() {
-	return NULL;
 }
 
 void* mm_mem_kalloc() {
-	return NULL;
+        page_t *page;
+        if (page = take_free_kernel_page()) {
+                return PAGE_TO_PHADDR(page);
+        } else 
+                return NULL;
 }
 
 void mm_mem_free(void* page) {
@@ -154,10 +157,10 @@ static page_t* take_free_kernel_page() {
 }
 
 static page_t* take_free_page(page_t** page_list_ptr) {
-        if (!*page_list_ptr) 
-                custom_kpanic_msg("Memoria física disponible agotada");
-
-        return reserve_page(page_list_ptr, (*page_list_ptr)->next);
+        if (!*page_list_ptr)
+                return NULL;
+        else
+                return reserve_page(page_list_ptr, (*page_list_ptr)->next);
 }
 
 
@@ -183,8 +186,7 @@ static uint32_t* get_pte(uint32_t pd[], void* vaddr) {
 
 // Mapea una pagina fisica nueva para una tabla de paginas de page_dir
 static void *new_page_table(uint32_t pd[], void* vaddr) {
-        page_t *page = take_free_kernel_page();
-        void *page_va = PAGE_TO_PHADDR(page);
+        void *page_va = mm_mem_kalloc(); 
 
         pd[PDI(vaddr)] = PDE_PT_BASE(page_va) | PDE_P | PDE_PWT | PDE_US | PDE_RW;
         memset(page_va, 0, PAGE_SIZE);

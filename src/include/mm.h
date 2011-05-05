@@ -82,8 +82,8 @@ typedef struct str_mm_page {
 #define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
 
 
-#define PAGE_SIZE 0x1000
-#define PAGE_4MB_SIZE 0x400000
+#define PAGE_SIZE 0x1000ul
+#define PAGE_4MB_SIZE 0x400000ul
 #define PAGE_MASK 0xFFFFF000
 #define ALIGN_TO_PAGE_START(phaddr) ((void*)(PAGE_MASK & (uint32_t)phaddr))
 
