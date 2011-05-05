@@ -51,4 +51,5 @@ typedef sint_16     int16_t;
 typedef sint_32     int32_t; 
 typedef sint_64     int64_t; 
 
+typedef uint_32     size_t;
 #endif

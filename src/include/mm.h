@@ -43,7 +43,6 @@
 #define CR4_PVI		0x00000002	// Protected-Mode Virtual Interrupts
 #define CR4_VME		0x00000001	// V86 Mode Extensions
 
-#define PAGE_SIZE 4096
 typedef struct str_mm_page {
 	uint_32 attr:12;
 	uint_32 base:20;
@@ -51,6 +50,51 @@ typedef struct str_mm_page {
 
 #define make_mm_entry(base, attr) (mm_page){(uint_32)(attr), (uint_32)(base)}
 #define make_mm_entry_addr(addr, attr) (mm_page){(uint_32)(attr), (uint_32)(addr) >> 12}
+
+
+#define PDI(laddr) (((uint32_t)(laddr) & __22_31_BITS__) >> 22)
+#define PTI(laddr) (((uint32_t)(laddr) & __12_21_BITS__) >> 12)
+
+#define PDE_PT_BASE(addr) ((uint32_t)(addr) & __12_31_BITS__)
+#define PDE_PS (((uint32_t) 1) << 7)
+#define PDE_A (((uint32_t) 1) << 5)
+#define PDE_PCD (((uint32_t) 1) << 4)
+#define PDE_PWT (((uint32_t) 1) << 3)
+#define PDE_US (((uint32_t) 1) << 2)
+#define PDE_RW (((uint32_t) 1) << 1)
+#define PDE_P (((uint32_t) 1) << 0)
+
+// page_t Table Entry
+
+#define PTE_PAGE_BASE(dir) ((uint32_t)(dir) & __12_31_BITS__)
+#define PTE_G (((uint32_t) 1) << 8)
+#define PTE_PAT (((uint32_t) 1) << 7)
+#define PTE_D (((uint32_t) 1) << 6)
+#define PTE_A PDE_A
+#define PTE_PCD PDE_PCD
+#define PTE_PWT PDE_PWT
+#define PTE_US PDE_US
+#define PTE_RW PDE_RW
+#define PTE_P PDE_P
+
+
+#define PHADDR_TO_PAGE(phaddr) ((page_t*) (FIRST_FREE_KERNEL_PAGE + ((uint32_t)phaddr/PAGE_SIZE)))
+#define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
+
+
+#define PAGE_SIZE 0x1000ul
+#define PAGE_4MB_SIZE 0x400000ul
+#define PAGE_MASK 0xFFFFF000
+#define ALIGN_TO_PAGE_START(phaddr) ((void*)(PAGE_MASK & (uint32_t)phaddr))
+
+
+#define FIRST_FREE_KERNEL_PAGE ((void*)0x100000)
+#define LAST_POSIBLE_PAGE 0x100000
+#define KERNEL_MEMORY_START ((void*)0x0)
+#define KERNEL_MEMORY_LIMIT ((void*)0x400000)
+
+#define TEST_WORD 0xAAAAAAAA
+
 
 void mm_init(void);
 void* mm_mem_alloc();
@@ -60,6 +104,14 @@ void mm_mem_free(void* page);
 /* Manejador de directorios de página */
 mm_page* mm_dir_new(void);
 void mm_dir_free(mm_page* d);
+
+typedef struct page_t page_t;
+
+struct page_t {
+    int count;
+    page_t *next;
+    page_t *prev;
+};
 
 /* Syscalls */
 // void* palloc(void);

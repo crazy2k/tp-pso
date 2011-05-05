@@ -8,7 +8,7 @@ MKFS=/sbin/mkfs.vfat
 
 # Parámetros de programas
 NASMFLAGS=-I include/ -g -ggdb -D__KERNEL__
-CFLAGS=-m32 -g -ggdb -Wall -Werror -O2 -I include/ \
+CFLAGS=-m32 -g -ggdb -Wall -O2 -I include/ \
   -fno-zero-initialized-in-bss -fno-stack-protector -fno-strict-aliasing -ffreestanding -D__KERNEL__
 CXXFLAGS=-O2
 LDFLAGS=-static -m elf_i386 -nostdlib
@@ -26,7 +26,7 @@ BIN_BOOT=$(DIRBOOT)floppyboot.bin
 OBJS_KERN=kernel/kinit.o kernel/a20.o kernel/kernel.o kernel/gdt.o kernel/idt.o \
   kernel/isr.o kernel/pic.o kernel/vga.o kernel/sched.o \
   kernel/mm.o kernel/debug.o kernel/loader.o kernel/tasks.o \
-  kernel/syscalls.o kernel/sem.o
+  kernel/syscalls.o kernel/sem.o kernel/utils.o
 BIN_KERN=$(DIROUT)kernel.bin
 DUMP_KERN=$(DIROUT)kernel.bin.asm $(DIROUT)kernel.bin.elf $(DIROUT)kernel.bin.dbg
 SYM_KERN=$(DIROUT)kernel.sym
