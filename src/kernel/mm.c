@@ -25,7 +25,6 @@ static void return_page(page_t**, page_t*);
 static page_t *reserve_page(page_t**, page_t*);
 static void reserve_pages(page_t**, void*, void*);
 static page_t* take_free_page(page_t** page_list_ptr);
-static page_t* take_free_kernel_page(void);
 
 static uint32_t* get_pte(uint32_t pd[], void* vaddr);
 static void *new_page_table(uint32_t pd[], void* vaddr);
@@ -53,7 +52,7 @@ void* mm_mem_alloc() {
 }
 
 void* mm_mem_kalloc() {
-    page_t *page = take_free_kernel_page();
+    page_t *page = take_free_page(&free_kernel_pages);
 
     if (page) {
         return PAGE_TO_PHADDR(page);
@@ -209,10 +208,6 @@ static void reserve_pages(page_t** page_list_ptr, void* phaddr, void* limit) {
     for (phaddr = ALIGN_TO_PAGE_START(phaddr); phaddr < limit; phaddr += PAGE_SIZE) {
         reserve_page(page_list_ptr, PHADDR_TO_PAGE(phaddr));
     }
-}
-
-static page_t* take_free_kernel_page() {
-    return take_free_page(&free_kernel_pages);
 }
 
 static page_t* take_free_page(page_t** page_list_ptr) {
