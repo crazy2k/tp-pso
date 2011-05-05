@@ -94,7 +94,7 @@ void mm_dir_free(mm_page* mm_page) {
 extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
 
 uint32_t *mm_current_pd(void) {
-    return (uint32_t*)(PD_MASK & (rcr3));
+    return (uint32_t*)(PD_MASK & rcr3());
 }
 
 void mm_init(void) {
