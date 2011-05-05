@@ -74,8 +74,21 @@ mm_page* mm_dir_new(void) {
         return (mm_page*) initialize_pd(pd);
 }
 
-void mm_dir_free(mm_page* pd) {
-
+void mm_dir_free(mm_page* mm_page) {
+	uint32_t *pd = (uint32_t*)mm_page;
+        int i, j;
+             
+        for (i = 0; i < 1024; i++) {
+                if (pd[i] & PDE_P) {
+                        void *vaddr;
+                        for (vaddr = (void*)(PAGE_4MB_SIZE * i), j = 0; j < 1024; vaddr += PAGE_SIZE) {
+                                uint32_t *pte = get_pte(pd, vaddr);
+                                if (*pte & PTE_P)
+                                        mm_mem_free(vaddr);
+                                 
+                        }
+                }
+        }
 }
 
 
@@ -165,14 +178,16 @@ static void add_page_to_list(page_t* head, page_t* new) {
 
 
 static void return_page(page_t** page_list_ptr, page_t* reserved) {
-        reserved->count--;
+        if (reserved->count > 0) {
 
-        if (reserved->count == 0) {
-                if (*page_list_ptr)
-                        add_page_to_list(*page_list_ptr, reserved);
-                else
-                        *page_list_ptr = reserved->next = reserved->prev = reserved;
+                if (--reserved->count == 0) {
 
+                        if (*page_list_ptr)
+                                add_page_to_list(*page_list_ptr, reserved);
+                        else
+                                *page_list_ptr = reserved->next = reserved->prev = reserved;
+
+                }
         }
 }
 
