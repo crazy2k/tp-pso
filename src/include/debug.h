@@ -5,7 +5,9 @@
 
 void debug_init(void);
 
-void debug_kernelpanic(const uint_32* stack, const exp_state* expst);
+void debug_kernelpanic(const uint_32* stack, const task_state_t *st);
+
+extern uint32_t debug_backtrace_limit;
 
 #include <vga.h>
 #include <i386.h>
