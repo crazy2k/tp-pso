@@ -128,7 +128,9 @@ static void free_pages_list_setup(void) {
 static uint32_t* initialize_pd(uint32_t pd[]) {
         void* vaddr;
 
-        for (vaddr = KERNEL_MEMORY_START + PAGE_SIZE; vaddr < KERNEL_MEMORY_LIMIT; vaddr += PAGE_4MB_SIZE) {
+        for (vaddr = KERNEL_MEMORY_START + PAGE_SIZE; vaddr < KERNEL_MEMORY_LIMIT; 
+                vaddr += PAGE_4MB_SIZE) {
+
                 uint32_t* table = new_page_table(kernel_pd, vaddr);
                 pd[PDI(vaddr)] = PDE_PT_BASE(table) | PDE_P | PDE_PWT | PDE_RW;
         }
