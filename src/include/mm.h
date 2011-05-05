@@ -93,25 +93,18 @@ typedef struct str_mm_page {
 #define KERNEL_MEMORY_START ((void*)0x0)
 #define KERNEL_MEMORY_LIMIT ((void*)0x400000)
 
-#define TEST_WORD 0xAAAAAAAA
+#define TEST_WORD 0xF0F0F0F0
 
 
 void mm_init(void);
 void* mm_mem_alloc();
 void* mm_mem_kalloc();
 void mm_mem_free(void* page);
+uint32_t* mm_current_pd(void);
 
 /* Manejador de directorios de página */
 mm_page* mm_dir_new(void);
 void mm_dir_free(mm_page* d);
-
-typedef struct page_t page_t;
-
-struct page_t {
-    int count;
-    page_t *next;
-    page_t *prev;
-};
 
 /* Syscalls */
 // void* palloc(void);
