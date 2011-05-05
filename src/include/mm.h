@@ -52,6 +52,8 @@ typedef struct str_mm_page {
 #define make_mm_entry_addr(addr, attr) (mm_page){(uint_32)(attr), (uint_32)(addr) >> 12}
 
 
+#define PD_MASK __12_31_BITS__
+
 #define PDI(laddr) (((uint32_t)(laddr) & __22_31_BITS__) >> 22)
 #define PTI(laddr) (((uint32_t)(laddr) & __12_21_BITS__) >> 12)
 

@@ -94,7 +94,7 @@ void mm_dir_free(mm_page* mm_page) {
 extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
 
 uint32_t *mm_current_pd(void) {
-    return (uint32_t*)rcr3();
+    return (uint32_t*)(PD_MASK & (rcr3));
 }
 
 void mm_init(void) {
@@ -195,7 +195,7 @@ static page_t *reserve_page(page_t** page_list_ptr, page_t* page) {
         link_pages(page->prev, page->next);
 
     if (*page_list_ptr == page) {
-        *page_list_ptr = (page->next != page) ? page->next:  NULL;
+        *page_list_ptr = (page->next != page) ? page->next : NULL;
     }
 
     page->count++;
