@@ -115,8 +115,8 @@ static void link_pages(page_t* first, page_t* second)  {
 }
 
 static void add_page_to_list(page_t* head, page_t* new) {
-    link_pages(new, head->next);
-    link_pages(head, new);
+        link_pages(new, head->next);
+        link_pages(head, new);
 }
 
 
