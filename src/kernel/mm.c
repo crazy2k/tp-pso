@@ -135,7 +135,7 @@ static void free_pages_list_setup(void) {
     page_t *last_used_page = PHADDR_TO_PAGE(phaddr) - 1;
     link_pages(last_used_page, free_user_pages);
 
-    reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, last_used_page);
+    reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, phaddr);
 }
 
 static uint32_t* initialize_pd(uint32_t pd[]) {
