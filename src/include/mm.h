@@ -52,14 +52,20 @@ typedef struct str_mm_page {
 #define make_mm_entry_addr(addr, attr) (mm_page){(uint_32)(attr), (uint_32)(addr) >> 12}
 
 
-#define PAGE_NUM_TO_PHADDR(page_number) ((void*)(page_number * PAGE_SIZE))
-#define PAGE_NUM_TO_PAGE_T(page_number) ((page_t*)(FIRST_FREE_PAGE_ADDR + page_number * sizeof(page_t)))
+#define PHADDR_TO_PAGE(phaddr) ((page_t*) (FIRST_FREE_KERNEL_PAGE + ((uint32_t)phaddr/PAGE_SIZE)))
+#define PAGE_TO_PHADDR(page) ((void*) ((page - page_list) * PAGE_SIZE) )
 
 
 #define PAGE_SIZE 0x1000
-#define FIRST_FREE_PAGE 0x100
-#define FIRST_FREE_PAGE_ADDR (PAGE_NUM_TO_PHADDR(FIRST_FREE_PAGE))
+#define PAGE_MASK 0xFFFFF000
+#define ALIGN_TO_PAGE_START(phaddr) ((void*)(PAGE_MASK & (uint32_t)phaddr))
+
+
+#define FIRST_FREE_KERNEL_PAGE ((void*)0x100000)
 #define LAST_POSIBLE_PAGE 0x100000
+#define KERNEL_MEMORY_START ((void*)0x0)
+#define KERNEL_MEMORY_LIMIT ((void*)0x400000)
+
 #define TEST_WORD 0xAAAAAAAA
 
 
@@ -79,9 +85,6 @@ struct page_t {
     page_t *next;
     page_t *prev;
 };
-
-
-extern page_t* page_list;
 
 /* Syscalls */
 // void* palloc(void);

@@ -1,4 +1,6 @@
 #include <utils.h>
+#include <vga.h>
+#include <i386.h>
 
 #define PANIC_PREFIX "PANIC : "
 
