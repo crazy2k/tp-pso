@@ -28,11 +28,11 @@ const char* exp_name[] = {
 };
 
 
-
-
+static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
+    *func_addr);
 
 #define DEBUG_KP_REGS_COL 60
-#define DEBUG_KP_REGS_INITROW 3
+#define DEBUG_KP_REGS_INITROW 1
 #define DEBUG_KP_COL 0
 #define DEBUG_KP_ROW 0
 #define DEBUG_KP_ATTR 0x0F
@@ -45,7 +45,7 @@ const char* exp_name[] = {
 #define DEBUG_KP_BT_COL DEBUG_KP_STACK_COL
 #define DEBUG_KP_BT_ROWS 4
 bool in_panic = FALSE;
-void debug_kernelpanic(const uint_32* stack, const exp_state* expst) {
+void debug_kernelpanic(const uint_32* stack, const task_state_t *st) {
 	/* No permite panics anidados */
 	if (in_panic) while(1) hlt();
 	in_panic = TRUE;
@@ -56,11 +56,11 @@ void debug_kernelpanic(const uint_32* stack, const exp_state* expst) {
 
     // Imprimimos los registros
     char *regs[] = { "eax: %x", "ebx: %x", "ecx: %x", "edx: %x", "esi: %x",
-        "edi: %x", "ebp: %x", "esp: %x", "eip: %x", "efl: %x", "tr:  %x",
-        "cr2: %x", "cr3: %x" };
-    uint32_t regs_values[] = { expst->eax, expst->ebx, expst->ecx,
-        expst->edx, expst->esi, expst->edi, expst->ebp, expst->esp,
-        expst->org_eip, expst->eflags, rtr(), rcr2(), rcr3() };
+        "edi: %x", "ebp: %x", "ss:  %x", "esp: %x", "cs:  %x", "eip: %x",
+        "efl: %x", "tr: %x", "cr2: %x", "cr3: %x", "pid: %x" };
+    uint32_t regs_values[] = { st->eax, st->ebx, st->ecx,
+        st->edx, st->esi, st->edi, st->ebp, st->ss, st->esp, st->cs, st->eip,
+        st->eflags, rtr(), rcr2(), rcr3(), 0x0 };
 
     uint16_t regs_row = DEBUG_KP_REGS_INITROW;
     int i;
@@ -85,19 +85,24 @@ void debug_kernelpanic(const uint_32* stack, const exp_state* expst) {
     // Imprimimos el backtrace
     uint16_t bt_row = DEBUG_KP_BT_ROW;
     vga_printf(bt_row++, DEBUG_KP_BT_COL, "Backtrace: Current: %x",
-        DEBUG_KP_ATTR, expst->org_eip);
+        DEBUG_KP_ATTR, st->eip);
 
-    uint32_t *ebp = (uint32_t *)expst->ebp;
+    uint32_t *ebp = (uint32_t *)st->ebp;
     uint32_t ret_addr = *(ebp + 1);
     for (i = 0; i < DEBUG_KP_BT_ROWS; i++) {
         uint32_t *first_parm = ebp + 2;
-        // XXX: Ver si asumir lo siguiente no es demasiado fuerte
-        // 5 bytes por el opcode del call relativo
-        uint32_t at = ret_addr - 5;
 
-        vga_printf(bt_row++, DEBUG_KP_BT_COL, "At %x: CALL No se "
-            "(%x, %x, %x, %x, ...)", DEBUG_KP_ATTR, at, *first_parm,
-            *(first_parm + 1), *(first_parm + 2), *(first_parm + 3));
+        uint32_t at = 0x0;
+        uint32_t func_addr = 0x0;
+        get_call_info(ret_addr, &at, &func_addr);
+
+        if ((uint32_t *)at == &debug_backtrace_limit)
+            break;
+
+        vga_printf(bt_row++, DEBUG_KP_BT_COL, "%x: CALL %x "
+            "(%x, %x, %x, %x, ...)", DEBUG_KP_ATTR, at, func_addr,
+            *first_parm, *(first_parm + 1), *(first_parm + 2),
+            *(first_parm + 3));
 
         ebp = (uint32_t *)(*ebp);
         ret_addr = *(ebp + 1);
@@ -105,11 +110,35 @@ void debug_kernelpanic(const uint_32* stack, const exp_state* expst) {
 
 }
 
+static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
+    *func_addr) {
+    uint8_t *at_ptr = (uint8_t *)ret_addr - 6;
+    // Call near, absolute indirect. Address given in m32.
+    if (*at_ptr == 0xFF) {
+        *at = (uint32_t)at_ptr;
+        *func_addr = 0x0;
+    }
+    else {
+        at_ptr++;
+        // Call near, relative to next instruction. 32-bit displacement.
+        if (*at_ptr == 0xE8) {
+            *at = (uint32_t)at_ptr;
+            
+            int disp = *((int *)(at_ptr + 1));
+            *func_addr = ret_addr + disp;
+        }
+        else {
+        // Call near, relative to next instruction. 16-bit displacement.
+            at_ptr += 2;
+            if (*at_ptr == 0xE8) {
+                *at = (uint32_t)at_ptr;
+                *func_addr = 0x0;
+            }
+        }
+    }
+}
+                
 
 void debug_init(void) {
-    int i;
-    for (i = 0; i < IDT_LENGTH; i++)
-        idt_set_isr(i, gather_and_panic_noerrcode, IDT_DESC_DPL(0) |
-            IDT_DESC_P | IDT_DESC_D | IDT_DESC_INT);
+    // __asm__ __volatile__("mov $0x12345678, %eax; int $0x80");
 }
-
