@@ -12,6 +12,8 @@ static void add_page_to_list(page_t* head, page_t* new);
 static void return_page(page_t**, page_t*);
 static page_t *reserve_page(page_t**, page_t*);
 static void reserve_pages(page_t**, void*, void*);
+static page_t* take_free_page(page_t** page_list_ptr);
+static page_t* take_free_kernel_page();
 
 
 page_t *free_user_pages = NULL, 
@@ -128,6 +130,9 @@ static void reserve_pages(page_t** page_list_ptr, void* phaddr, void* limit) {
         }
 }
 
+static page_t* take_free_kernel_page() {
+        return take_free_page(&free_kernel_pages);
+}
 static page_t* take_free_page(page_t** page_list_ptr) {
         if (!*page_list_ptr) 
                 custom_kpanic_msg("Memoria física disponible agotada");
