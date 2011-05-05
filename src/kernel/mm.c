@@ -1,9 +1,12 @@
 #include <mm.h>
 #include <utils.h>
+#include <i386.h>
 
 
 static void free_pages_setup();
-static void kernel_page_dir_setup();
+static void initialize_pd(uint32_t pd[]);
+static void activate_pagination();
+static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop);
 
 static bool valid_phisical_page(void*);
 static void link_pages(page_t*, page_t*);
@@ -15,9 +18,13 @@ static void reserve_pages(page_t**, void*, void*);
 static page_t* take_free_page(page_t** page_list_ptr);
 static page_t* take_free_kernel_page();
 
+static uint32_t* get_pte(uint32_t pd[], void* vaddr);
+static void *new_page_table(uint32_t pd[], void* vaddr);
+
 
 page_t *free_user_pages = NULL, 
        *free_kernel_pages = NULL;
+
 uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 
 
@@ -44,7 +51,8 @@ extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD
 
 void mm_init(void) {
         free_pages_setup();
-        kernel_page_dir_setup();
+        initialize_pd(kernel_pd);
+        activate_pagination();
 }
 
 static void free_pages_setup() {
@@ -74,10 +82,21 @@ static void free_pages_setup() {
         reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, last_used_page);
 }
 
-static void kernel_page_dir_setup() {
-        
+static void initialize_pd(uint32_t pd[]) {
+        void* vaddr;
+
+        for (vaddr = KERNEL_MEMORY_START + PAGE_SIZE; vaddr < KERNEL_MEMORY_LIMIT; vaddr += PAGE_4MB_SIZE) {
+                uint32_t* table = new_page_table(kernel_pd, vaddr);
+                pd[PDI(vaddr)] = PDE_PT_BASE(table) | PDE_P | PDE_PWT | PDE_RW;
+        }
+        map_kernel_pages(kernel_pd, KERNEL_MEMORY_START, KERNEL_MEMORY_LIMIT);
 }
 
+static void activate_pagination() {
+        lcr3((uint32_t)kernel_pd);
+        uint32_t new_cr0 = rcr0() | CR0_PG;
+        lcr0(new_cr0);
+}
 
 static bool valid_phisical_page(void* phaddr) {
         uint32_t* test_addr = ALIGN_TO_PAGE_START(phaddr);
@@ -133,9 +152,42 @@ static void reserve_pages(page_t** page_list_ptr, void* phaddr, void* limit) {
 static page_t* take_free_kernel_page() {
         return take_free_page(&free_kernel_pages);
 }
+
 static page_t* take_free_page(page_t** page_list_ptr) {
         if (!*page_list_ptr) 
                 custom_kpanic_msg("Memoria física disponible agotada");
 
         return reserve_page(page_list_ptr, (*page_list_ptr)->next);
+}
+
+
+static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop) {
+        void *vaddr;
+        for (vaddr = vstart; vaddr < vstop; vaddr += PAGE_SIZE) {
+
+                *get_pte(pd, vaddr) = PTE_PAGE_BASE(vaddr) | PTE_G | PTE_PWT |
+                        PTE_RW | PTE_P;
+        }
+}
+
+static uint32_t* get_pte(uint32_t pd[], void* vaddr) {
+        uint32_t pde = pd[PDI(vaddr)];
+
+        //Si la tabla de paginas no esta disponible, retornar NULL
+        if (!(pde & PDE_P))
+                return NULL;
+
+        uint32_t *pt = (void *)PDE_PT_BASE(pde);
+        return &pt[PTI(vaddr)];
+}
+
+// Mapea una pagina fisica nueva para una tabla de paginas de page_dir
+static void *new_page_table(uint32_t pd[], void* vaddr) {
+        page_t *page = take_free_kernel_page();
+        void *page_va = PAGE_TO_PHADDR(page);
+
+        pd[PDI(vaddr)] = PDE_PT_BASE(page_va) | PDE_P | PDE_PWT | PDE_US | PDE_RW;
+        memset(page_va, 0, PAGE_SIZE);
+
+        return page_va;
 }
