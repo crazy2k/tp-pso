@@ -97,7 +97,9 @@ static void free_pages_list_setup(void) {
         free_kernel_pages = (page_t*)FIRST_FREE_KERNEL_PAGE;
         memset(free_kernel_pages, 0, sizeof(page_t));
         
-        for (phaddr = KERNEL_MEMORY_START + PAGE_SIZE; phaddr < KERNEL_MEMORY_LIMIT; phaddr += PAGE_SIZE) {
+        for (phaddr = KERNEL_MEMORY_START + PAGE_SIZE; phaddr < KERNEL_MEMORY_LIMIT; 
+                phaddr += PAGE_SIZE) {
+
                 page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
                 link_pages(current, PHADDR_TO_PAGE(current) - 1);
         }
@@ -106,9 +108,14 @@ static void free_pages_list_setup(void) {
         free_user_pages = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
         memset(free_user_pages, 0, sizeof(page_t));
 
-        if (!valid_phisical_page(KERNEL_MEMORY_LIMIT)) custom_kpanic_msg("No hay suficiente memoria física disponible para ejecutar el SO");
+        if (!valid_phisical_page(KERNEL_MEMORY_LIMIT)) {
+                custom_kpanic_msg("No hay suficiente memoria física "
+                        "disponible para ejecutar el SO");
+        }
 
-        for (phaddr = KERNEL_MEMORY_LIMIT + PAGE_SIZE; valid_phisical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
+        for (phaddr = KERNEL_MEMORY_LIMIT + PAGE_SIZE; 
+                valid_phisical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
+
                 page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
                 link_pages(current, PHADDR_TO_PAGE(current) - 1);
         }
