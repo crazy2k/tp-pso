@@ -14,6 +14,7 @@ GDT_DESC: equ gdtr
 extern enable_A20
 
 global start
+global debug_backtrace_limit
 ; start MUST be at the very begining of this file
 start: 
 	call enable_A20
@@ -36,7 +37,7 @@ modo_protegido:
 	mov 	esp, 0xA0000
 	mov 	ebp, 0xA0000
 
-	xchg 	bx, bx
+debug_backtrace_limit:
 	call 	kernel_init
 	jmp $
 
