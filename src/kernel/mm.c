@@ -25,7 +25,6 @@ static void return_page(page_t**, page_t*);
 static page_t *reserve_page(page_t**, page_t*);
 static void reserve_pages(page_t**, void*, void*);
 static page_t* take_free_page(page_t** page_list_ptr);
-static page_t* take_free_kernel_page(void);
 
 static uint32_t* get_pte(uint32_t pd[], void* vaddr);
 static void *new_page_table(uint32_t pd[], void* vaddr);
@@ -53,7 +52,7 @@ void* mm_mem_alloc() {
 }
 
 void* mm_mem_kalloc() {
-    page_t *page = take_free_kernel_page();
+    page_t *page = take_free_page(&free_kernel_pages);
 
     if (page) {
         return PAGE_TO_PHADDR(page);
@@ -95,7 +94,7 @@ void mm_dir_free(mm_page* mm_page) {
 extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
 
 uint32_t *mm_current_pd(void) {
-    return (uint32_t*)rcr3();
+    return (uint32_t*)(PD_MASK & rcr3());
 }
 
 void mm_init(void) {
@@ -135,7 +134,7 @@ static void free_pages_list_setup(void) {
     page_t *last_used_page = PHADDR_TO_PAGE(phaddr) - 1;
     link_pages(last_used_page, free_user_pages);
 
-    reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, last_used_page);
+    reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, phaddr);
 }
 
 static uint32_t* initialize_pd(uint32_t pd[]) {
@@ -196,7 +195,7 @@ static page_t *reserve_page(page_t** page_list_ptr, page_t* page) {
         link_pages(page->prev, page->next);
 
     if (*page_list_ptr == page) {
-        *page_list_ptr = (page->next != page) ? page->next:  NULL;
+        *page_list_ptr = (page->next != page) ? page->next : NULL;
     }
 
     page->count++;
@@ -209,10 +208,6 @@ static void reserve_pages(page_t** page_list_ptr, void* phaddr, void* limit) {
     for (phaddr = ALIGN_TO_PAGE_START(phaddr); phaddr < limit; phaddr += PAGE_SIZE) {
         reserve_page(page_list_ptr, PHADDR_TO_PAGE(phaddr));
     }
-}
-
-static page_t* take_free_kernel_page() {
-    return take_free_page(&free_kernel_pages);
 }
 
 static page_t* take_free_page(page_t** page_list_ptr) {
