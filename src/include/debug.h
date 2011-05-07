@@ -5,7 +5,7 @@
 
 void debug_init(void);
 
-void debug_kernelpanic(const uint_32* stack, const task_state_t *st);
+void debug_kernelpanic(const task_state_t *st, uint32_t error_code);
 
 extern uint32_t debug_backtrace_limit;
 

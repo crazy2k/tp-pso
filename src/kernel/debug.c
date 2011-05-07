@@ -27,25 +27,17 @@ const char* exp_name[] = {
 	"Alignment check"
 };
 
-
+static void print_regs(const task_state_t *st);
+static void print_stack(uint32_t *stack);
+static void print_backtrace(const task_state_t *st);
 static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
     *func_addr);
 
-#define DEBUG_KP_REGS_COL 60
-#define DEBUG_KP_REGS_INITROW 1
 #define DEBUG_KP_COL 0
 #define DEBUG_KP_ROW 0
 #define DEBUG_KP_ATTR 0x0F
-#define DEBUG_KP_STACK_ROW 2
-#define DEBUG_KP_STACK_COL 2
-#define DEBUG_KP_STACK_PPR 4        // Posiciones por fila
-#define DEBUG_KP_STACK_ROWS 13
-#define DEBUG_KP_BT_ROW DEBUG_KP_STACK_ROW + 1 + \
-    DEBUG_KP_STACK_ROWS + 1
-#define DEBUG_KP_BT_COL DEBUG_KP_STACK_COL
-#define DEBUG_KP_BT_ROWS 4
 bool in_panic = FALSE;
-void debug_kernelpanic(const uint_32* stack, const task_state_t *st) {
+void debug_kernelpanic(const task_state_t *st, uint32_t error_code) {
 	/* No permite panics anidados */
 	if (in_panic) while(1) hlt();
 	in_panic = TRUE;
@@ -54,7 +46,14 @@ void debug_kernelpanic(const uint_32* stack, const task_state_t *st) {
     vga_printf(DEBUG_KP_ROW, DEBUG_KP_COL, "Kernel Panic!",
         DEBUG_KP_ATTR);
 
-    // Imprimimos los registros
+    print_regs(st);
+    print_stack((uint32_t *)st->esp);
+    print_backtrace(st);
+}
+
+#define DEBUG_KP_REGS_COL 60
+#define DEBUG_KP_REGS_INITROW 1
+static void print_regs(const task_state_t *st) {
     char *regs[] = { "eax: %x", "ebx: %x", "ecx: %x", "edx: %x", "esi: %x",
         "edi: %x", "ebp: %x", "ss:  %x", "esp: %x", "cs:  %x", "eip: %x",
         "efl: %x", "tr: %x", "cr2: %x", "cr3: %x", "pid: %x" };
@@ -67,13 +66,17 @@ void debug_kernelpanic(const uint_32* stack, const task_state_t *st) {
     for (i = 0; i < (sizeof(regs)/sizeof(char *)); i++)
         vga_printf(regs_row++, DEBUG_KP_REGS_COL, regs[i], DEBUG_KP_ATTR,
             regs_values[i]);
+}
 
-
-    // Imprimimos el stack
-     vga_printf(DEBUG_KP_STACK_ROW, DEBUG_KP_STACK_COL, "Stack:",
+#define DEBUG_KP_STACK_ROW 2
+#define DEBUG_KP_STACK_COL 2
+#define DEBUG_KP_STACK_PPR 4        // Posiciones por fila
+#define DEBUG_KP_STACK_ROWS 13
+static void print_stack(uint32_t *stack) {
+    vga_printf(DEBUG_KP_STACK_ROW, DEBUG_KP_STACK_COL, "Stack:",
          DEBUG_KP_ATTR);
 
-    const uint32_t *addr = stack;
+    const uint32_t *addr;
     uint16_t stack_row = DEBUG_KP_STACK_ROW + 1;
     for (addr = stack; addr < stack + DEBUG_KP_STACK_PPR*DEBUG_KP_STACK_ROWS;
         addr += DEBUG_KP_STACK_PPR) {
@@ -81,14 +84,20 @@ void debug_kernelpanic(const uint_32* stack, const task_state_t *st) {
             DEBUG_KP_ATTR, (uint32_t)addr, *(addr), *(addr + 1),
             *(addr + 2), *(addr + 3));
     }
+}
 
-    // Imprimimos el backtrace
+#define DEBUG_KP_BT_ROW DEBUG_KP_STACK_ROW + 1 + \
+    DEBUG_KP_STACK_ROWS + 1
+#define DEBUG_KP_BT_COL DEBUG_KP_STACK_COL
+#define DEBUG_KP_BT_ROWS 4
+static void print_backtrace(const task_state_t *st) {
     uint16_t bt_row = DEBUG_KP_BT_ROW;
     vga_printf(bt_row++, DEBUG_KP_BT_COL, "Backtrace: Current: %x",
         DEBUG_KP_ATTR, st->eip);
 
     uint32_t *ebp = (uint32_t *)st->ebp;
     uint32_t ret_addr = *(ebp + 1);
+    int i;
     for (i = 0; i < DEBUG_KP_BT_ROWS; i++) {
         uint32_t *first_parm = ebp + 2;
 
@@ -107,8 +116,8 @@ void debug_kernelpanic(const uint_32* stack, const task_state_t *st) {
         ebp = (uint32_t *)(*ebp);
         ret_addr = *(ebp + 1);
     }
-
 }
+
 
 static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
     *func_addr) {
