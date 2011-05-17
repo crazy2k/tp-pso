@@ -20,7 +20,6 @@ static void activate_pagination(void);
 static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop);
 
 static bool valid_phisical_page(void*);
-static void link_pages(page_t*, page_t*);
 static void add_page_to_list(page_t* head, page_t* new);
 
 static void return_page(page_t**, page_t*);
@@ -115,9 +114,9 @@ static void free_pages_list_setup(void) {
         phaddr += PAGE_SIZE) {
 
         page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
-        link_pages(current, PHADDR_TO_PAGE(current) - 1);
+        LINK_NODES(current, PHADDR_TO_PAGE(current) - 1);
     }
-    link_pages(PHADDR_TO_PAGE(phaddr) - 1, free_kernel_pages);
+    LINK_NODES(PHADDR_TO_PAGE(phaddr) - 1, free_kernel_pages);
 
     free_user_pages = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
     memset(free_user_pages, 0, sizeof(page_t));
@@ -131,10 +130,10 @@ static void free_pages_list_setup(void) {
         valid_phisical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
 
         page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
-        link_pages(current, PHADDR_TO_PAGE(current) - 1);
+        LINK_NODES(current, PHADDR_TO_PAGE(current) - 1);
     }
     page_t *last_used_page = PHADDR_TO_PAGE(phaddr) - 1;
-    link_pages(last_used_page, free_user_pages);
+    LINK_NODES(last_used_page, free_user_pages);
 
     reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, phaddr);
 }
@@ -166,15 +165,9 @@ static bool valid_phisical_page(void* phaddr) {
     return *test_addr == TEST_WORD;
 }
 
-
-static void link_pages(page_t* first, page_t* second)  { 
-    first->next = second;
-    second->prev = first;
-}
-
 static void add_page_to_list(page_t* head, page_t* new) {
-    link_pages(new, head->next);
-    link_pages(head, new);
+    LINK_NODES(new, head->next);
+    LINK_NODES(head, new);
 }
 
 
@@ -187,14 +180,13 @@ static void return_page(page_t** page_list_ptr, page_t* reserved) {
                 add_page_to_list(*page_list_ptr, reserved);
             else
                 *page_list_ptr = reserved->next = reserved->prev = reserved;
-
         }
     }
 }
 
 static page_t *reserve_page(page_t** page_list_ptr, page_t* page) {
     if (page->next && page->prev)
-        link_pages(page->prev, page->next);
+        LINK_NODES(page->prev, page->next);
 
     if (*page_list_ptr == page) {
         *page_list_ptr = (page->next != page) ? page->next : NULL;
