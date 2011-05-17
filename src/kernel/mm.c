@@ -12,6 +12,8 @@ struct page_t {
 };
 
 
+static uint32_t *current_pd(void);
+
 static void free_pages_list_setup(void);
 static uint32_t*  initialize_pd(uint32_t pd[]);
 static void activate_pagination(void);
@@ -41,7 +43,7 @@ uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 
 
 void* mm_mem_alloc() {
-    uint32_t *pd = mm_current_pd();
+    uint32_t *pd = current_pd();
     void *vaddr = seek_unused_vaddr(pd);
 
     if (vaddr) {
@@ -64,7 +66,7 @@ void mm_mem_free(void* vaddr) {
     if (vaddr < KERNEL_MEMORY_LIMIT) {
         return_page(&free_kernel_pages, PHADDR_TO_PAGE(vaddr));
     } else {
-        free_user_page(mm_current_pd(), vaddr);
+        free_user_page(current_pd(), vaddr);
     }
 }
 
@@ -93,8 +95,8 @@ void mm_dir_free(mm_page* mm_page) {
 
 extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
 
-uint32_t *mm_current_pd(void) {
-    return (uint32_t*)(PD_MASK & rcr3());
+uint32_t *current_pd(void) {
+    return (uint32_t *)(PD_MASK & rcr3());
 }
 
 void mm_init(void) {

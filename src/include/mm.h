@@ -102,7 +102,6 @@ void mm_init(void);
 void* mm_mem_alloc();
 void* mm_mem_kalloc();
 void mm_mem_free(void* page);
-uint32_t* mm_current_pd(void);
 
 /* Manejador de directorios de página */
 mm_page* mm_dir_new(void);
