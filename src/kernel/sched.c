@@ -22,12 +22,12 @@ static int get_pid(sched_task *task);
 static void restart_quantum(sched_task *task);
 
 
-sched_task tasks[MAX_PID];
+static sched_task tasks[MAX_PID];
 
 // Lista de tareas del scheduler
-sched_task *task_list;
+static sched_task *task_list;
 // Lista de tareas libres
-sched_task *free_tasks;
+static sched_task *free_tasks;
 
 void sched_init(void) {
     memset(tasks, 0, sizeof(tasks));
