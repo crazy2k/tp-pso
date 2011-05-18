@@ -30,7 +30,6 @@ static page_t* take_free_page(page_t** page_list_ptr);
 static uint32_t* get_pte(uint32_t pd[], void* vaddr);
 static void *new_page_table(uint32_t pd[], void* vaddr);
 
-static void* new_user_page(uint32_t pd[], void* vaddr);
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
 
@@ -242,7 +241,7 @@ static void *new_page_table(uint32_t pd[], void* vaddr) {
 }
 
 // Mapea una pagina fisica nueva para la direccion virtual pasada por parametro 
-static void* new_user_page(uint32_t pd[], void* vaddr) {
+void* new_user_page(uint32_t pd[], void* vaddr) {
     // Si no hay mas memoria retornar NULL
     if (!free_user_pages) 
         return NULL;

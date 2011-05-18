@@ -107,6 +107,8 @@ void mm_mem_free(void* page);
 mm_page* mm_dir_new(void);
 void mm_dir_free(mm_page* d);
 
+void* new_user_page(uint32_t pd[], void* vaddr);
+
 /* Syscalls */
 // void* palloc(void);
 
