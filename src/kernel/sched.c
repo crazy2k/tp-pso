@@ -107,7 +107,7 @@ static void restart_quantum(sched_task *task) {
 }
 
 static int get_pid(sched_task *task) {
-    return (task - task_list);
+    return (task - tasks);
 }
 
 static sched_task *current_task() {

@@ -2,9 +2,13 @@
 #include <isr.h>
 #include <mm.h>
 #include <utils.h>
+#include <i386.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000
+
+extern void loader_switch_stack_pointers(void **old_stack_top, void
+    **new_stack_top);
 
 /*
  * TSS
@@ -73,12 +77,16 @@ struct pcb {
 
 static void initialize_task_state(task_state_t *st, void *entry_point,
     void *stack_pointer, int pl);
-
+static pcb *current_pcb();
+static int get_pid(pcb *pcb);
 
 
 static pcb pcbs[MAX_PID];
 static pcb *free_pcbs;
 static pcb *pcbs_list;
+// TSS del sistema. Su valor de esp0 se actualiza en los cambios de contexto.
+static tss_t tss_struct;
+static tss_t *tss = NULL;
 
 void loader_init(void) {
     memset(pcbs, 0, sizeof(pcbs));
@@ -140,12 +148,28 @@ void loader_enqueue(int* cola) {
 }
 
 void loader_unqueue(int* cola) {
+
 }
 
 void loader_exit(void) {
 }
 
 void loader_switchto(pid pd) {
+    if (get_pid(current_pcb()) == pd)
+        return;
+
+    uint32_t eflags = disable_interrupts();
+
+    pcb *old_pcb = current_pcb();
+    pcb *new_pcb = pcbs_list = &pcbs[pd];
+
+    lcr3(new_pcb->pd);
+    setup_tss(new_pcb->kernel_stack_limit);
+
+    loader_switch_stack_pointers(&old_pcb->kernel_stack_pointer,
+        &new_pcb->kernel_stack_pointer);
+
+    restore_eflags(eflags);
     
 }
 
@@ -192,3 +216,45 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
     st->org_esp = (uint32_t)stack_pointer;
     st->org_ss = GDT_SEGSEL(pl, ds);
 }
+
+static pcb *current_pcb() {
+    return pcbs_list;
+}
+
+static int get_pid(pcb *pcb) {
+    return (pcb - pcbs);
+}
+
+/* Si no existe la TSS, crea una y la configura con los valores para el
+ * segmento y offset del stack de nivel 0, carga un descriptor para ella en la
+ * GDT y carga el Task Register con un selector que la referencia.
+ *
+ * Si ya existe, simplemente actualiza el valor del offset del stack de nivel
+ * 0.
+ *
+ * - ``kernel_stack`` es la direccion del stack pointer para el stack de nivel
+ *   0 de la tarea en su espacio de direcciones
+ */
+void setup_tss(uint32_t kernel_stack) {
+    if (tss) {
+        tss->esp0 = kernel_stack;
+        return;
+    }
+
+    tss = &tss_struct;
+    memset(tss, 0, sizeof(tss_t));
+
+    // Solo nos interesa el segmento de stack para el kernel
+    tss->ss0 = GDT_SEGSEL(0x0, GDT_INDEX_KERNEL_DS);
+    tss->esp0 = kernel_stack;
+
+    // Escribimos el descriptor de la TSS en la GDT
+    gdt[GDT_INDEX_TSS] = GDT_DESC_BASE((uint32_t)tss) |
+        GDT_DESC_LIMIT(sizeof(tss_t)) | GDT_DESC_DPL(0x0) |
+        GDT_DESC_TYPE(GDT_F_32BTA) | GDT_DESC_G | GDT_DESC_P;
+
+    // Cargamos el Task Register con un selector para la TSS
+    uint16_t segsel = GDT_SEGSEL(0x0, GDT_INDEX_TSS);
+    ltr(segsel);
+}
+
