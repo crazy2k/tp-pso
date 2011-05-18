@@ -8,6 +8,8 @@ void *memcpy(void *dest, const void *src, size_t n);
 
 void *memset(void * ptr, int value, size_t num);
 
+int strcmp(char * src, char * dst);
+
 void custom_kpanic_msg(char* custom_msg);
 
 #define LINK_NODES(fst, sec) \

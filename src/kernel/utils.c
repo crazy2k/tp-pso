@@ -25,6 +25,22 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
+int strcmp(char * src, char * dst) {
+    int ret = 0 ;
+
+    while(!(ret = (unsigned int)*src - (unsigned int)*dst) && *dst) {
+        ++src;
+        ++dst;
+    }
+
+    if (ret < 0)
+        ret = -1;
+    else if (ret > 0)
+        ret = 1;
+
+    return ret;
+}
+
 void custom_kpanic_msg(char* custom_msg) {
     cli(); 
     vga_write(0, 0, PANIC_PREFIX,  VGA_BC_RED | VGA_FC_WHITE | VGA_FC_LIGHT); 
