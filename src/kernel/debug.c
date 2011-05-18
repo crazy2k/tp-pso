@@ -58,7 +58,7 @@ static void print_regs(const task_state_t *st) {
         "edi: %x", "ebp: %x", "ss:  %x", "esp: %x", "cs:  %x", "eip: %x",
         "efl: %x", "tr: %x", "cr2: %x", "cr3: %x", "pid: %x" };
     uint32_t regs_values[] = { st->eax, st->ebx, st->ecx,
-        st->edx, st->esi, st->edi, st->ebp, st->ss, st->esp, st->cs, st->eip,
+        st->edx, st->esi, st->edi, st->ebp, st->org_ss, st->esp, st->cs, st->eip,
         st->eflags, rtr(), rcr2(), rcr3(), 0x0 };
 
     uint16_t regs_row = DEBUG_KP_REGS_INITROW;
