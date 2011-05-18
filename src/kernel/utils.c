@@ -49,3 +49,17 @@ void custom_kpanic_msg(char* custom_msg) {
     while(1);
 }
 
+uint32_t disable_interrupts() {
+    uint32_t eflags;
+    __asm__ __volatile__("pushf");
+    __asm__ __volatile__("pop %0" : "=a" (eflags) :);
+    __asm__ __volatile__("cli");
+
+    return eflags;
+}
+
+void restore_eflags(uint32_t eflags) {
+    __asm__ __volatile__("push %0" : : "r" (eflags));
+    __asm__ __volatile__("popf");
+}
+
