@@ -2,6 +2,7 @@
 #include <sched.h>
 #include <loader.h>
 #include <utils.h>
+#include <i386.h>
 
 #define DEFAULT_QUANTUM 20
 
@@ -37,6 +38,7 @@ void sched_init(void) {
     for (i = 0; i < MAX_PID; i++) {
         APPEND(&free_tasks, &tasks[i]);
     }
+    breakpoint();
 }
 
 

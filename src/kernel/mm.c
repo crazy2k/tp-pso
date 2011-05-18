@@ -101,6 +101,7 @@ void mm_init(void) {
     free_pages_list_setup();
     initialize_pd(kernel_pd);
     activate_pagination();
+    breakpoint();
 }
 
 static void free_pages_list_setup(void) {

@@ -16,6 +16,9 @@ void kernel_init(void) {
     vga_init();
     idt_init();
     debug_init();
+    mm_init();
+    sched_init();
+    loader_init();
 
     sti();
 
