@@ -89,6 +89,13 @@ typedef struct str_mm_page {
 #define PAGE_MASK 0xFFFFF000
 #define ALIGN_TO_PAGE_START(phaddr) ((void*)(PAGE_MASK & (uint32_t)phaddr))
 
+#define ALIGN_TO_PAGE(addr, ceil) ALIGN_TO_N(addr, 0xFFFFF000, 0x1000, ceil)
+#define ALIGN_TO_N(addr, mask, n, ceil) ({ uint32_t __addr = (uint32_t)(addr); \
+    uint32_t __mask = (uint32_t)(mask); \
+    uint32_t __n = (uint32_t)(n); \
+    if ((ceil) && (__addr & ~__mask)) __addr += __n; \
+    (void*) (__addr & __mask); })
+
 
 #define FIRST_FREE_KERNEL_PAGE ((void*)0x100000)
 #define LAST_POSIBLE_PAGE 0x100000
