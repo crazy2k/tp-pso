@@ -30,6 +30,7 @@ const char* exp_name[] = {
 static void print_regs(const task_state_t *st);
 static void print_stack(uint32_t *stack);
 static void print_backtrace(const task_state_t *st);
+static void print_int(uint32_t index, uint32_t error_code);
 static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
     *func_addr);
 
@@ -37,7 +38,8 @@ static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
 #define DEBUG_KP_ROW 0
 #define DEBUG_KP_ATTR 0x0F
 bool in_panic = FALSE;
-void debug_kernelpanic(const task_state_t *st, uint32_t error_code) {
+void debug_kernelpanic(const task_state_t *st, uint32_t index, uint32_t
+    error_code) {
 	/* No permite panics anidados */
 	if (in_panic) while(1) hlt();
 	in_panic = TRUE;
@@ -49,6 +51,7 @@ void debug_kernelpanic(const task_state_t *st, uint32_t error_code) {
     print_regs(st);
     print_stack((uint32_t *)st->esp);
     print_backtrace(st);
+    print_int(index, error_code);
 }
 
 #define DEBUG_KP_REGS_COL 60
@@ -116,6 +119,19 @@ static void print_backtrace(const task_state_t *st) {
         ebp = (uint32_t *)(*ebp);
         ret_addr = *(ebp + 1);
     }
+}
+
+#define DEBUG_KP_INT_ROW (VGA_ROWS - 1)
+#define DEBUG_KP_INT_COL 0
+#define DEBUG_KP_INT_DESC_COL 60
+static void print_int(uint32_t index, uint32_t error_code) {
+    vga_printf(DEBUG_KP_INT_ROW, DEBUG_KP_INT_COL, "INT %x err: %x ",
+        DEBUG_KP_ATTR, index, error_code);
+
+    if (index < sizeof(exp_name)/sizeof(char *))
+        vga_printf(DEBUG_KP_INT_ROW, DEBUG_KP_INT_DESC_COL, exp_name[index],
+            DEBUG_KP_ATTR);
+
 }
 
 

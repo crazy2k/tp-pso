@@ -6,7 +6,6 @@
 uint_16 vga_port = 0x3D0;
 
 void vga_init(void) {
-    vga_printf(10, 10, "Hola %x como va?", 0x0F, 0x12345);
 }
 
 void *vga_putchar(void *addr, const char chr, uint8_t attr) {

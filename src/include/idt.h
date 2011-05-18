@@ -15,6 +15,14 @@ extern uint64_t idt[];
 typedef gdtr_t idtr_t;
 extern idtr_t idtr;
 
+// Indices de interrupciones y excepciones
+
+#define IDT_INDEX_GP    13ul
+#define IDT_INDEX_PF    14ul
+#define IDT_INDEX_TIMER 32ul
+#define IDT_INDEX_KB    33ul
+#define IDT_INDEX_SYSC  0x80ul
+
 // Campos de descriptores de la IDT
 
 #define IDT_DESC_P ((uint64_t)0x1 << (32 + 15))
@@ -65,6 +73,7 @@ extern idtr_t idtr;
 /* TYPE Field */
 #define IDT_ATTR_TYPE_INT 0x0600
 #define IDT_ATTR_TYPE_EXP 0x0700
+
 
 
 #endif
