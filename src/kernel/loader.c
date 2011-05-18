@@ -129,6 +129,8 @@ pid loader_load(pso_file* f, int pl) {
         memset((void *)f->mem_end_disk, 0, f->mem_end - f->mem_end_disk);
 
         APPEND(&pcbs_list, pcb);
+
+        sched_load(pcb - pcbs);
     }
 
 	return 0;
@@ -144,6 +146,7 @@ void loader_exit(void) {
 }
 
 void loader_switchto(pid pd) {
+    
 }
 
 
