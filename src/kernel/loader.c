@@ -147,6 +147,20 @@ pid loader_load(pso_file* f, int pl) {
 void loader_enqueue(int* cola) {
 }
 
+void loader_new_enqueue(pcb **queue) {
+    UNLINK_NODE(&pcbs_list, current_pcb());
+    APPEND(queue, current_pcb());
+
+    loader_switchto(sched_block());
+}
+
+void loader_new_unqueue(pcb **queue) {
+    pcb *pcb;
+    POP(queue, &pcb);
+
+    sched_unblock(get_pid(pcb));
+}
+
 void loader_unqueue(int* cola) {
 
 }
