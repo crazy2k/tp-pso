@@ -10,13 +10,6 @@
 
 #ifdef __KERNEL__
 
-typedef struct str_task {
-	int next, prev;
-	// Informaci'on
-} task;
-
-extern task task_table[];
-extern uint_32 cur_pid;
 
 void loader_init(void);
 pid loader_load(pso_file* f, int pl);

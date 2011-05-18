@@ -50,13 +50,38 @@ typedef struct {
     uint16_t io;    // I/O map base address
 } tss_t;
 
-task task_table[MAX_PID];
+typedef struct pcb pcb;
+struct pcb {
+    // Direccion virtual y fisica del directorio de paginas en cualquier
+    // espacio de direcciones
+    void *pd;
+    // Datos sobre el stack de kernel de la tarea
+    void *kernel_stack;
+    void *kernel_stack_limit;
+    void *kernel_stack_pointer;
 
-/* pid "actual" */
-uint_32 cur_pid = 0;
+    pcb *next;
+    pcb *prev;
+};
+
+
+static void initialize_task_state(task_state_t *st, void *entry_point,
+    void *stack_pointer, int pl);
+
+
+
+static pcb pcbs[MAX_PID];
+static pcb *free_pcbs;
+static pcb *pcbs_list;
 
 void loader_init(void) {
-	
+    memset(pcbs, 0, sizeof(pcbs));
+
+    free_pcbs = NULL;
+    int i;
+    for (i = 0; i < MAX_PID; i++) {
+        APPEND(&free_pcbs, &pcbs[i]);
+    }
 }
 
 pid loader_load(pso_file* f, int pl) {
