@@ -54,7 +54,7 @@ typedef struct {
     uint16_t t:1;   // Debug trap flag
     uint16_t :15;
     uint16_t io;    // I/O map base address
-} tss_t;
+}__attribute__((__packed__, aligned (8))) tss_t;
 
 typedef struct pcb pcb;
 struct pcb {

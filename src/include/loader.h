@@ -2,7 +2,6 @@
 #define __LOADER_H__
 
 #include <pso_file.h>
-#include <tss.h>
 #include <syscalls.h>
 
 #define PID_IDLE_TASK 0

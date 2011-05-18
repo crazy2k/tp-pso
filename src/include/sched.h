@@ -1,7 +1,6 @@
 #ifndef __SCHED_H__
 #define __SCHED_H__
 
-#include <tss.h>
 #include <tipos.h>
 #include <syscalls.h>
 
