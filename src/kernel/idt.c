@@ -35,9 +35,9 @@ void idt_init(void) {
 }
 
 /* ``idt_register()`` existe por compatibilidad con el codigo original, pero
- * en nuestro codigo utilizamos ``idt_set_isr()``. La diferencia entre ambas
- * funciones es que 1) la segunda devuelve codigos de error y 2) la segunda
- * recibe atributos de 64 bits en lugar de 32. Esto ultimo nos permite
+ * en nuestro codigo utilizamos ``idt_set_handler()``. La diferencia entre
+ * ambas funciones es que 1) la segunda devuelve codigos de error y 2) la
+ * segunda recibe atributos de 64 bits en lugar de 32. Esto ultimo nos permite
  * reutilizar macros que teniamos escritas en Zafio.
  */
 void idt_register(int intr, void (*isr)(void), int attr) {
@@ -73,8 +73,14 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     outb(PIC1_COMMAND, OCW2);
 
     //breakpoint();
-    debug_kernelpanic(st, error_code);
 
+    if (index == IDT_INDEX_TIMER)
+        breakpoint();
+    else if (index == IDT_INDEX_KB)
+        breakpoint();
+
+
+    debug_kernelpanic(st, index, error_code);
     //if (isrs[index] == NULL)
     //    default_isr(index, error_code, st);
     //else

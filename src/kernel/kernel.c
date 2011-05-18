@@ -16,6 +16,9 @@ void kernel_init(void) {
     vga_init();
     idt_init();
     debug_init();
+
+    sti();
+
 	breakpoint();
 	return;
 }
