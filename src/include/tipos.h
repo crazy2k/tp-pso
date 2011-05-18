@@ -17,8 +17,7 @@ typedef sint_32 pid;
 
 #define FALSE 0
 #define TRUE 1
-#define NULL ((void*)0)
-
+#define NULL 0
 
 /*
  * Mascaras
