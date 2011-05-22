@@ -44,7 +44,7 @@ void restore_eflags(uint32_t eflags);
         (node)->prev = (node); \
     } \
     else { \
-        LINK_NODES((*(list))->next, (node)); \
+        LINK_NODES((*(list))->prev, (node)); \
         LINK_NODES((node), (*(list))); \
     }
 

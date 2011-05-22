@@ -3,12 +3,15 @@
 #include <mm.h>
 #include <utils.h>
 #include <i386.h>
+#include <sched.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000
+#define IDLE_MAIN_SIZE 0x00000100
 
 extern void loader_switch_stack_pointers(void **old_stack_top, void
     **new_stack_top);
+extern func_main idle_main;
 
 /*
  * TSS
@@ -82,8 +85,8 @@ static int get_pid(pcb *pcb);
 
 
 static pcb pcbs[MAX_PID];
-static pcb *free_pcbs;
-static pcb *pcbs_list;
+static pcb *free_pcbs = NULL;
+static pcb *pcbs_list = NULL;
 // TSS del sistema. Su valor de esp0 se actualiza en los cambios de contexto.
 static tss_t tss_struct;
 static tss_t *tss = NULL;
@@ -96,7 +99,17 @@ void loader_init(void) {
     for (i = 0; i < MAX_PID; i++) {
         APPEND(&free_pcbs, &pcbs[i]);
     }
+
+    pso_file idle_pso_file = {
+            .signature = "PSO",
+            .mem_start = (uint32_t)idle_main,
+            .mem_end_disk = (uint32_t)idle_main + IDLE_MAIN_SIZE,
+            .mem_end = (uint32_t)idle_main + IDLE_MAIN_SIZE,
+            ._main = idle_main,
+        };
+    loader_load(&idle_pso_file, 0);
 }
+
 
 pid loader_load(pso_file* f, int pl) {
     if (strcmp((char *)f->signature, "PSO") == 0) {
@@ -144,28 +157,36 @@ pid loader_load(pso_file* f, int pl) {
 	return 0;
 }
 
-void loader_enqueue(int* cola) {
-}
-
-void loader_new_enqueue(pcb **queue) {
+void loader_enqueue(int *cola) {
     UNLINK_NODE(&pcbs_list, current_pcb());
-    APPEND(queue, current_pcb());
+
+    pcb *queue;
+    if (*cola == -1) {
+        queue = NULL;
+        *cola = get_pid(current_pcb());
+    }
+    else
+        queue = &pcbs[*cola];
+
+    APPEND(&queue, current_pcb());
 
     loader_switchto(sched_block());
 }
 
-void loader_new_unqueue(pcb **queue) {
+void loader_unqueue(int *cola) {
+    pcb *queue = &pcbs[*cola];
     pcb *pcb;
-    POP(queue, &pcb);
+    POP(&queue, &pcb);
 
     sched_unblock(get_pid(pcb));
 }
 
-void loader_unqueue(int* cola) {
-
-}
-
 void loader_exit(void) {
+    mm_dir_free(current_pcb()->pd);
+
+    // TODO: Completar
+
+
 }
 
 void loader_switchto(pid pd) {
