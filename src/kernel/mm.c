@@ -173,7 +173,7 @@ static void activate_pagination(void) {
 }
 
 static bool valid_physical_page(void* phaddr) {
-    uint32_t* test_addr = ALIGN_TO_PAGE_START(phaddr);
+    volatile uint32_t* test_addr = ALIGN_TO_PAGE_START(phaddr);
     *test_addr = TEST_WORD;
 
     return *test_addr == TEST_WORD;
