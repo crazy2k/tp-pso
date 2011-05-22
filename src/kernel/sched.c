@@ -38,7 +38,6 @@ void sched_init(void) {
     for (i = 0; i < MAX_PID; i++) {
         APPEND(&free_tasks, &tasks[i]);
     }
-    breakpoint();
 }
 
 
