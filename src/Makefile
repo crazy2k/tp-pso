@@ -8,9 +8,9 @@ MKFS=/sbin/mkfs.vfat
 
 # Parámetros de programas
 NASMFLAGS=-I include/ -g -ggdb -D__KERNEL__
-CFLAGS=-m32 -g -ggdb -Wall -O2 -I include/ \
+CFLAGS=-m32 -g -ggdb -Wall -O0 -I include/ \
   -fno-zero-initialized-in-bss -fno-stack-protector -fno-strict-aliasing -ffreestanding -D__KERNEL__
-CXXFLAGS=-O2
+CXXFLAGS=-O0
 LDFLAGS=-static -m elf_i386 -nostdlib
 
 # Directorios

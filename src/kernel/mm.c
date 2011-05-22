@@ -101,7 +101,6 @@ uint32_t *current_pd(void) {
 
 void mm_init(void) {
     free_pages_list_setup();
-    breakpoint();
     initialize_pd(kernel_pd);
     activate_pagination();
 }
