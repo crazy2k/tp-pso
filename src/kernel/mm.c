@@ -15,6 +15,8 @@ struct page_t {
 static uint32_t *current_pd(void);
 
 static void free_pages_list_setup(void);
+static void user_pages_list_setup(void);
+static void kernel_pages_list_setup(void);
 static uint32_t*  initialize_pd(uint32_t pd[]);
 static void activate_pagination(void);
 static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop);
@@ -105,6 +107,13 @@ void mm_init(void) {
 }
 
 static void free_pages_list_setup(void) {
+
+    kernel_pages_list_setup();
+    user_pages_list_setup();
+}
+
+
+static void kernel_pages_list_setup(void) {
     void *phaddr;
 
     free_kernel_pages = (page_t*)FIRST_FREE_KERNEL_PAGE;
@@ -117,6 +126,11 @@ static void free_pages_list_setup(void) {
         LINK_NODES(current, PHADDR_TO_PAGE(current) - 1);
     }
     LINK_NODES(PHADDR_TO_PAGE(phaddr) - 1, free_kernel_pages);
+}
+
+
+static void user_pages_list_setup(void) {
+    void *phaddr;
 
     free_user_pages = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
     memset(free_user_pages, 0, sizeof(page_t));
