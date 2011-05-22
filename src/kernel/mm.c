@@ -21,7 +21,7 @@ static uint32_t*  initialize_pd(uint32_t pd[]);
 static void activate_pagination(void);
 static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop);
 
-static bool valid_phisical_page(void*);
+static bool valid_physical_page(void*);
 static void add_page_to_list(page_t* head, page_t* new);
 
 static void return_page(page_t**, page_t*);
@@ -135,13 +135,13 @@ static void user_pages_list_setup(void) {
     free_user_pages = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
     memset(free_user_pages, 0, sizeof(page_t));
 
-    if (!valid_phisical_page(KERNEL_MEMORY_LIMIT)) {
+    if (!valid_physical_page(KERNEL_MEMORY_LIMIT)) {
         custom_kpanic_msg("No hay suficiente memoria física "
             "disponible para ejecutar el SO");
     }
 
     for (phaddr = KERNEL_MEMORY_LIMIT + PAGE_SIZE; 
-        valid_phisical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
+        valid_physical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
 
         page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
         LINK_NODES(current, PHADDR_TO_PAGE(current) - 1);
@@ -172,7 +172,7 @@ static void activate_pagination(void) {
     lcr0(new_cr0);
 }
 
-static bool valid_phisical_page(void* phaddr) {
+static bool valid_physical_page(void* phaddr) {
     uint32_t* test_addr = ALIGN_TO_PAGE_START(phaddr);
     *test_addr = TEST_WORD;
 
