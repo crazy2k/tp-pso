@@ -151,7 +151,7 @@ pid loader_load(pso_file* f, int pl) {
 
         APPEND(&pcbs_list, pcb);
 
-        sched_load(pcb - pcbs);
+        sched_load(get_pid(pcb));
     }
 
 	return 0;
