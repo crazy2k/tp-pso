@@ -1,6 +1,7 @@
 %include "./include/nasm_macros.inc"
 
 global loader_switch_stack_pointers
+global idle_main
 
 %define old_stack_top_ptr [ebp + 8]
 %define new_stack_top_ptr [ebp + 12]
@@ -20,3 +21,8 @@ loader_switch_stack_pointers:
     pop ebp
 
     ret
+
+idle_main:
+    ;hlt
+    xchg bx, bx
+    jmp idle_main
