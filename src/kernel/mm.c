@@ -122,7 +122,7 @@ static void kernel_pages_list_setup(void) {
         phaddr += PAGE_SIZE) {
 
         page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
-        LINK_NODES(current, PHADDR_TO_PAGE(current) - 1);
+        LINK_NODES(current, current - 1);
     }
     LINK_NODES(PHADDR_TO_PAGE(phaddr) - 1, free_kernel_pages);
 }
@@ -143,7 +143,7 @@ static void user_pages_list_setup(void) {
         valid_physical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
 
         page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
-        LINK_NODES(current, PHADDR_TO_PAGE(current) - 1);
+        LINK_NODES(current, current - 1);
     }
     page_t *last_used_page = PHADDR_TO_PAGE(phaddr) - 1;
     LINK_NODES(last_used_page, free_user_pages);
