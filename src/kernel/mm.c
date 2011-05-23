@@ -115,24 +115,26 @@ static void free_pages_list_setup(void) {
 static void kernel_pages_list_setup(void) {
     void *phaddr;
 
-    free_kernel_pages = (page_t*)FIRST_FREE_KERNEL_PAGE;
-    memset(free_kernel_pages, 0, sizeof(page_t));
-    
+    page_t *first = (page_t *)FIRST_FREE_KERNEL_PAGE;
+    memset(first, 0, sizeof(page_t));
+    APPEND(&free_kernel_pages, first);
+
     for (phaddr = KERNEL_MEMORY_START + PAGE_SIZE; phaddr < KERNEL_MEMORY_LIMIT; 
         phaddr += PAGE_SIZE) {
 
-        page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
-        LINK_NODES(current, current - 1);
+        page_t *current = PHADDR_TO_PAGE(phaddr);
+        memset(current, 0, sizeof(page_t));
+        APPEND(&free_kernel_pages, current);
     }
-    LINK_NODES(PHADDR_TO_PAGE(phaddr) - 1, free_kernel_pages);
 }
 
 
 static void user_pages_list_setup(void) {
     void *phaddr;
 
-    free_user_pages = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
-    memset(free_user_pages, 0, sizeof(page_t));
+    page_t *first = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
+    memset(first, 0, sizeof(page_t));
+    APPEND(&free_user_pages, first);
 
     if (!valid_physical_page(KERNEL_MEMORY_LIMIT)) {
         custom_kpanic_msg("No hay suficiente memoria física "
@@ -142,11 +144,10 @@ static void user_pages_list_setup(void) {
     for (phaddr = KERNEL_MEMORY_LIMIT + PAGE_SIZE; 
         valid_physical_page(phaddr) && phaddr != NULL; phaddr += PAGE_SIZE) {
 
-        page_t* current = memset(PHADDR_TO_PAGE(phaddr), 0, sizeof(page_t));
-        LINK_NODES(current, current - 1);
+        page_t *current = PHADDR_TO_PAGE(phaddr);
+        memset(current, 0, sizeof(page_t));
+        APPEND(&free_user_pages, current);
     }
-    page_t *last_used_page = PHADDR_TO_PAGE(phaddr) - 1;
-    LINK_NODES(last_used_page, free_user_pages);
 
     reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, phaddr);
 }
