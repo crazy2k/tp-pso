@@ -149,7 +149,8 @@ static void user_pages_list_setup(void) {
         APPEND(&free_user_pages, current);
     }
 
-    reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START, phaddr);
+    reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START,
+        (void *)PHADDR_TO_PAGE(phaddr));
 }
 
 static uint32_t* initialize_pd(uint32_t pd[]) {
