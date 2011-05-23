@@ -48,10 +48,13 @@ void restore_eflags(uint32_t eflags);
         LINK_NODES((node), (*(list))); \
     }
 
-// POP(<node type> **list, <node type> **node);
-#define POP(list, node) \
-    *(node) = *(list); \
-    UNLINK_NODE((list), *(node));
+// POP(<node type> **list);
+#define POP(list) \
+    ({ \
+        typeof(*(list)) _node = *(list); \
+        UNLINK_NODE((list), _node); \
+        _node; \
+    })
 
 
 #endif

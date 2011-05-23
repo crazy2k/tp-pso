@@ -42,8 +42,7 @@ void sched_init(void) {
 
 
 void sched_load(pid pd) {
-    sched_task *task;
-    POP(&free_tasks, &task);
+    sched_task *task = POP(&free_tasks);
 
     // Llenar task
     task->blocked = FALSE;

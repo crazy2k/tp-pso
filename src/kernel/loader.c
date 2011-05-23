@@ -114,8 +114,7 @@ void loader_init(void) {
 pid loader_load(pso_file* f, int pl) {
     if (strcmp((char *)f->signature, "PSO") == 0) {
         // Obtenemos un nuevo PCB
-        pcb *pcb;
-        POP(&free_pcbs, &pcb);
+        pcb *pcb = POP(&free_pcbs);
 
         /*
          * Cargamos los datos en el PCB
@@ -175,8 +174,7 @@ void loader_enqueue(int *cola) {
 
 void loader_unqueue(int *cola) {
     pcb *queue = &pcbs[*cola];
-    pcb *pcb;
-    POP(&queue, &pcb);
+    pcb *pcb = POP(&queue);
 
     sched_unblock(get_pid(pcb));
 }
