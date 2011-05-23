@@ -72,7 +72,8 @@ void mm_mem_free(void* vaddr) {
 
 mm_page* mm_dir_new(void) {
 	uint32_t *pd = mm_mem_kalloc();
-    return (mm_page*) initialize_pd(pd);
+    mm_page *new_dir = initialize_pd(pd);
+    return new_dir;
 }
 
 void mm_dir_free(mm_page* mm_page) {
@@ -160,9 +161,10 @@ static uint32_t* initialize_pd(uint32_t pd[]) {
     for (vaddr = KERNEL_MEMORY_START + PAGE_SIZE; vaddr < KERNEL_MEMORY_LIMIT; 
         vaddr += PAGE_4MB_SIZE) {
 
-        uint32_t* table = new_page_table(kernel_pd, vaddr);
+        uint32_t* table = new_page_table(pd, vaddr);
         pd[PDI(vaddr)] = PDE_PT_BASE(table) | PDE_P | PDE_PWT | PDE_RW;
     }
+
     map_kernel_pages(kernel_pd, KERNEL_MEMORY_START, KERNEL_MEMORY_LIMIT);
 
     return pd;
