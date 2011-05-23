@@ -153,6 +153,7 @@ static void user_pages_list_setup(void) {
 
 static uint32_t* initialize_pd(uint32_t pd[]) {
     void* vaddr;
+    memset((void*)pd, 0, PAGE_SIZE);
 
     for (vaddr = KERNEL_MEMORY_START + PAGE_SIZE; vaddr < KERNEL_MEMORY_LIMIT; 
         vaddr += PAGE_4MB_SIZE) {
