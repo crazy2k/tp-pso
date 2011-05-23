@@ -80,7 +80,7 @@ typedef struct str_mm_page {
 #define PTE_P PDE_P
 
 
-#define PHADDR_TO_PAGE(phaddr) ((page_t*) (FIRST_FREE_KERNEL_PAGE + ((uint32_t)phaddr/PAGE_SIZE)))
+#define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
 #define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
 
 
