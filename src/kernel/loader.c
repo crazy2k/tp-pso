@@ -12,6 +12,7 @@
 extern void loader_switch_stack_pointers(void **old_stack_top, void
     **new_stack_top);
 extern func_main idle_main;
+extern pso_file task_task1_pso;
 
 /*
  * TSS
@@ -100,14 +101,19 @@ void loader_init(void) {
         APPEND(&free_pcbs, &pcbs[i]);
     }
 
-    pso_file idle_pso_file = {
-            .signature = "PSO",
-            .mem_start = (uint32_t)idle_main,
-            .mem_end_disk = (uint32_t)idle_main + IDLE_MAIN_SIZE,
-            .mem_end = (uint32_t)idle_main + IDLE_MAIN_SIZE,
-            ._main = idle_main,
-        };
-    loader_load(&idle_pso_file, 0);
+    pcb *pcb = POP(&free_pcbs);
+
+    pcb->pd = kernel_pd;
+    pcb->kernel_stack = (void *)KERNEL_STACK;
+    pcb->kernel_stack_limit = (void *)(KERNEL_STACK + PAGE_SIZE);
+    pcb->kernel_stack_pointer = (void *)(KERNEL_STACK + PAGE_SIZE);
+
+    sched_load(get_pid(pcb));
+
+    loader_load(&task_task1_pso, 0);
+
+    sti();
+    idle_main();
 }
 
 
@@ -151,9 +157,11 @@ pid loader_load(pso_file* f, int pl) {
         APPEND(&pcbs_list, pcb);
 
         sched_load(get_pid(pcb));
+
+        return get_pid(pcb);
     }
 
-	return 0;
+	return -1;
 }
 
 void loader_enqueue(int *cola) {

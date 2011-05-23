@@ -20,8 +20,5 @@ void kernel_init(void) {
     sched_init();
     loader_init();
 
-    sti();
-
-	breakpoint();
 	return;
 }
