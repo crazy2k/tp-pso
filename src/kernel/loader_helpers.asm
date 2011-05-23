@@ -2,6 +2,10 @@
 
 global loader_switch_stack_pointers
 global idle_main
+global initialize_task
+
+extern loader_setup_task_memory
+extern load_state
 
 %define old_stack_top_ptr [ebp + 8]
 %define new_stack_top_ptr [ebp + 12]
@@ -26,3 +30,15 @@ idle_main:
     ;hlt
     xchg bx, bx
     jmp idle_main
+
+
+
+initialize_task:
+    ; El pso_file * ya se encuentra en el stack, por lo que no hace falta
+    ; hacer push para pasarlo como parametro
+    CCALL loader_setup_task_memory
+    add esp, 4
+
+    ; Ahora que tenemos listo nuestro espacio de memoria virtual, cargamos el
+    ; estado inicial de la tarea
+    jmp load_state

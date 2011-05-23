@@ -3,6 +3,7 @@
 extern idt_handle
 
 global idt_stateful_handlers
+global load_state
 
 %define IDT_LENGTH      256
 %define IDT_LAST_INDEX  (IDT_LENGTH - 1)

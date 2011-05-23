@@ -11,6 +11,8 @@
 
 extern void loader_switch_stack_pointers(void **old_stack_top, void
     **new_stack_top);
+extern void initialize_task(pso_file *f);
+
 extern func_main idle_main;
 extern pso_file task_task1_pso;
 
@@ -92,6 +94,8 @@ static pcb *pcbs_list = NULL;
 static tss_t tss_struct;
 static tss_t *tss = NULL;
 
+void loader_setup_task_memory(pso_file *f);
+
 void loader_init(void) {
     memset(pcbs, 0, sizeof(pcbs));
 
@@ -138,21 +142,19 @@ pid loader_load(pso_file* f, int pl) {
         initialize_task_state(st, (void *)f->_main,
             (void *)(USER_STACK + PAGE_SIZE), pl);
 
-        /*
-         * Armamos el mapa de memoria de la tarea
-         */
+        // Agregamos la direccion de la funcion de inicializacion de la tarea
+        // y su parametro
+        pcb->kernel_stack_pointer -= 4;
+        *((void **)pcb->kernel_stack_pointer) = f;
+        pcb->kernel_stack_pointer -= 4;
+        *((void **)pcb->kernel_stack_pointer) = initialize_task;
 
-        void *mem_start = ALIGN_TO_PAGE((void *)f->mem_start, FALSE);
-        void *mem_end = ALIGN_TO_PAGE((void *)f->mem_end, TRUE);
-        uint32_t task_pages = ((uint32_t)(mem_end - mem_start))/PAGE_SIZE;
-
-        int i;
-        for (i = 0; i < task_pages; i++)
-            new_user_page(pcb->pd, mem_start + i*PAGE_SIZE);
-
-        // Copiamos datos y codigo inicializados
-        memcpy(mem_start, (void *)f, f->mem_end_disk - f->mem_start);
-        memset((void *)f->mem_end_disk, 0, f->mem_end - f->mem_end_disk);
+        // El valor de esta entrada en el stack no deberia tener ninguna
+        // importancia. Es el valor que adquiere ebp al cambiar el contexto al
+        // de la tarea nueva. Este registro no es usado hasta que adquiere el
+        // valor que indica el task_state_t inicial de la tarea.
+        pcb->kernel_stack_pointer -= 4;
+        *((void **)pcb->kernel_stack_pointer) = NULL;
 
         APPEND(&pcbs_list, pcb);
 
@@ -163,6 +165,26 @@ pid loader_load(pso_file* f, int pl) {
 
 	return -1;
 }
+
+void loader_setup_task_memory(pso_file *f) {
+    /*
+     * Armamos el mapa de memoria de la tarea
+     */
+
+    void *mem_start = ALIGN_TO_PAGE((void *)f->mem_start, FALSE);
+    void *mem_end = ALIGN_TO_PAGE((void *)f->mem_end, TRUE);
+    uint32_t task_pages = ((uint32_t)(mem_end - mem_start))/PAGE_SIZE;
+
+    int i;
+    for (i = 0; i < task_pages; i++)
+        new_user_page(current_pcb()->pd, mem_start + i*PAGE_SIZE);
+
+
+    // Copiamos datos y codigo inicializados
+    memcpy(mem_start, (void *)f, f->mem_end_disk - f->mem_start);
+    memset((void *)f->mem_end_disk, 0, f->mem_end - f->mem_end_disk);
+}
+
 
 void loader_enqueue(int *cola) {
     UNLINK_NODE(&pcbs_list, current_pcb());
