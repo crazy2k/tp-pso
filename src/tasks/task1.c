@@ -1,5 +1,5 @@
 int main(void) {
-	while (1);
-	// void* p = palloc();
+    __asm__ __volatile__("xchg %bx, %bx");
+
 	return 0;
 }
