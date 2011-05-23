@@ -74,12 +74,14 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
 
     //breakpoint();
 
-    if (index == IDT_INDEX_TIMER)
-        breakpoint();
+    if (index == IDT_INDEX_TIMER) {
+        // TODO: Atender timer provisoriamente por aca
+    }
     else if (index == IDT_INDEX_KB)
         breakpoint();
 
 
+    breakpoint();
     debug_kernelpanic(st, index, error_code);
     //if (isrs[index] == NULL)
     //    default_isr(index, error_code, st);
