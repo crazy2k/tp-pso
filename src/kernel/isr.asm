@@ -26,7 +26,7 @@ idt_handler_%1:
     %endif
 
     ; Salvamos el estado en la pila
-    ;push ss
+    push ss
     push ds
     push es
     push fs
