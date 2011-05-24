@@ -83,13 +83,13 @@ struct pcb {
 
 static void initialize_task_state(task_state_t *st, void *entry_point,
     void *stack_pointer, int pl);
-static pcb *current_pcb();
+static pcb *get_current_pcb();
 static int get_pid(pcb *pcb);
 
 
 static pcb pcbs[MAX_PID];
 static pcb *free_pcbs = NULL;
-static pcb *pcbs_list = NULL;
+static pcb *current_pcb = NULL;
 // TSS del sistema. Su valor de esp0 se actualiza en los cambios de contexto.
 static tss_t tss_struct;
 static tss_t *tss = NULL;
@@ -105,16 +105,22 @@ void loader_init(void) {
         APPEND(&free_pcbs, &pcbs[i]);
     }
 
-    pcb *pcb = POP(&free_pcbs);
+    // Preparamos y cargamos la tarea IDLE
 
-    pcb->pd = kernel_pd;
-    pcb->kernel_stack = (void *)KERNEL_STACK;
-    pcb->kernel_stack_limit = (void *)(KERNEL_STACK + PAGE_SIZE);
-    pcb->kernel_stack_pointer = (void *)(KERNEL_STACK + PAGE_SIZE);
+    pcb *idle_pcb = POP(&free_pcbs);
 
-    sched_load(get_pid(pcb));
+    idle_pcb->pd = kernel_pd;
+    idle_pcb->kernel_stack = (void *)KERNEL_STACK;
+    idle_pcb->kernel_stack_limit = (void *)(KERNEL_STACK + PAGE_SIZE);
+    idle_pcb->kernel_stack_pointer = (void *)(KERNEL_STACK + PAGE_SIZE);
+
+    sched_load(get_pid(idle_pcb));
+
+    // Cargamos otras tareas
 
     loader_load(&task_task1_pso, 0);
+
+    current_pcb = idle_pcb;
 
     sti();
     idle_main();
@@ -156,7 +162,7 @@ pid loader_load(pso_file* f, int pl) {
         pcb->kernel_stack_pointer -= 4;
         *((void **)pcb->kernel_stack_pointer) = NULL;
 
-        APPEND(&pcbs_list, pcb);
+        current_pcb = pcb;
 
         sched_load(get_pid(pcb));
 
@@ -177,7 +183,7 @@ void loader_setup_task_memory(pso_file *f) {
 
     int i;
     for (i = 0; i < task_pages; i++)
-        new_user_page(current_pcb()->pd, mem_start + i*PAGE_SIZE);
+        new_user_page(get_current_pcb()->pd, mem_start + i*PAGE_SIZE);
 
 
     // Copiamos datos y codigo inicializados
@@ -187,17 +193,15 @@ void loader_setup_task_memory(pso_file *f) {
 
 
 void loader_enqueue(int *cola) {
-    UNLINK_NODE(&pcbs_list, current_pcb());
-
     pcb *queue;
     if (*cola == -1) {
         queue = NULL;
-        *cola = get_pid(current_pcb());
+        *cola = get_pid(get_current_pcb());
     }
     else
         queue = &pcbs[*cola];
 
-    APPEND(&queue, current_pcb());
+    APPEND(&queue, get_current_pcb());
 
     loader_switchto(sched_block());
 }
@@ -210,7 +214,7 @@ void loader_unqueue(int *cola) {
 }
 
 void loader_exit(void) {
-    mm_dir_free(current_pcb()->pd);
+    mm_dir_free(get_current_pcb()->pd);
 
     // TODO: Completar
 
@@ -218,13 +222,13 @@ void loader_exit(void) {
 }
 
 void loader_switchto(pid pd) {
-    if (get_pid(current_pcb()) == pd)
+    if (get_pid(get_current_pcb()) == pd)
         return;
 
     uint32_t eflags = disable_interrupts();
 
-    pcb *old_pcb = current_pcb();
-    pcb *new_pcb = pcbs_list = &pcbs[pd];
+    pcb *old_pcb = get_current_pcb();
+    pcb *new_pcb = current_pcb = &pcbs[pd];
 
     lcr3(new_pcb->pd);
     setup_tss(new_pcb->kernel_stack_limit);
@@ -280,8 +284,8 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
     st->org_ss = GDT_SEGSEL(pl, ds);
 }
 
-static pcb *current_pcb() {
-    return pcbs_list;
+static pcb *get_current_pcb() {
+    return current_pcb;
 }
 
 static int get_pid(pcb *pcb) {
