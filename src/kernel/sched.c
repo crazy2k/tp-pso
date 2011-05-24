@@ -80,8 +80,10 @@ int sched_tick() {
         restart_quantum(current);
 
         sched_task *next_task = next_executable_task(current);
-        if (next_task)
+        if (next_task) {
+            task_list = next_task;
             return get_pid(next_task);
+        }
     }
 
     // Si la tarea actual aun tiene quantum o no encontramos otra tarea a
