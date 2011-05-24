@@ -27,8 +27,7 @@ loader_switch_stack_pointers:
     ret
 
 idle_main:
-    ;hlt
-    xchg bx, bx
+    hlt
     jmp idle_main
 
 
