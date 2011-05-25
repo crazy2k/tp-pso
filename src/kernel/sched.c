@@ -30,6 +30,8 @@ static sched_task *task_list;
 // Lista de tareas libres
 static sched_task *free_tasks;
 
+static sched_task *zoombie_tasks;
+
 void sched_init(void) {
     memset(tasks, 0, sizeof(tasks));
 
@@ -39,7 +41,6 @@ void sched_init(void) {
         APPEND(&free_tasks, &tasks[i]);
     }
 }
-
 
 void sched_load(pid pd) {
     sched_task *task = POP(&free_tasks);

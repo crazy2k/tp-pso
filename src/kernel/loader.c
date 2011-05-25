@@ -90,6 +90,7 @@ static int get_pid(pcb *pcb);
 static pcb pcbs[MAX_PID];
 static pcb *free_pcbs = NULL;
 static pcb *current_pcb = NULL;
+static pcb *zoombie_tasks = NULL;
 // TSS del sistema. Su valor de esp0 se actualiza en los cambios de contexto.
 static tss_t tss_struct;
 static tss_t *tss = NULL;
@@ -174,6 +175,15 @@ pid loader_load(pso_file* f, int pl) {
 	return -1;
 }
 
+
+
+void kill_zoombies() {
+    while(zoombie_tasks) {
+        mm_dir_free(POP(&zoombie_tasks)->pd);
+    }
+}
+
+
 void loader_setup_task_memory(pso_file *f) {
     /*
      * Armamos el mapa de memoria de la tarea
@@ -216,11 +226,8 @@ void loader_unqueue(int *cola) {
 }
 
 void loader_exit(void) {
-    mm_dir_free(get_current_pcb()->pd);
-
-    // TODO: Completar
-
-
+    APPEND(&zoombie_tasks, get_current_pcb());
+    loader_switchto(sched_exit());
 }
 
 void loader_switchto(pid pd) {
@@ -288,7 +295,7 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
 }
 
 static pcb *get_current_pcb() {
-    return current_pcb;
+    return pcbs + sched_get_current_pid();
 }
 
 static int get_pid(pcb *pcb) {
