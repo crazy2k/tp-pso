@@ -226,7 +226,7 @@ static page_t* take_free_page(page_t** page_list_ptr) {
     if (!*page_list_ptr)
         return NULL;
     else
-        return reserve_page(page_list_ptr, (*page_list_ptr)->next);
+        return reserve_page(page_list_ptr, *page_list_ptr);
 }
 
 
