@@ -15,6 +15,9 @@ int sched_exit();
 int sched_block();
 int sched_tick();
 
+int sched_get_current_pid();
+
+
 #endif
 
 #endif /* SCHED_H_ */

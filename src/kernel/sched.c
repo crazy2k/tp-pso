@@ -115,3 +115,7 @@ static int get_pid(sched_task *task) {
 static sched_task *current_task() {
     return task_list;
 }
+
+int sched_get_current_pid() {
+    return get_pid(current_task());
+}
