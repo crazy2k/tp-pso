@@ -8,8 +8,10 @@
 // Sólo se compila en modo "kernel"
 
 #define SYSCALLS_NUM_EXIT 1
+#define SYSCALLS_NUM_GETPID 2
 
 void sys_exit();
+uint32_t sys_getpid();
 
 #else
 // __TAREA___
