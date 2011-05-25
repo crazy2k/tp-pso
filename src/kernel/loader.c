@@ -85,6 +85,7 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
     void *stack_pointer, int pl);
 static pcb *get_current_pcb();
 static int get_pid(pcb *pcb);
+static void kill_zoombies();
 
 
 static pcb pcbs[MAX_PID];
