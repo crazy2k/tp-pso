@@ -296,7 +296,7 @@ static void free_user_page(uint32_t pd[], void* vaddr) {
     uint32_t *pte = get_pte(pd, vaddr);
     page_t *page = PHADDR_TO_PAGE(PTE_PAGE_BASE(*pte));
 
-    return_page(&free_kernel_pages, page);
+    return_page(&free_user_pages, page);
     *pte = 0;
 }
 
