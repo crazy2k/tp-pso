@@ -107,6 +107,8 @@ void loader_init(void) {
         APPEND(&free_pcbs, &pcbs[i]);
     }
 
+    setup_tss(KERNEL_STACK);
+
     // Preparamos y cargamos la tarea IDLE
 
     pcb *idle_pcb = POP(&free_pcbs);
@@ -333,4 +335,3 @@ void setup_tss(uint32_t kernel_stack) {
     uint16_t segsel = GDT_SEGSEL(0x0, GDT_INDEX_TSS);
     ltr(segsel);
 }
-

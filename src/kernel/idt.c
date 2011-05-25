@@ -5,9 +5,16 @@
 #include <idt.h>
 #include <pic.h>
 #include <debug.h>
+#include <loader.h>
+#include <sched.h>
+#include <syscalls.h>
 
 
 extern void (*idt_stateful_handlers[IDT_LENGTH])();
+
+static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
+    *st);
+
 
 
 // IDT e idtr
@@ -77,9 +84,19 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     }
     else if (index == IDT_INDEX_KB)
         breakpoint();
+
+    else if (index == IDT_INDEX_SYSC) {
+        syscall_caller(index, error_code, st);
+    }
     else {
         breakpoint();
         debug_kernelpanic(st, index, error_code);
     }
 }
 
+static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
+    *st) {
+
+    if (st->eax == SYSCALLS_NUM_EXIT)
+        sys_exit();
+}
