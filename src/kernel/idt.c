@@ -99,4 +99,6 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
 
     if (st->eax == SYSCALLS_NUM_EXIT)
         sys_exit();
+    if (st->eax == SYSCALLS_NUM_GETPID)
+        st->eax = sys_getpid();
 }
