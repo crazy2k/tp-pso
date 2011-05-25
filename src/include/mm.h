@@ -101,6 +101,7 @@ typedef struct str_mm_page {
 #define LAST_POSIBLE_PAGE 0x100000
 #define KERNEL_MEMORY_START ((void*)0x0)
 #define KERNEL_MEMORY_LIMIT ((void*)0x400000)
+#define USER_MEMORY_START ((void*)0x400000)
 #define KERNEL_STACK (0xA0000 - PAGE_SIZE)
 
 #define TEST_WORD 0xF0F0F0F0
