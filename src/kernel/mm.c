@@ -95,6 +95,7 @@ void mm_dir_free(mm_page* mm_page) {
             }
         }
     }
+    return_page(&free_kernel_pages, PHADDR_TO_PAGE(pd));
 }
 
 
