@@ -34,8 +34,8 @@ typedef struct {
     uint16_t :16;
     uint16_t ds;
     uint16_t :16;
-    //uint16_t ss;
-    //uint16_t :16;
+    uint16_t ss;
+    uint16_t :16;
 
     /*
      * Estado a ser cargado por ``iret``

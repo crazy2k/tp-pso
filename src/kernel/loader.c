@@ -274,6 +274,7 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
     st->fs = GDT_SEGSEL(pl, ds);
     st->gs = GDT_SEGSEL(pl, ds);
     st->cs = GDT_SEGSEL(pl, cs);
+    st->ss = GDT_SEGSEL(pl, ds);
 
     // Flags
     st->eflags = COMMON_EFLAGS;
