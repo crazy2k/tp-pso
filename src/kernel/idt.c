@@ -72,11 +72,7 @@ int idt_set_handler(uint32_t index, void (*handler)(), uint64_t attr) {
 void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     outb(PIC1_COMMAND, OCW2);
 
-    //breakpoint();
-
     if (index == IDT_INDEX_TIMER) {
-        // TODO: Atender timer provisoriamente por aca
-        breakpoint();
         loader_switchto(sched_tick());
     }
     else if (index == IDT_INDEX_KB)
