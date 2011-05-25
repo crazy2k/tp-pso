@@ -165,7 +165,7 @@ static uint32_t* initialize_pd(uint32_t pd[]) {
         pd[PDI(vaddr)] = PDE_PT_BASE(table) | PDE_P | PDE_PWT | PDE_RW;
     }
 
-    map_kernel_pages(kernel_pd, KERNEL_MEMORY_START, KERNEL_MEMORY_LIMIT);
+    map_kernel_pages(pd, KERNEL_MEMORY_START, KERNEL_MEMORY_LIMIT);
 
     return pd;
 }
