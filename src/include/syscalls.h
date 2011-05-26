@@ -13,6 +13,7 @@
 
 void sys_exit();
 uint32_t sys_getpid();
+void* sys_palloc();
 
 #else
 // __TAREA___
