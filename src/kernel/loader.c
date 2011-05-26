@@ -246,6 +246,8 @@ void loader_switchto(pid pd) {
     loader_switch_stack_pointers(&old_pcb->kernel_stack_pointer,
         &new_pcb->kernel_stack_pointer);
 
+    kill_zoombies();
+
     restore_eflags(eflags);
     
 }
