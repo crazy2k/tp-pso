@@ -122,7 +122,7 @@ void loader_init(void) {
 
     // Cargamos otras tareas
 
-    loader_load(&task_task1_pso, 0);
+    loader_load(&task_task1_pso, 3);
 
     current_pcb = idle_pcb;
 
@@ -198,10 +198,12 @@ void loader_setup_task_memory(pso_file *f) {
     for (i = 0; i < task_pages; i++)
         new_user_page(get_current_pcb()->pd, mem_start + i*PAGE_SIZE);
 
+    new_user_page(get_current_pcb()->pd, USER_STACK);
 
     // Copiamos datos y codigo inicializados
     memcpy(mem_start, (void *)f, f->mem_end_disk - f->mem_start);
     memset((void *)f->mem_end_disk, 0, f->mem_end - f->mem_end_disk);
+
 }
 
 
