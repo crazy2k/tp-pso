@@ -20,13 +20,13 @@ uint32_t syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx,
 
 
 void* palloc() {
-    return syscall(SYSCALLS_NUM_PALLOC, 0, 0, 0, 0, 0);
+    return (void *)syscall(SYSCALLS_NUM_PALLOC, 0, 0, 0, 0, 0);
 }
 
 void exit(void) {
     syscall(SYSCALLS_NUM_EXIT, 0, 0, 0, 0, 0);
 }
 
-int getpid(void) {
+uint32_t getpid(void) {
     return syscall(SYSCALLS_NUM_GETPID, 0, 0, 0, 0, 0);
 }

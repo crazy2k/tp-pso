@@ -7,6 +7,8 @@
 #define SYSCALLS_NUM_EXIT 1
 #define SYSCALLS_NUM_GETPID 2
 #define SYSCALLS_NUM_PALLOC 3
+#define SYSCALLS_INTERRUPT 0x30ul
+
 
 #ifdef __KERNEL__
 // Sólo se compila en modo "kernel"
