@@ -129,8 +129,8 @@ static void print_int(uint32_t index, uint32_t error_code) {
         DEBUG_KP_ATTR, index, error_code);
 
     if (index < sizeof(exp_name)/sizeof(char *))
-        vga_printf(DEBUG_KP_INT_ROW, DEBUG_KP_INT_DESC_COL, exp_name[index],
-            DEBUG_KP_ATTR);
+        vga_printf(DEBUG_KP_INT_ROW, DEBUG_KP_INT_DESC_COL,"%s",
+            DEBUG_KP_ATTR, exp_name[index]);
 
 }
 

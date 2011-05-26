@@ -1,6 +1,7 @@
+#include <syscalls.h>
+#include <mm.h>
 #include <loader.h>
 #include <sched.h>
-#include <syscalls.h>
 
 void sys_exit() {
     loader_exit();

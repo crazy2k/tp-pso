@@ -86,7 +86,7 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
 static pcb *get_current_pcb();
 static int get_pid(pcb *pcb);
 static void kill_zoombies();
-
+static void setup_tss(uint32_t kernel_stack);
 
 static pcb pcbs[MAX_PID];
 static pcb *free_pcbs = NULL;
@@ -240,8 +240,8 @@ void loader_switchto(pid pd) {
     pcb *old_pcb = get_current_pcb();
     pcb *new_pcb = current_pcb = &pcbs[pd];
 
-    lcr3(new_pcb->pd);
-    setup_tss(new_pcb->kernel_stack_limit);
+    lcr3((uint32_t)(new_pcb->pd));
+    setup_tss((uint32_t)new_pcb->kernel_stack_limit);
 
     loader_switch_stack_pointers(&old_pcb->kernel_stack_pointer,
         &new_pcb->kernel_stack_pointer);
