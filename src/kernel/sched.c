@@ -75,6 +75,9 @@ int sched_tick() {
     sched_task *current = current_task();
     current->rem_quantum--;
 
+    //vga_printf(0, 0, "pid = %x, rem_quantum = %x", 0x0F, sched_get_current_pid(),
+    //    current_task()->rem_quantum);
+
     if (!current->rem_quantum) {
         restart_quantum(current);
 
