@@ -228,6 +228,10 @@ static void reserve_pages(page_t** page_list_ptr, void* phaddr, void* limit) {
     }
 }
 
+static void return_kernel_page(page_t* reserved) {
+    return_page(&free_kernel_pages, reserved);
+}
+
 static page_t* take_free_page(page_t** page_list_ptr) {
     if (!*page_list_ptr)
         return NULL;
