@@ -85,7 +85,9 @@ load_state:
     pop fs
     pop es
     pop ds
-    pop ss
+
+    ;pop ss
+    add esp, 4
 
     iret
 
