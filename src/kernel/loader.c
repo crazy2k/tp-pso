@@ -300,7 +300,8 @@ static void initialize_task_state(task_state_t *st, void *entry_point,
 }
 
 static pcb *get_current_pcb() {
-    return pcbs + sched_get_current_pid();
+    //return pcbs + sched_get_current_pid();
+    return current_pcb;
 }
 
 static int get_pid(pcb *pcb) {
