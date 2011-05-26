@@ -12,6 +12,14 @@ struct page_t {
 };
 
 
+
+uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
+
+static page_t *free_user_pages = NULL,
+       *free_kernel_pages = NULL;
+
+
+
 static uint32_t *current_pd(void);
 
 static void free_pages_list_setup(void);
@@ -35,12 +43,6 @@ static void *new_page_table(uint32_t pd[], void* vaddr);
 
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
-
-
-page_t *free_user_pages = NULL,
-       *free_kernel_pages = NULL;
-
-uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 
 
 void* mm_mem_alloc() {
