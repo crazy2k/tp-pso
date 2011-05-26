@@ -1,2 +1,0 @@
-; Tabla de syscalls
-;

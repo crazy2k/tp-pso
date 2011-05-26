@@ -1,0 +1,470 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>El sistema por dentro &mdash; Trabajo Práctico de Programación de Sistemas Operativos v1.0 documentation</title>
+    <link rel="stylesheet" href="_static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="top" title="Trabajo Práctico de Programación de Sistemas Operativos v1.0 documentation" href="index.html" />
+    <link rel="prev" title="Trabajo Práctico de Programación de Sistemas Operativos" href="index.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="_static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="index.html" title="Trabajo Práctico de Programación de Sistemas Operativos"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Trabajo Práctico de Programación de Sistemas Operativos v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="el-sistema-por-dentro">
+<h1>El sistema por dentro<a class="headerlink" href="#el-sistema-por-dentro" title="Permalink to this headline">¶</a></h1>
+<p>El sistema operativo de este proyecto consta de un kernel monolítico muy
+sencillo. Algunas de las características del kernel, al momento de escribir
+este documento, son:</p>
+<ul class="simple">
+<li><strong>carga de programas</strong> desde ejecutables con un formato propio (PSO)</li>
+<li><strong>protección de memoria</strong> utilizando paginación y espacios de memoria
+diferentes para las tareas</li>
+<li>manejador de interrupciones que permite el <strong>registro de
+handlers en tiempo de ejecución</strong></li>
+<li><strong>scheduling de procesos utilizando round-robin</strong> con quantum fijo</li>
+<li><strong>task-switching por software</strong></li>
+<li>atención de <strong>llamadas al sistema</strong></li>
+</ul>
+<p>En este documento se describen estas y otras características del sistema.</p>
+<div class="section" id="la-estructura-de-directorios">
+<h2>La estructura de directorios<a class="headerlink" href="#la-estructura-de-directorios" title="Permalink to this headline">¶</a></h2>
+<p>Si bien la parte más importante del proyecto está escrita en C, en realidad,
+este también se compone de archivos con código <em>assembly</em> de x86, <em>scripts</em> de
+utilidad y de configuración de herramientas, archivos binarios y
+documentación. Todo estos archivos están organizados en una estructura de
+directorios que facilita su búsqueda.</p>
+<p>Esta es una síntesis de la estructura de directorios del proyecto:</p>
+<p class="graphviz">
+<img src="_images/graphviz-05a56a1b0eb24ecb581b580cff955a91a342881f.png" alt="digraph direcciones {
+    &quot;raíz&quot; [shape=box]
+    &quot;src/&quot; [shape=box]
+    &quot;doc/&quot; [shape=box]
+    &quot;bin/&quot; [shape=box]
+    &quot;boot/&quot; [shape=box]
+    &quot;include/&quot; [shape=box]
+    &quot;kernel/&quot; [shape=box]
+    &quot;tasks/&quot; [shape=box]
+    &quot;raíz&quot; -&gt; &quot;src/&quot;
+    &quot;raíz&quot; -&gt; &quot;doc/&quot;
+    &quot;src/&quot; -&gt; &quot;bin/&quot;
+    &quot;src/&quot; -&gt; &quot;boot/&quot;
+    &quot;src/&quot; -&gt; &quot;include/&quot;
+    &quot;src/&quot; -&gt; &quot;kernel/&quot;
+    &quot;src/&quot; -&gt; &quot;tasks/&quot;
+}" />
+</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="22%" />
+<col width="78%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Directorio</th>
+<th class="head">Contenido</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td><strong>raíz</strong></td>
+<td>representa la base de la estructura de directorios. Además
+de contener al resto de los directorios, posee archivos de
+alcance global en el proyecto.</td>
+</tr>
+<tr><td><strong>src/</strong></td>
+<td>posee todos los archivos y directorios referidos al
+proyecto menos la documentación</td>
+</tr>
+<tr><td><strong>src/bin/</strong></td>
+<td>es el directorio en el que se hallará la imagen del kernel
+y el archivo correspondiente al disco floppy una vez se
+realice la compilación del código. Además, posee el código
+binario correspondiente a los BIOS de bochs.</td>
+</tr>
+<tr><td><strong>src/boot/</strong></td>
+<td>alberga el código fuente del bootloader.</td>
+</tr>
+<tr><td><strong>src/include/</strong></td>
+<td>posee los encabezados del kernel.</td>
+</tr>
+<tr><td><strong>src/kernel/</strong></td>
+<td>contiene el código fuente del kernel y además alberga los
+archivos objeto resultantes de su compilación.</td>
+</tr>
+<tr><td><strong>src/tasks/</strong></td>
+<td>contiene el código fuente y objeto de las tareas de
+usuario y también archivos relacionados con el formato de
+ejecutable propio.</td>
+</tr>
+<tr><td><strong>doc/</strong></td>
+<td>contiene los fuentes de la documentación y algunas
+utilidades para construirla.</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="manejo-de-procesos">
+<h2>Manejo de procesos<a class="headerlink" href="#manejo-de-procesos" title="Permalink to this headline">¶</a></h2>
+<p>La ejecución y el manejo de tareas (o procesos <a class="footnote-reference" href="#id2" id="id1">[1]</a>) es una parte
+importante de cualquier sistema operativo. Este sistema no es la excepción.</p>
+<p>El manejo de las tareas se encuentra repartido en los módulos <tt class="docutils literal"><span class="pre">sched</span></tt>
+(<tt class="docutils literal"><span class="pre">src/kernel/sched.c</span></tt>) y <tt class="docutils literal"><span class="pre">loader</span></tt> (<tt class="docutils literal"><span class="pre">src/kernel/loader.c</span></tt>). El primero se
+ocupa estrictamente del algoritmo de scheduling, mientras que el segundo se
+encarga de la creación efectiva de los procesos, de los cambios de contexto,
+entre otras cosas.</p>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Usamos los términos &#8220;tarea&#8221; y &#8220;proceso&#8221; de manera
+intercambiable.</td></tr>
+</tbody>
+</table>
+<div class="section" id="el-descriptor-de-proceso">
+<h3>El descriptor de proceso<a class="headerlink" href="#el-descriptor-de-proceso" title="Permalink to this headline">¶</a></h3>
+<p>Cada tarea es representada en el scheduler (<tt class="docutils literal"><span class="pre">sched</span></tt>) por una estructura
+<tt class="docutils literal"><span class="pre">sched_task</span></tt> cuya definición puede hallarse en <tt class="docutils literal"><span class="pre">kernel/sched.c</span></tt>:</p>
+<div class="highlight-python"><pre>struct sched_task {
+    bool blocked;
+    uint32_t quantum;
+    uint32_t rem_quantum;
+
+    sched_task *next;
+    sched_task *prev;
+};</pre>
+</div>
+<p>Esta estructura contiene todo lo que el scheduler precisa saber sobre la
+tarea. Entre estas cosas, se encuentra el quantum asociado a la tarea, el
+quantum que le queda por consumir y un flag que indica si la tarea se
+encuentra bloqueada.</p>
+<p>Por otro lado, el módulo <tt class="docutils literal"><span class="pre">load</span></tt> define una estructura <tt class="docutils literal"><span class="pre">pcb</span></tt> para cada
+tarea. La definición de esta estructura se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader.c</span></tt>:</p>
+<div class="highlight-python"><pre>struct pcb {
+    // Direccion virtual y fisica del directorio de paginas en cualquier
+    // espacio de direcciones
+    void *pd;
+    // Datos sobre el stack de kernel de la tarea
+    void *kernel_stack;
+    void *kernel_stack_limit;
+    void *kernel_stack_pointer;
+
+    pcb *next;
+    pcb *prev;
+};</pre>
+</div>
+<p>Esta estructura contiene datos sobre el stack de kernel de la tarea (su
+dirección virtual, el valor del puntero del stack) y la dirección del
+directorio de páginas de la tarea.</p>
+</div>
+<div class="section" id="el-scheduler">
+<h3>El <em>scheduler</em><a class="headerlink" href="#el-scheduler" title="Permalink to this headline">¶</a></h3>
+<p>El algoritmo de <em>scheduling</em> utilizado es extremadamente sencillo:
+<em>round-robin</em> con <em>quantums</em> fijos. A cada tarea se le asigna,
+inicialmente, un número fijo de unidades de tiempo para su ejecución.
+Cada unidad de tiempo equivale a una interrupción del <em>timer</em>.</p>
+<p>Las tareas pueden estar bloqueadas (<tt class="docutils literal"><span class="pre">blocked</span> <span class="pre">=</span> <span class="pre">TRUE</span></tt>) o disponibles
+para ser ejecutadas (<tt class="docutils literal"><span class="pre">blocked</span> <span class="pre">=</span> <span class="pre">FALSE</span></tt>). Cuando están disponibles,
+pueden encontrarse en ejecución o a la espera de su turno. Como el
+kernel sólo maneja un único procesador, en todo momento hay a lo sumo
+una única tarea en ejecución.</p>
+<p>La administración se realiza mediante una lista doblemente enlazada
+circular de procesos. La cabeza de esta lista es siempre el proceso
+actualmente en ejecución. Cuando se acaba el <em>quantum</em> de una tarea, la
+cabeza pasa a ser la siguiente tarea en la lista que se encuentre
+en condiciones de ser ejecutada. Cuando una tarea finaliza su ejecución
+(por ejemplo, al invocar ella misma a la llamada al sistema <tt class="docutils literal"><span class="pre">exit()</span></tt>)
+esta es quitada de la lista y los recursos que utilizaba son liberados.</p>
+<p>El scheduler exporta una función para cada tipo de evetno:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">sched_load()</span></tt> para la carga de la tarea,</li>
+<li><tt class="docutils literal"><span class="pre">sched_block()</span></tt> y <tt class="docutils literal"><span class="pre">sched_ublock()</span></tt> para los eventos de bloqueo y
+desbloqueo de la tarea,</li>
+<li><tt class="docutils literal"><span class="pre">sched_tick()</span></tt> para la ocurrencia de un tick del timer,</li>
+<li><tt class="docutils literal"><span class="pre">sched_exit()</span></tt> para la terminación de una tarea.</li>
+</ul>
+</div>
+<div class="section" id="creacion-de-tareas">
+<h3>Creación de tareas<a class="headerlink" href="#creacion-de-tareas" title="Permalink to this headline">¶</a></h3>
+<p>La primer tarea que ingresa al sistema es la tarea &#8220;idle&#8221;. Esta tarea
+se ejecuta en el anillo de kernel y su sola función es quedarse a la espera de
+una interrupción sin consumir recursos del procesador. El código de esta tarea
+se encuentre en el archivo <tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>, bajo la etiqueta
+<tt class="docutils literal"><span class="pre">idle_main</span></tt>.</p>
+<p>El <tt class="docutils literal"><span class="pre">loader</span></tt> (cuyo código se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader.c</span></tt>) se ocupa de
+iniciar la creación de las tareas. Para que el kernel comience la carga de una
+tarea, se utiliza la función <tt class="docutils literal"><span class="pre">loader_load()</span></tt>. Esta función se encarga de
+inicializar un <tt class="docutils literal"><span class="pre">pcb</span></tt> para la tarea, creándole su directorio de páginas
+inicial y reservando memoria para su stack de modo kernel. Además, prepara en
+dicho stack un estado inicial para la tarea y escribe en él la dirección de la
+función <tt class="docutils literal"><span class="pre">initialize_task</span></tt> que será el primer código que ejecutará la tarea.
+Como paso final, se realiza la llamada a <tt class="docutils literal"><span class="pre">sched_load()</span></tt> para avisar al
+scheduler de la llegada de la tarea.</p>
+<p>Hasta este punto, se reserva espacio para el descriptor del proceso en los
+módulos <tt class="docutils literal"><span class="pre">sched</span></tt> y <tt class="docutils literal"><span class="pre">loader</span></tt>, para el stack de kernel de la tarea, para su
+directorio de páginas, pero la reserva y mapeo del stack de usuario y del
+código y los datos de la tarea en su espacio de direcciones virtual,
+utilizando la información en el ejecutable correspondiente, se realiza recién
+cuando a esta le toca ejecutarse por primera vez. La función
+<tt class="docutils literal"><span class="pre">initialize_task</span></tt> es justamente la encargada de realizar esto. El código de
+dicha función se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>.</p>
+</div>
+<div class="section" id="cambios-de-contexto">
+<h3>Cambios de contexto<a class="headerlink" href="#cambios-de-contexto" title="Permalink to this headline">¶</a></h3>
+<p>El kernel realiza los cambios de contexto de las tareas por <em>software</em>.
+Como consecuencia, hay una única TSS que se utiliza al mínimo: Sólo
+se utilizan el campo correspondiente al descriptor de segmento del
+stack en modo kernel (<tt class="docutils literal"><span class="pre">SS0</span></tt>) y el correspondiente al <em>stack pointer</em>
+en modo kernel (<tt class="docutils literal"><span class="pre">ESP0</span></tt>). Estos campos de la TSS son utilizados por el
+hardware para cargar los registros <tt class="docutils literal"><span class="pre">SS</span></tt> y <tt class="docutils literal"><span class="pre">ESP0</span></tt> respectivamente al
+ocurrir un cambio de nivel al nivel 0.</p>
+<p>Los contextos de las tareas son resguardados en sus correspondientes
+stacks de kernel. Al ocurrir una interrupción mientras se está
+ejecutando una tarea, el <em>handler</em> de la interrupción toma el control. Si se
+precisa un cambio de contexto o si el kernel precisará el estado actual de la
+tarea para algo <a class="footnote-reference" href="#id4" id="id3">[2]</a>, el handler almacena el contexto de la tarea en el stack de
+modo kernel y luego llama a la rutina de atención correspondiente (ver la
+sección <a class="reference external" href="#manejo-de-interrupciones">Manejo de interrupciones</a>).</p>
+<p>Si la interrupción no deriva en un cambio de contexto, al terminar de
+manejarla, simplemente se procede de manera inversa, cargando el estado
+de la tarea desde el stack de kernel y volviendo a ejecutar en modo
+usuario. Sin embargo, si la interrupción sí derivará en un cambio de
+contexto, se realiza la llamada a <tt class="docutils literal"><span class="pre">loader_switchto</span></tt> que procede del
+siguiente modo:</p>
+<ul class="simple">
+<li>guarda el registro <tt class="docutils literal"><span class="pre">EFLAGS</span></tt> (<em>flags</em> del procesador) y desactiva las
+interrupciones,</li>
+<li>se carga el espacio de direcciones de la nueva tarea,</li>
+<li>se actualizan los valores de <tt class="docutils literal"><span class="pre">SS0</span></tt> y <tt class="docutils literal"><span class="pre">ESP0</span></tt> en la TSS del sistema</li>
+<li>se almacena el <em>stack pointer</em> de modo kernel actual en el <tt class="docutils literal"><span class="pre">pcb</span></tt>
+de la tarea que estaba ejecutando y se carga el correspondiente a la
+nueva tarea desde su <tt class="docutils literal"><span class="pre">pcb</span></tt></li>
+</ul>
+<p>La función <tt class="docutils literal"><span class="pre">loader_switchto()</span></tt> (<tt class="docutils literal"><span class="pre">kernel/loader.c</span></tt>) se ocupa de lo
+anterior, y para el último punto utiliza la función
+<tt class="docutils literal"><span class="pre">loader_switch_stack_pointers()</span></tt> definida en <tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>.
+Al retornar de dicha función, se buscará la dirección de retorno en este
+&#8220;nuevo&#8221; stack. Si la tarea ya había estado en ejecución, simplemente irá
+retornando hasta llegar a la parte en la que se carga el contexto desde el
+stack y se vuelve a ejecutar en modo usuario. No obstante, si la tarea es una
+tarea nueva, su stack fue armado cuidadosamente de manera que al retornar de
+la función se ejecute el código del label <tt class="docutils literal"><span class="pre">initialize_task</span></tt>. Esta porción de
+código es la encargada de reservar memoria y realizar los mapeos que ya se
+nombraron antes en <a class="reference external" href="#creacion-de-tareas">Creación de tareas</a>.</p>
+<table class="docutils footnote" frame="void" id="id4" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>En el estado actual del código, <em>siempre</em> se resguarda el estado de la
+tarea independientemente de si el kernel lo precisará o no.</td></tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="section" id="manejo-de-interrupciones">
+<h2>Manejo de interrupciones<a class="headerlink" href="#manejo-de-interrupciones" title="Permalink to this headline">¶</a></h2>
+<p>La función <tt class="docutils literal"><span class="pre">idt_init()</span></tt> en <tt class="docutils literal"><span class="pre">kernel/idt.c</span></tt> se ocupa de
+inicializar el módulo de manejo de interrupciones. Para esto, escribe
+los descriptores en la IDT para las interrupciones que serán manejadas.</p>
+<p>Puede designarse el handler que se desee para cualquier índice en la IDT. Sin
+embargo, existe un arreglo de handlers llamado <tt class="docutils literal"><span class="pre">idt_stateful_handlers</span></tt> que
+puede ser aprovechado. Los handlers en este arreglo son generados en
+<tt class="docutils literal"><span class="pre">kernel/isr.asm</span></tt>. La razón por la que hay un <em>handler</em> diferente por cada
+interrupción es porque es la única forma de poder establecer qué interrupción
+se está atendiendo, ya que, cuando ocurre una interrupción, se ejecuta el
+código cuya dirección fue registrada en la IDT, pero el hardware no almacena
+información que permita identificar de qué interrupción se trata.</p>
+<p>Estas rutinas se encargan de guardar el contexto de la tarea en
+ejecución en el stack de modo kernel y luego llaman a una función
+común, llamada <tt class="docutils literal"><span class="pre">idt_handle()</span></tt>, pasándole a esta el índice en la IDT
+de la interrupción ocurrida, un código de error si existiera y el
+contexto guardado. De allí en más, <tt class="docutils literal"><span class="pre">idt_handle()</span></tt> puede ocuparse de delegar
+el manejo de la interrupción en rutinas de servicio, escritas en C.</p>
+<p>Una vez que <tt class="docutils literal"><span class="pre">idt_init()</span></tt> escribió la IDT, da aviso al procesador de que
+tiene la IDT lista. Por último, configura los PIC y desenmascara sólo las
+interrupciones de <em>hardware</em> que le interesarán al kernel.</p>
+</div>
+<div class="section" id="atencion-de-llamadas-al-sistema">
+<h2>Atención de llamadas al sistema<a class="headerlink" href="#atencion-de-llamadas-al-sistema" title="Permalink to this headline">¶</a></h2>
+<p>Las llamadas al sistema se realizan a través de la interrupción
+<tt class="docutils literal"><span class="pre">0x30</span></tt>. Antes de generar la interrupción por software, el proceso
+debe escribir el número correspondiente a la llamada al sistema que
+desea ejecutar en el registro <tt class="docutils literal"><span class="pre">EAX</span></tt>. Los parámetros de la llamada al
+sistema deben pasarse usando los registros <tt class="docutils literal"><span class="pre">EBX</span></tt>, <tt class="docutils literal"><span class="pre">ECX</span></tt> y <tt class="docutils literal"><span class="pre">EDX</span></tt>.
+Al ocurrir la interrupción, la rutina de servicio de la interrupción
+<tt class="docutils literal"><span class="pre">0x30</span></tt> llama a la función correspondiente a la llamada al sistema
+invocada con los parámetros pasados.</p>
+<p>Las llamadas al sistema implementadas hasta ahora son:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="10%" />
+<col width="22%" />
+<col width="68%" />
+</colgroup>
+<thead valign="bottom">
+<tr><th class="head">Número</th>
+<th class="head">Nombre</th>
+<th class="head">Función</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr><td>1</td>
+<td><tt class="docutils literal"><span class="pre">exit()</span></tt></td>
+<td>finaliza el proceso en ejecución y libera todos
+los recursos utilizados por este</td>
+</tr>
+<tr><td>2</td>
+<td><tt class="docutils literal"><span class="pre">getpid()</span></tt></td>
+<td>devuelve el identificador de proceso de la
+tarea</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="la-memoria">
+<h2>La memoria<a class="headerlink" href="#la-memoria" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="gestion-de-la-memoria">
+<h3>Gestión de la memoria<a class="headerlink" href="#gestion-de-la-memoria" title="Permalink to this headline">¶</a></h3>
+<p>El módulo encargado de la gestión de la memoria es el módulo <tt class="docutils literal"><span class="pre">mm</span></tt>
+(<tt class="docutils literal"><span class="pre">kernel/mm.c</span></tt>). Su función de inicialización, <tt class="docutils literal"><span class="pre">mm_init()</span></tt>, se encarga de</p>
+<ol class="arabic simple">
+<li>armar la lista de páginas libres para el kernel y para usuario,</li>
+<li>inicializar un directorio de páginas para el kernel y</li>
+<li>activar la paginación de memoria.</li>
+</ol>
+<p>Para el paso 1, recorre la memoria verificando qué páginas de memoria son
+válidas y arma dos listas de páginas libres: las del kernel, que están por
+debajo de los 4MB de memoria física, y las de usuario.</p>
+<p>Cada página de memoria física disponible está representada por una estructura
+<tt class="docutils literal"><span class="pre">page_t</span></tt>.  Dicha estructura se encuentra declarada en <tt class="docutils literal"><span class="pre">kernel/mm.c</span></tt> del
+siguiente modo:</p>
+<div class="highlight-python"><pre>struct page_t {
+    int count;
+
+    page_t *next;
+    page_t *prev;
+};</pre>
+</div>
+<p>Los punteros <tt class="docutils literal"><span class="pre">next</span></tt> y <tt class="docutils literal"><span class="pre">prev</span></tt> son utilizados para administrar las
+listas de páginas físicas libres y``count`` indica el número de
+referencias de la página.</p>
+<p>En el módulo <tt class="docutils literal"><span class="pre">mm</span></tt> se encuentran todas las funciones que se ocupan
+de gestionar las páginas físicas libres y de mapearlas a los espacios
+de direcciones virtuales.</p>
+</div>
+<div class="section" id="direccionamiento">
+<h3>Direccionamiento<a class="headerlink" href="#direccionamiento" title="Permalink to this headline">¶</a></h3>
+<p>Una de las primeras cosas que se realizan en <tt class="docutils literal"><span class="pre">kernel/kinit.asm</span></tt>
+(el código al que salta el bootloader) es configurar una GDT definitiva
+para el sistema. La misma está compuesta por descriptores para:</p>
+<ol class="arabic simple">
+<li>Código de nivel 0</li>
+<li>Datos de nivel 0</li>
+<li>Código de nivel 3</li>
+<li>Datos de nivel 3</li>
+<li>TSS del sistema</li>
+</ol>
+<p>Tanto los segmentos de código como de datos ocupan todo el espacio
+direccionable. El principal mecanismo de protección de memoria
+utilizado en el kernel es la paginación.</p>
+<p>Cada tarea cuenta con un espacio de direcciones virtual propio, pero todas
+ellas tienen al código y los datos del kernel mapeados en las direcciones
+bajas (<em>lower half</em>) mientras que el código y los datos de usuario se
+encuentran en direcciones más altas.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">El sistema por dentro</a><ul>
+<li><a class="reference internal" href="#la-estructura-de-directorios">La estructura de directorios</a></li>
+<li><a class="reference internal" href="#manejo-de-procesos">Manejo de procesos</a><ul>
+<li><a class="reference internal" href="#el-descriptor-de-proceso">El descriptor de proceso</a></li>
+<li><a class="reference internal" href="#el-scheduler">El <em>scheduler</em></a></li>
+<li><a class="reference internal" href="#creacion-de-tareas">Creación de tareas</a></li>
+<li><a class="reference internal" href="#cambios-de-contexto">Cambios de contexto</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#manejo-de-interrupciones">Manejo de interrupciones</a></li>
+<li><a class="reference internal" href="#atencion-de-llamadas-al-sistema">Atención de llamadas al sistema</a></li>
+<li><a class="reference internal" href="#la-memoria">La memoria</a><ul>
+<li><a class="reference internal" href="#gestion-de-la-memoria">Gestión de la memoria</a></li>
+<li><a class="reference internal" href="#direccionamiento">Direccionamiento</a></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="index.html" title="previous chapter">Trabajo Práctico de Programación de Sistemas Operativos</a></li>
+  </ul></li>
+</ul>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="_sources/inside.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Pablo Antonio, Pablo Herrero.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>
