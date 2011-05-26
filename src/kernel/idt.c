@@ -25,10 +25,15 @@ idtr_t idtr = { .size = sizeof(idt) - 1, .addr = idt };
 void idt_init(void) {
     // Configuramos los handlers en la IDT
     int i;
-    for (i = 0; i <= IDT_LAST_INDEX; i++)
+    for (i = 0; i <= IDT_LAST_INDEX; i++) {
         // En principio, a todos los indices les registramos stateful handlers
-        idt_set_handler(i, idt_stateful_handlers[i], IDT_DESC_P | IDT_DESC_D |
-            IDT_DESC_INT | IDT_DESC_DPL(0));
+        if (i == IDT_INDEX_SYSC)
+            idt_set_handler(IDT_INDEX_SYSC, idt_stateful_handlers[IDT_INDEX_SYSC],
+                IDT_DESC_P | IDT_DESC_D | IDT_DESC_INT | IDT_DESC_DPL(0x3));
+        else
+            idt_set_handler(i, idt_stateful_handlers[i], IDT_DESC_P | IDT_DESC_D |
+                IDT_DESC_INT | IDT_DESC_DPL(0));
+    }
 
     // Cargamos la IDT
     lidt(&idtr);
@@ -80,7 +85,8 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     outb(PIC1_COMMAND, OCW2);
 
     if (index == IDT_INDEX_TIMER) {
-        loader_switchto(sched_tick());
+        pid pid = sched_tick();
+        loader_switchto(pid);
     }
     else if (index == IDT_INDEX_KB)
         breakpoint();
