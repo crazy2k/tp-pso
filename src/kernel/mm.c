@@ -25,6 +25,7 @@ static bool valid_physical_page(void*);
 static void add_page_to_list(page_t* head, page_t* new);
 
 static void return_page(page_t**, page_t*);
+static void return_kernel_page(page_t*);
 static page_t *reserve_page(page_t**, page_t*);
 static void reserve_pages(page_t**, void*, void*);
 static page_t* take_free_page(page_t** page_list_ptr);
@@ -64,7 +65,7 @@ void* mm_mem_kalloc() {
 
 void mm_mem_free(void* vaddr) {
     if (vaddr < KERNEL_MEMORY_LIMIT) {
-        return_page(&free_kernel_pages, PHADDR_TO_PAGE(vaddr));
+        return_kernel_page(PHADDR_TO_PAGE(vaddr));
     } else {
         free_user_page(current_pd(), vaddr);
     }
@@ -81,12 +82,12 @@ void mm_dir_free(mm_page* mm_page) {
     void *vaddr;
 
     for (i = 0; i < 4; i++)
-        return_page(&free_kernel_pages, PHADDR_TO_PAGE((PAGE_4MB_SIZE * i)));
+        return_kernel_page(PHADDR_TO_PAGE((PAGE_4MB_SIZE * i)));
 
     for (i = 4; i < 1024; i++) {
         if (pd[i] & PDE_P) {
             vaddr = (void*)(PAGE_4MB_SIZE * i);
-            return_page(&free_kernel_pages, PHADDR_TO_PAGE(vaddr));
+            return_kernel_page(PHADDR_TO_PAGE(vaddr));
             for (j = 0; j < 1024; vaddr += PAGE_SIZE) {
                 uint32_t *pte = get_pte(pd, vaddr);
                 if (*pte & PTE_P)
@@ -95,7 +96,7 @@ void mm_dir_free(mm_page* mm_page) {
             }
         }
     }
-    return_page(&free_kernel_pages, PHADDR_TO_PAGE(pd));
+    return_kernel_page(PHADDR_TO_PAGE(pd));
 }
 
 
