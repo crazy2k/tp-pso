@@ -1,7 +1,0 @@
-*.o
-*.swp
-*.pso
-*.elf
-bin/
-tags
-deps
