@@ -68,7 +68,7 @@ int sched_exit() {
 int sched_block() {
     sched_task *task = current_task();
     task->blocked = TRUE;
-	return get_pid(task->next);
+    return get_pid(task->next);
 }
 
 int sched_tick() {
@@ -90,7 +90,7 @@ int sched_tick() {
 
     // Si la tarea actual aun tiene quantum o no encontramos otra tarea a
     // ejecutar, seguimos con la misma
-	return get_pid(current);
+    return get_pid(current);
 }
 
 static sched_task *next_executable_task(sched_task *task) {
