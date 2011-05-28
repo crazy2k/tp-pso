@@ -92,14 +92,11 @@ int sched_tick() {
 
 static sched_task *next_executable_task(sched_task *task) {
     sched_task *candidate = task->next;
-    while (candidate != task) {
-        if (!(candidate->blocked))
-            return candidate;
-
+    //Siempre existe un candidate sin bloquear (debido a la presencia de idle)
+    while (candidate->blocked) 
         candidate = candidate->next;
-    }
-    // Nunca deberiamos llegar aqui si hay siempre una tarea idle
-    return NULL;
+
+    return candidate;
 }
 
 
