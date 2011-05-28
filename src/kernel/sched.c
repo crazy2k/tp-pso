@@ -73,19 +73,13 @@ int sched_block() {
 
 int sched_tick() {
     sched_task *current = current_task();
-    current->rem_quantum--;
 
     //vga_printf(0, 0, "pid = %x, rem_quantum = %x", 0x0F, sched_get_current_pid(),
     //    current_task()->rem_quantum);
 
-    if (!current->rem_quantum) {
+    if (--(current->rem_quantum) == 0) {
         restart_quantum(current);
-
-        sched_task *next_task = next_executable_task(current);
-        if (next_task) {
-            task_list = next_task;
-            return get_pid(next_task);
-        }
+        task_list = current = next_executable_task(current);
     }
 
     // Si la tarea actual aun tiene quantum o no encontramos otra tarea a
