@@ -32,10 +32,10 @@ convención:
 
 1. Todas las directivas ``#include``.
 2. Todas las directivas ``#define``.
-3. Todas las definiciones de variables exportadas.
-4. Todas las declaraciones de funciones externas.
-5. Todas las declaraciones de variables externas.
-6. Todas las declaraciones de funciones locales.
-7. Todas las declaraciones de variables locales.
+3. Todas las definiciones de variables externas.
+4. Todas las declaraciones de variables globales.
+5. Todas las declaraciones de variables locales (static).
+6. Todos los prototipos de funciones externas
+7. Todos los prototipos de funciones locales (static).
 8. Las definiciones de todas las funciones, comenzando con la función de
    inicialización del módulo si la hubiera.
