@@ -15,7 +15,12 @@
 
     void sys_exit();
     uint32_t sys_getpid();
-    void* sys_palloc();
+    void *sys_palloc();
+    int sys_read(int fd, void *buf, uint32_t size);
+    int sys_write(int fd, const void *buf, uint32_t size);
+    int sys_seek(int fd, uint32_t size);
+    int sys_close(int fd);
+
 
 #else
 // __TAREA___
