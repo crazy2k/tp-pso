@@ -102,6 +102,29 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
 
 static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
     *st) {
+    // eax indica el numero de la llamada al sistema
+    switch (st->eax) {
+        case SYSCALLS_NUM_EXIT:
+            sys_exit();
+            break;
+        case SYSCALLS_NUM_GETPID:
+            st->eax = sys_getpid();
+            break;
+        case SYSCALLS_NUM_PALLOC:
+            st->eax = (uint32_t)sys_palloc();
+            break;
+        case SYSCALLS_NUM_READ:
+            st->eax = sys_read(st->ebx, (void *)st->ecx, st->edx);
+            break;
+        case SYSCALLS_NUM_WRITE:
+            st->eax = sys_write(st->ebx, (void *)st->ecx, st->edx);
+        case SYSCALLS_NUM_SEEK:
+            st->eax = sys_seek(st->ebx, st->ecx);
+        case SYSCALLS_NUM_CLOSE:
+            st->eax = sys_close(st->ebx);
+            break;
+    }
+}
 
     if (st->eax == SYSCALLS_NUM_EXIT)
         sys_exit();
