@@ -3,6 +3,7 @@
 
 #include <pso_file.h>
 #include <syscalls.h>
+#include <device.h>
 
 #define PID_IDLE_TASK 0
 #define MAX_PID 32

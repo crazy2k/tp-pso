@@ -3,6 +3,8 @@
 
 #include <tipos.h>
 
+#define DEVICE_CON_CHARDEV 1
+
 /* Devices */
 typedef struct str_dev device;
 typedef uint_32(dev_flush_t)(device* this);
@@ -51,13 +53,5 @@ struct str_blockdev {
 void device_init(void);
 
 int device_descriptor(chardev* dev);
-
-// Syscalls
-/*
-int read(int fd, void* buf, uint_32 size);
-int write(int fd, const void* buf, uint_32 size);
-int seek(int fd, uint_32 size);
-int close(int fd);
-*/
 
 #endif
