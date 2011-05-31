@@ -19,10 +19,10 @@ Se seguirá la regla de exportar siempre lo mínimo a los demás módulos. Así,
 el encabezado sólo deberán hallarse las declaraciones de funciones, variables
 o estructuras que se decidan exportar por ser de utilidad para otros módulos.
 Lo mismo aplica para las macros y definiciones de constantes. Las funciones,
-variables, estructuras o macros o constantes sólo interesan al módulo, deberán
-hallarse declaradas y/o definidas únicamente en el código del módulo y, en el
-caso de código C, deberá usarse la palabra ``static`` para la declaración de
-variables y funciones no exportadas.
+variables, estructuras o macros o constantes que sólo interesan al
+módulo, deberán hallarse declaradas y/o definidas únicamente en el
+código del módulo y, en el caso de código C, deberá usarse la palabra
+``static`` para la declaración de variables y funciones no exportadas.
 
 Orden en el código C
 --------------------
