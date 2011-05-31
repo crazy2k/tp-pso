@@ -4,10 +4,13 @@
 #include <utils.h>
 #include <i386.h>
 #include <sched.h>
+#include <device.h>
+#include <errors.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000
 #define IDLE_MAIN_SIZE 0x00000100
+#define MAX_FD 256
 
 extern void loader_switch_stack_pointers(void **old_stack_top, void
     **new_stack_top);
