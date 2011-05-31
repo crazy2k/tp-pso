@@ -31,13 +31,7 @@ static sched_task *task_list;
 static sched_task *free_tasks;
 
 void sched_init(void) {
-    memset(tasks, 0, sizeof(tasks));
-
-    free_tasks = NULL;
-    int i;
-    for (i = 0; i < MAX_PID; i++) {
-        APPEND(&free_tasks, &tasks[i]);
-    }
+    CREATE_FREE_OBJS_LIST(free_tasks, tasks, MAX_PID);
 }
 
 void sched_load(pid pd) {
