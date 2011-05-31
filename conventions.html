@@ -1,0 +1,135 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Convenciones para el código de este trabajo &mdash; Trabajo Práctico de Programación de Sistemas Operativos v1.0 documentation</title>
+    <link rel="stylesheet" href="static/flasky.css" type="text/css" />
+    <link rel="stylesheet" href="static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '',
+        VERSION:     '1.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="static/jquery.js"></script>
+    <script type="text/javascript" src="static/underscore.js"></script>
+    <script type="text/javascript" src="static/doctools.js"></script>
+    <link rel="top" title="Trabajo Práctico de Programación de Sistemas Operativos v1.0 documentation" href="index.html" />
+    <link rel="prev" title="El sistema por dentro" href="inside.html" />
+   
+  
+  <link media="only screen and (max-device-width: 480px)" href="static/small_flask.css" type= "text/css" rel="stylesheet" />
+
+  </head>
+  <body>
+    <div class="related">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="inside.html" title="El sistema por dentro"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">Trabajo Práctico de Programación de Sistemas Operativos v1.0 documentation</a> &raquo;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body">
+            
+  <div class="section" id="convenciones-para-el-codigo-de-este-trabajo">
+<h1>Convenciones para el código de este trabajo<a class="headerlink" href="#convenciones-para-el-codigo-de-este-trabajo" title="Permalink to this headline">¶</a></h1>
+<p>Las siguientes son las convenciones que deben seguirse al escribir código para
+este trabajo.</p>
+<div class="section" id="encabezados-y-codigo">
+<h2>Encabezados y código<a class="headerlink" href="#encabezados-y-codigo" title="Permalink to this headline">¶</a></h2>
+<p>Cada módulo <tt class="docutils literal"><span class="pre">module</span></tt> está compuesto por su <strong>código</strong> en el archivo
+<tt class="docutils literal"><span class="pre">src/kernel/module.c</span></tt> y su <strong>header o encabezado</strong> correspondiente en
+<tt class="docutils literal"><span class="pre">src/include/module.h</span></tt>. Adicionalmente, el módulo puede estar compuesto de
+un archivo con <strong>código *assembly*</strong>, normalmente llamado
+<tt class="docutils literal"><span class="pre">src/kernel/module_helpers.asm</span></tt>.</p>
+<p>Se seguirá la regla de exportar siempre lo mínimo a los demás módulos. Así, en
+el encabezado sólo deberán hallarse las declaraciones de funciones, variables
+o estructuras que se decidan exportar por ser de utilidad para otros módulos.
+Lo mismo aplica para las macros y definiciones de constantes. Las funciones,
+variables, estructuras o macros o constantes sólo interesan al módulo, deberán
+hallarse declaradas y/o definidas únicamente en el código del módulo y, en el
+caso de código C, deberá usarse la palabra <tt class="docutils literal"><span class="pre">static</span></tt> para la declaración de
+variables y funciones no exportadas.</p>
+</div>
+<div class="section" id="orden-en-el-codigo-c">
+<h2>Orden en el código C<a class="headerlink" href="#orden-en-el-codigo-c" title="Permalink to this headline">¶</a></h2>
+<p>Para el orden de todo lo que haya en el código C, se seguirá la siguiente
+convención:</p>
+<ol class="arabic simple">
+<li>Todas las directivas <tt class="docutils literal"><span class="pre">#include</span></tt>.</li>
+<li>Todas las directivas <tt class="docutils literal"><span class="pre">#define</span></tt>.</li>
+<li>Todas las definiciones de variables exportadas.</li>
+<li>Todas las declaraciones de funciones externas.</li>
+<li>Todas las declaraciones de variables externas.</li>
+<li>Todas las declaraciones de funciones locales.</li>
+<li>Todas las declaraciones de variables locales.</li>
+<li>Las definiciones de todas las funciones, comenzando con la función de
+inicialización del módulo si la hubiera.</li>
+</ol>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Convenciones para el código de este trabajo</a><ul>
+<li><a class="reference internal" href="#encabezados-y-codigo">Encabezados y código</a></li>
+<li><a class="reference internal" href="#orden-en-el-codigo-c">Orden en el código C</a></li>
+</ul>
+</li>
+</ul>
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="inside.html" title="previous chapter">El sistema por dentro</a></li>
+  </ul></li>
+</ul>
+  <h3>This Page</h3>
+  <ul class="this-page-menu">
+    <li><a href="sources/conventions.txt"
+           rel="nofollow">Show Source</a></li>
+  </ul>
+<div id="searchbox" style="display: none">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" size="18" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy; Copyright 2011, Pablo Antonio, Pablo Herrero.
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a>.
+    </div>
+  </body>
+</html>
