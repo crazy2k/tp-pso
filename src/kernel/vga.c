@@ -106,10 +106,17 @@ void vga_printf(uint_16 row, uint_16 col, const char* format, uint_8 attr,
     va_end(vargs);
 }
 
+void vga_clear(void *begin, void *end) {
+    void *addr;
+    for (addr = begin; addr < end; addr += VGA_CHAR_SIZE)
+        vga_putchar(addr, ' ', 0x0F);
+}
+
 void vga_cls() {
     void *vga_end = (void *)(VGA_ADDR + VGA_ROWS*VGA_COLS*VGA_CHAR_SIZE);
-    void *addr;
-    for (addr = (void *)VGA_ADDR; addr < vga_end; addr += VGA_CHAR_SIZE)
-        vga_putchar(addr, ' ', 0x0F);
+    vga_clear((void *)VGA_ADDR, vga_end);
+}
 
+void vga_clline(void *pos) {
+    vga_clear(pos, pos + VGA_ROW_SIZE);
 }

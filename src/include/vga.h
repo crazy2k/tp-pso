@@ -5,18 +5,26 @@
 
 void vga_init(void);
 
+void *vga_putchar(void *addr, const char chr, uint8_t attr);
 void vga_write(uint_16 f, uint_16 c, const char* msg, uint_8 attr);
 void vga_writechar(uint16_t row, uint16_t col, const char chr, uint8_t attr);
 void vga_printf(uint_16 f, uint_16 c, const char* format, uint_8 attr, ...) __attribute__ ((format (printf, 3, 5)));
 void vga_cls();
+void vga_clline(void *pos);
 
 #define VGA_ADDR 0xB8000ul
 #define VGA_CHAR_SIZE 2
 #define VGA_ROWS 25
 #define VGA_COLS 80
+#define VGA_ROW_SIZE (VGA_COLS*VGA_CHAR_SIZE)
 
 #define VGA_POS_ADDR(row, col) \
     ((void *)(VGA_ADDR + row*VGA_COLS*VGA_CHAR_SIZE + col*VGA_CHAR_SIZE))
+
+#define VGA_LINE_BEGIN(pos, screen) \
+    (void *)(((((pos) - (screen))/VGA_ROW_SIZE)*\
+        VGA_ROW_SIZE) + (screen))
+
 
 /* Paleta de 16 colores */
 #define VGA_FC_BLACK   0x00
