@@ -16,6 +16,8 @@ uint32_t disable_interrupts();
 
 void restore_eflags(uint32_t eflags);
 
+char sc2ascii(unsigned char sc);
+
 #define LINK_NODES(fst, sec) \
     (fst)->next = (sec); \
     (sec)->prev = (fst);
