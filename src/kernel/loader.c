@@ -75,6 +75,9 @@ struct pcb {
     void *kernel_stack;
     void *kernel_stack_limit;
     void *kernel_stack_pointer;
+    // File descriptors
+    chardev *fds[MAX_FD];
+    uint32_t last_fd;
 
     pcb *next;
     pcb *prev;
@@ -99,13 +102,7 @@ static tss_t *tss = NULL;
 void loader_setup_task_memory(pso_file *f);
 
 void loader_init(void) {
-    memset(pcbs, 0, sizeof(pcbs));
-
-    free_pcbs = NULL;
-    int i;
-    for (i = 0; i < MAX_PID; i++) {
-        APPEND(&free_pcbs, &pcbs[i]);
-    }
+    CREATE_FREE_OBJS_LIST(free_pcbs, pcbs, MAX_PID);
 
     setup_tss(KERNEL_STACK);
 
@@ -145,6 +142,8 @@ pid loader_load(pso_file* f, int pl) {
         pcb->kernel_stack = mm_mem_kalloc();
         pcb->kernel_stack_limit = pcb->kernel_stack + PAGE_SIZE;
         pcb->kernel_stack_pointer = pcb->kernel_stack_limit;
+
+        pcb->last_fd = 0;
 
         // Escribimos el estado inicial
         pcb->kernel_stack_pointer -= sizeof(task_state_t);
@@ -198,7 +197,7 @@ void loader_setup_task_memory(pso_file *f) {
     for (i = 0; i < task_pages; i++)
         new_user_page(get_current_pcb()->pd, mem_start + i*PAGE_SIZE);
 
-    new_user_page(get_current_pcb()->pd, USER_STACK);
+    new_user_page(get_current_pcb()->pd, (void *)USER_STACK);
 
     // Copiamos datos y codigo inicializados
     memcpy(mem_start, (void *)f, f->mem_end_disk - f->mem_start);
@@ -252,6 +251,47 @@ void loader_switchto(pid pd) {
 
     restore_eflags(eflags);
     
+}
+
+int loader_add_file(chardev *cdev) {
+    pcb *pcb = get_current_pcb();
+
+    if (pcb->last_fd == MAX_FD)
+        return -ENOMEM;
+
+    pcb->last_fd++;
+    pcb->fds[pcb->last_fd] = cdev;
+    cdev->refcount++;
+
+    return pcb->last_fd;
+}
+
+int loader_remove_file(uint32_t fd) {
+    if (fd > MAX_FD)
+        return -1;
+
+    pcb *pcb = get_current_pcb();
+
+    pcb->fds[fd] = NULL;
+
+    if (pcb->last_fd == fd) {
+        int i;
+        for (i = pcb->last_fd; i >= 0; i--)
+            if (pcb->fds[i] != NULL) {
+                pcb->last_fd = i;
+                return 0;
+            }
+
+        pcb->last_fd = 0;
+    }
+    return 0;
+}
+
+chardev *loader_get_file(uint32_t fd) {
+    if (fd > MAX_FD)
+        return NULL;
+
+    return get_current_pcb()->fds[fd];
 }
 
 

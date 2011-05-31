@@ -56,5 +56,20 @@ void restore_eflags(uint32_t eflags);
         _node; \
     })
 
+#define NODES_ARRAY_TO_LIST(list, array, array_size) \
+    ({ \
+        (list) = NULL; \
+        int i; \
+        for (i = 0; i < array_size; i++) \
+            APPEND(&list, &array[i]); \
+    })
+
+#define CREATE_FREE_OBJS_LIST(free_objs, objs, max_objs) \
+    ({ \
+        memset((objs), 0, sizeof((objs))); \
+        NODES_ARRAY_TO_LIST(free_objs, objs, max_objs); \
+    })
+
+
 
 #endif
