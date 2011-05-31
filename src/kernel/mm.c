@@ -5,17 +5,22 @@
 
 typedef struct page_t page_t;
 
+/*Podria reducirse el tamaño eliminando prev y usando un contador de 16 bits*/
 struct page_t {
     int count;
     page_t *next;
     page_t *prev;
-};
+} __attribute__((__packed__)) ;
 
 
 
+/* Maybe Shared Resource (Aunque cada proceso tiene su propia pd y sus propias tablas)*/
 uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
 
+
+/* Shared Resource */
 static page_t *free_user_pages = NULL,
+       /* Shared Resource */
        *free_kernel_pages = NULL;
 
 

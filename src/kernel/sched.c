@@ -68,41 +68,32 @@ int sched_exit() {
 int sched_block() {
     sched_task *task = current_task();
     task->blocked = TRUE;
-	return get_pid(task->next);
+    return get_pid(task->next);
 }
 
 int sched_tick() {
     sched_task *current = current_task();
-    current->rem_quantum--;
 
     //vga_printf(0, 0, "pid = %x, rem_quantum = %x", 0x0F, sched_get_current_pid(),
     //    current_task()->rem_quantum);
 
-    if (!current->rem_quantum) {
+    if (--(current->rem_quantum) == 0) {
         restart_quantum(current);
-
-        sched_task *next_task = next_executable_task(current);
-        if (next_task) {
-            task_list = next_task;
-            return get_pid(next_task);
-        }
+        task_list = current = next_executable_task(current);
     }
 
     // Si la tarea actual aun tiene quantum o no encontramos otra tarea a
     // ejecutar, seguimos con la misma
-	return get_pid(current);
+    return get_pid(current);
 }
 
 static sched_task *next_executable_task(sched_task *task) {
     sched_task *candidate = task->next;
-    while (candidate != task) {
-        if (!(candidate->blocked))
-            return candidate;
-
+    //Siempre existe un candidate sin bloquear (debido a la presencia de idle)
+    while (candidate->blocked) 
         candidate = candidate->next;
-    }
-    // Nunca deberiamos llegar aqui si hay siempre una tarea idle
-    return NULL;
+
+    return candidate;
 }
 
 
