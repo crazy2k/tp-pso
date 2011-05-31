@@ -361,7 +361,7 @@ static int get_pid(pcb *pcb) {
  * - ``kernel_stack`` es la direccion del stack pointer para el stack de nivel
  *   0 de la tarea en su espacio de direcciones
  */
-void setup_tss(uint32_t kernel_stack) {
+static void setup_tss(uint32_t kernel_stack) {
     if (tss) {
         tss->esp0 = kernel_stack;
         return;
