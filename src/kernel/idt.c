@@ -8,19 +8,20 @@
 #include <loader.h>
 #include <sched.h>
 #include <syscalls.h>
-
-
-extern void (*idt_stateful_handlers[IDT_LENGTH])();
-
-static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
-    *st);
-
+#include <con.h>
+#include <utils.h>
 
 
 // IDT e idtr
 uint64_t idt[IDT_LENGTH] = {0};
 idtr_t idtr = { .size = sizeof(idt) - 1, .addr = idt };
 
+extern void (*idt_stateful_handlers[IDT_LENGTH])();
+
+static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
+    *st);
+static void keyboard_isr(uint32_t index, uint32_t error_code,
+    task_state_t *st);
 
 void idt_init(void) {
     // Configuramos los handlers en la IDT
@@ -89,7 +90,7 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
         loader_switchto(pid);
     }
     else if (index == IDT_INDEX_KB)
-        breakpoint();
+        keyboard_isr(index, error_code, st);
 
     else if (index == IDT_INDEX_SYSC) {
         syscall_caller(index, error_code, st);
@@ -126,10 +127,10 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
     }
 }
 
-    if (st->eax == SYSCALLS_NUM_EXIT)
-        sys_exit();
-    else if (st->eax == SYSCALLS_NUM_GETPID)
-        st->eax = sys_getpid();
-    else if (st->eax == SYSCALLS_NUM_PALLOC)
-        st->eax = (uint32_t)sys_palloc();
+static void keyboard_isr(uint32_t index, uint32_t error_code,
+    task_state_t *st) {
+
+    chardev *con = (chardev *)con_get_current_console();
+    char c = sc2ascii(inb(0x60));
+    con->write(con, &c, 1);
 }
