@@ -43,8 +43,6 @@ void idt_init(void) {
 
     // Desenmascaramos interrupciones en el PIC
     outb(PIC1_DATA, PIC_ALL_ENABLED);
-
-	return;
 }
 
 /* ``idt_register()`` existe por compatibilidad con el codigo original, pero
