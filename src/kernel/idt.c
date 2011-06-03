@@ -130,7 +130,5 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
 static void keyboard_isr(uint32_t index, uint32_t error_code,
     task_state_t *st) {
 
-    chardev *con = (chardev *)con_get_current_console();
-    char c = sc2ascii(inb(0x60));
-    con->write(con, &c, 1);
+    con_write_to_kb_buf(inb(0x60));
 }

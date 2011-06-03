@@ -18,7 +18,6 @@ void kernel_init(void) {
     debug_init();
     mm_init();
     sched_init();
+    con_init();
     loader_init();
-
-	return;
 }

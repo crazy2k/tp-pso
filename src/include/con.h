@@ -13,9 +13,14 @@ struct con_chardev {
     chardev_write_t* write;
     chardev_seek_t* seek;
 
-    void *screen;
-    void *screen_limit;
-    void *current_pos;
+    void *screen_buf;
+    uint32_t screen_buf_offset;
+    bool focused;
+
+    void *kb_buf;
+    uint32_t kb_buf_offset;
+    uint32_t kb_buf_remaining;
+
     uint8_t current_attr;
 
     con_chardev *next;

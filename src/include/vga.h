@@ -16,6 +16,7 @@ void vga_clline(void *pos);
 #define VGA_CHAR_SIZE 2
 #define VGA_ROWS 25
 #define VGA_COLS 80
+#define VGA_SCREEN_SIZE VGA_ROWS*VGA_COLS*VGA_CHAR_SIZE
 #define VGA_ROW_SIZE (VGA_COLS*VGA_CHAR_SIZE)
 
 #define VGA_POS_ADDR(row, col) \
