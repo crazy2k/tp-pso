@@ -41,6 +41,11 @@
     void exit();
     uint32_t getpid();
     void* palloc();
+    int read(int fd, void *buf, uint32_t size);
+    int write(int fd, const void *buf, uint32_t size);
+    int seek(int fd, uint32_t size);
+    int close(int fd);
+
 
 #endif
 
