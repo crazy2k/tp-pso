@@ -1,5 +1,6 @@
 #include <device.h>
 #include <errors.h>
+#include <loader.h>
 
 
 int device_descriptor(chardev *dev) {

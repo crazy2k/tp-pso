@@ -33,5 +33,6 @@ chardev* con_open(void);
 
 void con_focus(con_chardev *con);
 con_chardev *con_get_current_console();
+void con_write_to_kb_buf(uint8_t b);
 
 #endif

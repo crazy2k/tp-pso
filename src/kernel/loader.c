@@ -6,6 +6,7 @@
 #include <sched.h>
 #include <device.h>
 #include <errors.h>
+#include <con.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000

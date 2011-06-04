@@ -8,6 +8,7 @@
 #include <loader.h>
 #include <syscalls.h>
 #include <i386.h>
+#include <con.h>
 
 extern void* _end;
 /* Entry-point del modo protegido luego de cargar los registros de
