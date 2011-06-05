@@ -3,6 +3,7 @@
 #include <vga.h>
 #include <utils.h>
 #include <mm.h>
+#include <debug.h>
 
 #define MAX_CON_CHARDEVS 16
 #define KB_BUF_SIZE 1024
@@ -52,7 +53,27 @@ chardev* con_open(void) {
 }
 
 sint_32 con_read(chardev *this, void *buf, uint_32 size) {
-    return 0;
+     if (this->clase != DEVICE_CON_CHARDEV)
+        return -1;
+
+    con_chardev *ccdev = (con_chardev *)this;
+
+    uint32_t rem = ccdev->kb_buf_remaining;
+    uint32_t offset = ccdev->kb_buf_offset;
+
+    uint32_t n = (size < rem) ? size : rem;
+
+    char *cbuf = (char *)buf;
+    char *kb_cbuf = (char *)ccdev->kb_buf;
+
+    int i;
+    uint32_t read_offset;
+    for(i = 0; i < n; i++) {
+        cbuf[i] = kb_cbuf[(offset - rem + i) % KB_BUF_SIZE];
+    }
+    //vga_printf(0,0,"n = %x", 0x0F, n);
+
+    return n;
 }
 
 sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
@@ -124,7 +145,9 @@ void con_write_to_kb_buf(uint8_t b) {
     con_chardev *ccdev = con_get_current_console();
 
     ccdev->kb_buf_offset = (ccdev->kb_buf_offset + 1) % KB_BUF_SIZE;
+    ccdev->kb_buf_remaining = (ccdev->kb_buf_remaining == KB_BUF_SIZE)?
+        KB_BUF_SIZE : ccdev->kb_buf_remaining + 1;
 
-    uint8_t *out = ccdev->kb_buf + ccdev->kb_buf_offset;
+    uint8_t *out = (uint8_t *)(ccdev->kb_buf + ccdev->kb_buf_offset);
     *out = b;
 }
