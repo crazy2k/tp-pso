@@ -9,9 +9,9 @@
 
 
 // XXX: Deberian ser static?
-sint_32 con_read(chardev* this, void* buf, uint_32 size);
-sint_32 con_write(chardev* this, const void* buf, uint_32 size);
-uint_32 con_flush(chardev* this);
+sint_32 con_read(chardev *this, void *buf, uint_32 size);
+sint_32 con_write(chardev *this, const void *buf, uint_32 size);
+uint_32 con_flush(chardev *this);
 
 
 static void scroll_down(con_chardev *ccdev);
@@ -48,11 +48,11 @@ chardev* con_open(void) {
     return (chardev *)ccdev;
 }
 
-sint_32 con_read(chardev* this, void* buf, uint_32 size) {
+sint_32 con_read(chardev *this, void *buf, uint_32 size) {
     return 0;
 }
 
-sint_32 con_write(chardev* this, const void* buf, uint_32 size) {
+sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
     if (this->clase != DEVICE_CON_CHARDEV)
         return -1;
 
