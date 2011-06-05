@@ -67,7 +67,6 @@ sint_32 con_read(chardev *this, void *buf, uint_32 size) {
     char *kb_cbuf = (char *)ccdev->kb_buf;
 
     int i;
-    uint32_t read_offset;
     for(i = 0; i < n; i++) {
         cbuf[i] = kb_cbuf[(offset - rem + i) % KB_BUF_SIZE];
     }
