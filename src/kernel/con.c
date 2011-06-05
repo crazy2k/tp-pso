@@ -63,6 +63,8 @@ sint_32 con_read(chardev *this, void *buf, uint_32 size) {
 
     uint32_t n = (size < rem) ? size : rem;
 
+    ccdev->kb_buf_remaining -= n;
+
     char *cbuf = (char *)buf;
     char *kb_cbuf = (char *)ccdev->kb_buf;
 
