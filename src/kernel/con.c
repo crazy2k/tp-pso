@@ -18,6 +18,7 @@ static void scroll_down(con_chardev *ccdev);
 
 static con_chardev con_chardevs[MAX_CON_CHARDEVS];
 static con_chardev *free_con_chardevs = NULL;
+static con_chardev *open_con_chardevs = NULL;
 
 static con_chardev *current_console = NULL;
 
@@ -44,6 +45,8 @@ chardev* con_open(void) {
     ccdev->kb_buf_remaining = 0;
 
     ccdev->current_attr = 0x0F;
+
+    APPEND(&open_con_chardevs, ccdev);
 
     return (chardev *)ccdev;
 }
@@ -82,6 +85,7 @@ uint_32 con_flush(chardev *this) {
     mm_mem_free(ccdev->screen_buf);
     mm_mem_free(ccdev->kb_buf);
 
+    UNLINK_NODE(&open_con_chardevs, ccdev);
     APPEND(&free_con_chardevs, ccdev);
 
     return 0;
