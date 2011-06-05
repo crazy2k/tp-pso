@@ -73,7 +73,17 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
     return i;
 }
 
-uint_32 con_flush(chardev* this) {
+uint_32 con_flush(chardev *this) {
+    if (this->clase != DEVICE_CON_CHARDEV)
+        return -1;
+
+    con_chardev *ccdev = (con_chardev *)this;
+
+    mm_mem_free(ccdev->screen_buf);
+    mm_mem_free(ccdev->kb_buf);
+
+    APPEND(&free_con_chardevs, ccdev);
+
     return 0;
 }
 
