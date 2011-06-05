@@ -91,8 +91,11 @@ void con_focus(con_chardev *con) {
     if (current_console == con)
         return;
 
-    memcpy(current_console->screen_buf, (void *)VGA_ADDR, VGA_SCREEN_SIZE);
-    current_console->focused = FALSE;
+    if (current_console != NULL) {
+        memcpy(current_console->screen_buf, (void *)VGA_ADDR,
+            VGA_SCREEN_SIZE);
+        current_console->focused = FALSE;
+    }
 
     memcpy((void *)VGA_ADDR, con->screen_buf, VGA_SCREEN_SIZE);
     current_console = con;
