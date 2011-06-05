@@ -70,7 +70,7 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
             ccdev->current_attr);
         ccdev->screen_buf_offset += VGA_CHAR_SIZE;
     }
-    return 0;
+    return i;
 }
 
 uint_32 con_flush(chardev* this) {
