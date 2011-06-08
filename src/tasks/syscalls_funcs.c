@@ -47,3 +47,11 @@ int seek(int fd, uint32_t size) {
 int close(int fd) {
     return syscall(SYSCALLS_NUM_CLOSE, (uint32_t)fd, 0, 0, 0, 0);
 }
+
+int opencon() {
+    return syscall(SYSCALLS_NUM_OPENCON, 0, 0, 0, 0, 0);
+}
+
+int nextcon() {
+    return syscall(SYSCALLS_NUM_NEXTCON, 0, 0, 0, 0, 0);
+}
