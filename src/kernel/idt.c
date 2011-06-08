@@ -127,7 +127,7 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
             st->eax = con_open();
             break;
         case SYSCALLS_NUM_NEXTCON:
-            st->eax = con_focus(con_get_current_console()->next);
+            con_focus(con_get_current_console()->next);
             break;
     }
 }

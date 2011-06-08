@@ -48,7 +48,7 @@
     int seek(int fd, uint32_t size);
     int close(int fd);
     int opencon();
-    int nextcon();
+    void nextcon();
 
 
 #endif

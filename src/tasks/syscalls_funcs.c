@@ -52,6 +52,6 @@ int opencon() {
     return syscall(SYSCALLS_NUM_OPENCON, 0, 0, 0, 0, 0);
 }
 
-int nextcon() {
-    return syscall(SYSCALLS_NUM_NEXTCON, 0, 0, 0, 0, 0);
+void nextcon() {
+    syscall(SYSCALLS_NUM_NEXTCON, 0, 0, 0, 0, 0);
 }
