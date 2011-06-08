@@ -10,6 +10,7 @@
 #include <syscalls.h>
 #include <con.h>
 #include <utils.h>
+#include <kb.h>
 
 
 // IDT e idtr
@@ -128,5 +129,6 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
 static void keyboard_isr(uint32_t index, uint32_t error_code,
     task_state_t *st) {
 
-    con_write_to_kb_buf(inb(0x60));
+    kb_process_byte(inb(0x60));
+    breakpoint();
 }

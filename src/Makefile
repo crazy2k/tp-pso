@@ -27,7 +27,7 @@ OBJS_KERN=kernel/kinit.o kernel/a20.o kernel/kernel.o kernel/gdt.o kernel/idt.o 
   kernel/isr.o kernel/pic.o kernel/vga.o kernel/sched.o \
   kernel/mm.o kernel/debug.o kernel/loader.o kernel/tasks.o \
   kernel/syscalls.o kernel/sem.o kernel/utils.o kernel/loader_helpers.o \
-  kernel/syscalls_funcs.o kernel/con.o kernel/device.o
+  kernel/syscalls_funcs.o kernel/con.o kernel/device.o kernel/kb.o
 BIN_KERN=$(DIROUT)kernel.bin
 DUMP_KERN=$(DIROUT)kernel.bin.asm $(DIROUT)kernel.bin.elf $(DIROUT)kernel.bin.dbg
 SYM_KERN=$(DIROUT)kernel.sym
