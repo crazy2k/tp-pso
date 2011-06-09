@@ -2,16 +2,24 @@
 
 int main(void) {
 
+
+   // __asm__ __volatile__("xchg %bx, %bx");
+
+    
     int con = open_console();
 
-    char buff[100] = { 0 };
-    read(con, buff, 1);
+    write(con, "chau", 4);
+    write(con, " ", 1);
 
-    write(con, buff, 1);
+    char buff[20] = { 0 };
 
-    __asm__ __volatile__("xchg %bx, %bx");
+    while (1) {
+        read(con, buff, 1);
 
-    while (1);
+        if (buff[0] & 0x7F)
+            write(con, buff, 1);
+
+    }
 
     return;
 }
