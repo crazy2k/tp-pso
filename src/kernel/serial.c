@@ -98,6 +98,21 @@ chardev* serial_open(int nro) { /* 0 para COM1, 1 para COM2, ... */
 
 /** Init **/
 void serial_init() {
-	
+    // Desactivamos interrupciones
+    outb(SP_PORT + PORT_IER, 0x00); 
+
+    // Encendemos DLAB (Divisor Latch Access Bit)
+    outb(SP_PORT + PORT_LCTRL, LC_DLAB);
+    // Escribimos el divisor
+    outb(SP_PORT + PORT_DL_LSB, 0x03);
+    outb(SP_PORT + PORT_DL_MSB, 0x00);
+
+    // Elegimos: caracteres de 8 bits, 1 stop it, sin parity, sin break.
+    outb(SP_PORT + PORT_LCTRL, LC_BIT8);
+
+    // Activamos FIFOs, los limpiamos, y ponemos 14 bytes para la ocurrencia
+    // de la interrupcion
+    outb(SP_PORT + PORT_FCTRL, FC_FIFO | FC_CL_RCVFIFO | FC_CL_XMTFIFO |
+        FC_TRIGGER_14);
 }
 
