@@ -3,6 +3,7 @@
 
 #include <tipos.h>
 #include <device.h>
+#include <utils.h>
 
 typedef struct con_chardev con_chardev;
 struct con_chardev {
@@ -17,9 +18,7 @@ struct con_chardev {
     uint32_t screen_buf_offset;
     bool focused;
 
-    void *kb_buf;
-    uint32_t kb_buf_offset;
-    uint32_t kb_buf_remaining;
+    circular_buf_t kb_buf;
     int waiting_process;
 
     uint8_t current_attr;
