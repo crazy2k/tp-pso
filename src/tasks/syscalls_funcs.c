@@ -35,6 +35,7 @@ int read(int fd, void *buf, uint32_t size) {
     return syscall(SYSCALLS_NUM_READ, (uint32_t)fd, (uint32_t)buf,
         (uint32_t)size, 0, 0);
 }
+
 int write(int fd, const void *buf, uint32_t size) {
     return syscall(SYSCALLS_NUM_WRITE, (uint32_t)fd, (uint32_t)buf,
         (uint32_t)size, 0, 0);
@@ -48,10 +49,14 @@ int close(int fd) {
     return syscall(SYSCALLS_NUM_CLOSE, (uint32_t)fd, 0, 0, 0, 0);
 }
 
-int opencon() {
+int open_console() {
     return syscall(SYSCALLS_NUM_OPENCON, 0, 0, 0, 0, 0);
 }
 
-void nextcon() {
+void next_console() {
     syscall(SYSCALLS_NUM_NEXTCON, 0, 0, 0, 0, 0);
+}
+
+void prev_console() {
+    syscall(SYSCALLS_NUM_PREVCON, 0, 0, 0, 0, 0);
 }

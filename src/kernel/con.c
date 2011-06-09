@@ -140,6 +140,10 @@ void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
 
 }
 
+con_chardev *con_get_current_console() {
+    return current_console;
+}
+
 static void scroll_down(con_chardev *ccdev) {
     void *screen = (ccdev->focused) ? (void *)VGA_ADDR : ccdev->screen_buf;
     void *screen_limit = screen + VGA_SCREEN_SIZE;
@@ -149,9 +153,4 @@ static void scroll_down(con_chardev *ccdev) {
     ccdev->screen_buf_offset -= VGA_ROW_SIZE;
     vga_clline(VGA_LINE_BEGIN(screen + ccdev->screen_buf_offset, screen));
 }
-
-con_chardev *con_get_current_console() {
-    return current_console;
-}
-
 
