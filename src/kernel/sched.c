@@ -46,8 +46,7 @@ void sched_load(pid pd) {
 }
 
 void sched_unblock(pid pd) {
-    sched_task *task = current_task();
-    task->blocked = FALSE;
+    tasks[pd].blocked = FALSE;
 }
 
 int sched_exit() {
