@@ -55,7 +55,7 @@ void idt_init(void) {
     remap_PIC(PIC1_OFFSET, PIC2_OFFSET);
 
     // Desenmascaramos interrupciones en el PIC
-    outb(PIC1_DATA, ~(PIC_COM13));
+    outb(PIC1_DATA, PIC_ALL_ENABLED);
 }
 
 /* ``idt_register()`` existe por compatibilidad con el codigo original, pero
