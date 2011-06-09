@@ -82,3 +82,43 @@ char sc2ascii(unsigned char sc) {
     return sc2ascii_table[idx];
 }
 
+
+
+int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size) {
+    uint32_t rem = cbuf->remaining;
+    uint32_t offset = cbuf->offset;
+
+    uint32_t n = (size < rem) ? size : rem;
+
+    cbuf->remaining -= n;
+
+    char *kb_cbuf = (char *)cbuf->buf;
+
+    int i;
+    for(i = 0; i < n; i++) 
+        dst[i] = kb_cbuf[(offset - rem + i) % buf_size]; 
+
+    return i;
+}
+
+
+
+
+int copy_to_circ_buff(circular_buf_t *cbuf, char *src, uint32_t size, uint32_t buf_size) {
+
+/*    char *cbuf = (char *)buf;
+
+    void *out_base = (ccdev->focused) ? (void *)VGA_ADDR : ccdev->screen_buf;
+
+    int i;
+    for (i = 0; i < size; i++) {
+        if (ccdev->screen_buf_offset >= VGA_SCREEN_SIZE)
+            scroll_down(ccdev);
+
+        vga_putchar(out_base + ccdev->screen_buf_offset, cbuf[i],
+            ccdev->current_attr);
+        ccdev->screen_buf_offset += VGA_CHAR_SIZE;
+    }
+    return i;*/
+
+}

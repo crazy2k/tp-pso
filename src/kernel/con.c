@@ -43,7 +43,7 @@ chardev* con_open(void) {
 
     ccdev->kb_buf.buf = mm_mem_kalloc();
     ccdev->kb_buf.offset = 0;
-    ccdev->kb_buf.remaining = 0 ;
+    ccdev->kb_buf.remaining = 0;
 
     ccdev->waiting_process = -1 ;
 
@@ -63,27 +63,10 @@ sint_32 con_read(chardev *this, void *buf, uint_32 size) {
 
     con_chardev *ccdev = (con_chardev *)this;
 
-    while (ccdev->kb_buf.remaining == 0) {
+    while (ccdev->kb_buf.remaining == 0)
         loader_enqueue(&ccdev->waiting_process);
-    }
 
-
-    uint32_t rem = ccdev->kb_buf.remaining;
-    uint32_t offset = ccdev->kb_buf.offset;
-
-    uint32_t n = (size < rem) ? size : rem;
-
-    ccdev->kb_buf.remaining -= n;
-
-    char *cbuf = (char *)buf;
-    char *kb_cbuf = (char *)ccdev->kb_buf.buf;
-
-    int i;
-    for(i = 0; i < n; i++) {
-        cbuf[i] = kb_cbuf[(offset - rem + i) % KB_BUF_SIZE];
-    }
-
-    return n;
+    return copy_from_circ_buff((char *)buf, &ccdev->kb_buf, size, KB_BUF_SIZE);
 }
 
 sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
