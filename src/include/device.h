@@ -3,7 +3,8 @@
 
 #include <tipos.h>
 
-#define DEVICE_CON_CHARDEV 1
+#define DEVICE_CON_CHARDEV      1
+#define DEVICE_SERIAL_CHARDEV   2
 
 /* Devices */
 typedef struct str_dev device;

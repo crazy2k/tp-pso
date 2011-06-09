@@ -11,6 +11,7 @@
 #include <con.h>
 #include <utils.h>
 #include <kb.h>
+#include <serial.h>
 
 
 typedef void (*isr_t)(uint32_t index, uint32_t error_code, task_state_t *st);
@@ -54,7 +55,7 @@ void idt_init(void) {
     remap_PIC(PIC1_OFFSET, PIC2_OFFSET);
 
     // Desenmascaramos interrupciones en el PIC
-    outb(PIC1_DATA, ~PIC_COM13);
+    outb(PIC1_DATA, ~(PIC_COM13));
 }
 
 /* ``idt_register()`` existe por compatibilidad con el codigo original, pero
@@ -175,5 +176,5 @@ static void keyboard_isr(uint32_t index, uint32_t error_code,
 }
 
 static void serial_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
-    breakpoint();
+    serial_recv();
 }

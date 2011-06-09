@@ -4,8 +4,15 @@
 #include <isr.h>
 #include <pic.h>
 #include <debug.h>
+#include <utils.h>
+#include <mm.h>
 
-#define SP_PORT 0x03F8
+#define MAX_SERIAL_CHARDEVS 4
+
+#define COM1_PORT 0x03F8
+#define COM2_PORT 0x02F8
+#define COM3_PORT 0x03E8
+#define COM4_PORT 0x02E8
 
 /* Serial Controler sub-SP_PORTs */
 #define PORT_DATA  0 /* R/W - DATA flow */
@@ -76,8 +83,20 @@
 #define IE_RLS   0x04 /* Int Enable: Receiver Line Status */
 #define IE_MODEM 0x08 /* Int Enable: MODEM Status */
 
+#define BUF_SIZE 1024
 
-/** Char device **/
+static serial_chardev serial_chardevs[MAX_SERIAL_CHARDEVS];
+
+static void initialize_serial_chardev(serial_chardev *scdev, uint16_t port);
+static void initialize_serial_port(uint16_t port);
+static void recv_byte(serial_chardev *scdev);
+
+
+void serial_init() {
+    memset(serial_chardevs, 0, sizeof(serial_chardevs));
+
+    initialize_serial_chardev(&serial_chardevs[0], COM1_PORT);
+}
 
 sint_32 serial_read(chardev* this, void* buf, uint_32 size) {
 	return 0;
@@ -91,30 +110,81 @@ uint_32 serial_flush(chardev* this) {
 	return 0;
 }
 
-chardev* serial_open(int nro) { /* 0 para COM1, 1 para COM2, ... */
+chardev *serial_open(int no) { /* 0 para COM1, 1 para COM2, ... */
+    if (no < 0 || no > 3)
+        return NULL;
 
-	return NULL;
+    return (chardev *)(&serial_chardevs[no]);
 }
 
-/** Init **/
-void serial_init() {
+static void initialize_serial_chardev(serial_chardev *scdev, uint16_t port) {
+    /*
+     * Inicializamos el serial_chardev
+     */
+
+    scdev->clase = DEVICE_SERIAL_CHARDEV;
+    scdev->refcount = 0;
+    scdev->flush = serial_flush;
+    scdev->read = serial_read;
+    scdev->write = serial_write;
+
+    scdev->port = port;
+
+    scdev->buf = mm_mem_kalloc();
+    scdev->buf_offset = 0;
+    scdev->buf_remaining = 0;
+
+    // Inicializamos el puerto serie
+    initialize_serial_port(port);
+}
+
+static void initialize_serial_port(uint16_t port) {
     // Desactivamos interrupciones
-    outb(SP_PORT + PORT_IER, 0x00); 
+    outb(port + PORT_IER, 0x00); 
 
     // Encendemos DLAB (Divisor Latch Access Bit)
-    outb(SP_PORT + PORT_LCTRL, LC_DLAB);
+    outb(port + PORT_LCTRL, LC_DLAB);
     // Escribimos el divisor
-    outb(SP_PORT + PORT_DL_LSB, 0x03);
-    outb(SP_PORT + PORT_DL_MSB, 0x00);
+    outb(port + PORT_DL_LSB, 0x0C);
+    outb(port + PORT_DL_MSB, 0x00);
 
     // Elegimos: caracteres de 8 bits, 1 stop it, sin parity, sin break.
-    outb(SP_PORT + PORT_LCTRL, LC_BIT8);
+    outb(port + PORT_LCTRL, LC_BIT8);
 
-    // Activamos FIFOs, los limpiamos, y ponemos 14 bytes para la ocurrencia
-    // de la interrupcion
-    outb(SP_PORT + PORT_FCTRL, FC_FIFO | FC_CL_RCVFIFO | FC_CL_XMTFIFO |
-        FC_TRIGGER_14);
+    // No usamos los FIFOs
+    outb(port + PORT_FCTRL, 0);
 
     // Marcamos Data Terminal Ready, Request to Send, OUT2
-    outb(SP_PORT + PORT_MCTRL, 0x0B);
+    outb(port + PORT_MCTRL, 0x0B);
+
+    outb(port + PORT_IER, IE_RDA);
+}
+
+#define SERIAL_RECVD(port) (inb((port) + PORT_LSTAT) & 1)
+void serial_recv() {
+    if (SERIAL_RECVD(COM1_PORT)) {
+        recv_byte(&serial_chardevs[0]);
+    } else if (SERIAL_RECVD(COM2_PORT)) {
+        recv_byte(&serial_chardevs[1]);
+    } else if (SERIAL_RECVD(COM3_PORT)) {
+        recv_byte(&serial_chardevs[2]);
+    } else if (SERIAL_RECVD(COM4_PORT)) {
+        recv_byte(&serial_chardevs[3]);
+    }
+}
+
+static void recv_byte(serial_chardev *scdev) {
+    if (scdev->clase != DEVICE_SERIAL_CHARDEV) {
+        breakpoint();
+        return;
+    }
+
+    uint8_t b = inb(scdev->port);
+
+    scdev->buf_remaining = (scdev->buf_remaining == BUF_SIZE) ?
+        BUF_SIZE : scdev->buf_remaining + 1;
+
+    ((uint8_t *)scdev->buf)[scdev->buf_offset] = b;
+
+    scdev->buf_offset = (scdev->buf_offset + 1) % BUF_SIZE;
 }
