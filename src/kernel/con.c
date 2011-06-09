@@ -44,6 +44,7 @@ chardev* con_open(void) {
     ccdev->kb_buf = mm_mem_kalloc();
     ccdev->kb_buf_offset = 0;
     ccdev->kb_buf_remaining = 0;
+    ccdev->waiting_process = -1;
 
     ccdev->current_attr = 0x0F;
 
@@ -60,6 +61,11 @@ sint_32 con_read(chardev *this, void *buf, uint_32 size) {
         return -1;
 
     con_chardev *ccdev = (con_chardev *)this;
+
+    while (ccdev->kb_buf_remaining == 0) {
+        loader_enqueue(&ccdev->waiting_process);
+    }
+
 
     uint32_t rem = ccdev->kb_buf_remaining;
     uint32_t offset = ccdev->kb_buf_offset;
@@ -131,13 +137,14 @@ void con_focus(con_chardev *con) {
 }
 
 void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
-    ccdev->kb_buf_offset = (ccdev->kb_buf_offset + 1) % KB_BUF_SIZE;
-    ccdev->kb_buf_remaining = (ccdev->kb_buf_remaining == KB_BUF_SIZE)?
+    ccdev->kb_buf_remaining = (ccdev->kb_buf_remaining == KB_BUF_SIZE) ?
         KB_BUF_SIZE : ccdev->kb_buf_remaining + 1;
 
-    uint8_t *out = (uint8_t *)(ccdev->kb_buf + ccdev->kb_buf_offset);
-    *out = b;
+    ((uint8_t *)ccdev->kb_buf)[ccdev->kb_buf_offset] = b;
 
+    ccdev->kb_buf_offset = (ccdev->kb_buf_offset + 1) % KB_BUF_SIZE;
+
+    loader_unqueue(&ccdev->waiting_process);
 }
 
 con_chardev *con_get_current_console() {

@@ -225,10 +225,12 @@ void loader_enqueue(int *cola) {
 }
 
 void loader_unqueue(int *cola) {
-    pcb *queue = &pcbs[*cola];
-    pcb *pcb = POP(&queue);
+    if (*cola != -1) {
+        pcb *queue = &pcbs[*cola];
+        pcb *pcb = POP(&queue);
 
-    sched_unblock(get_pid(pcb));
+        sched_unblock(get_pid(pcb));
+    }
 }
 
 void loader_exit(void) {

@@ -1,4 +1,5 @@
 #define IS_KEY_RELEASE(b) ((b) & KB_RELEASE_BASE)
+#define MASK_RELEASE(b) ((b) & ~KB_RELEASE_BASE)
 #define KB_RELEASE_BASE 0x80
 #define KB_KC_SPECIAL_BASE KB_RELEASE_BASE
 #define KB_KC_NULL 0x0

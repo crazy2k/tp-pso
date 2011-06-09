@@ -1,5 +1,6 @@
 #include <con.h>
 #include <kb.h>
+#include <vga.h>
 
 #define KB_STATUS_SHIFT 0x0001
 #define KB_STATUS_ALT 0x0002
@@ -50,7 +51,7 @@ static char sc2kc(uint8_t sc) {
 void kb_process_byte(uint8_t b) {
     uint32_t mask = 0; 
 
-    uint8_t kc = sc2kc(b | ~KB_RELEASE_BASE);
+    uint8_t kc = sc2kc(MASK_RELEASE(b));
     switch (kc) {
         case KB_KC_LSHIFT:
         case KB_KC_RSHIFT:
