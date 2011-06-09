@@ -4,6 +4,7 @@
 #include <utils.h>
 #include <mm.h>
 #include <debug.h>
+#include <loader.h>
 
 #define MAX_CON_CHARDEVS 16
 #define KB_BUF_SIZE 1024
