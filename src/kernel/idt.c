@@ -139,5 +139,4 @@ static void keyboard_isr(uint32_t index, uint32_t error_code,
     task_state_t *st) {
 
     kb_process_byte(inb(0x60));
-    breakpoint();
 }
