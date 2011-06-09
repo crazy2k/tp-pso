@@ -9,6 +9,7 @@
 #include <syscalls.h>
 #include <i386.h>
 #include <con.h>
+#include <serial.h>
 
 extern void* _end;
 /* Entry-point del modo protegido luego de cargar los registros de
@@ -16,6 +17,7 @@ extern void* _end;
 void kernel_init(void) {
     vga_init();
     idt_init();
+    serial_init();
     debug_init();
     mm_init();
     sched_init();

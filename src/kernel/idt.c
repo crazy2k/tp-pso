@@ -43,7 +43,7 @@ void idt_init(void) {
     remap_PIC(PIC1_OFFSET, PIC2_OFFSET);
 
     // Desenmascaramos interrupciones en el PIC
-    outb(PIC1_DATA, PIC_ALL_ENABLED);
+    outb(PIC1_DATA, ~PIC_COM13);
 }
 
 /* ``idt_register()`` existe por compatibilidad con el codigo original, pero
@@ -90,12 +90,13 @@ void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     }
     else if (index == IDT_INDEX_KB)
         keyboard_isr(index, error_code, st);
+    else if (index == IDT_INDEX_COM13)
+        breakpoint();
 
     else if (index == IDT_INDEX_SYSC) {
         syscall_caller(index, error_code, st);
     }
     else {
-        breakpoint();
         debug_kernelpanic(st, index, error_code);
     }
 }

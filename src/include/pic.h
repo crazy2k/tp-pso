@@ -35,6 +35,8 @@
 
 #define PIC_TIMER       0x1
 #define PIC_KB          0x2
+#define PIC_COM24       0x4
+#define PIC_COM13       0x5
 
 /*
 #define PIC_ALL_ENABLED ((~PIC_TIMER))
