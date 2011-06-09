@@ -137,12 +137,12 @@ void con_focus(con_chardev *con) {
 }
 
 void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
-    ccdev->kb_buf_offset = (ccdev->kb_buf_offset + 1) % KB_BUF_SIZE;
     ccdev->kb_buf_remaining = (ccdev->kb_buf_remaining == KB_BUF_SIZE) ?
         KB_BUF_SIZE : ccdev->kb_buf_remaining + 1;
 
-    uint8_t *out = (uint8_t *)(ccdev->kb_buf + ccdev->kb_buf_offset);
-    *out = b;
+    ((uint8_t *)ccdev->kb_buf)[ccdev->kb_buf_offset] = b;
+
+    ccdev->kb_buf_offset = (ccdev->kb_buf_offset + 1) % KB_BUF_SIZE;
 
     loader_unqueue(&ccdev->waiting_process);
 }

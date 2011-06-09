@@ -39,7 +39,7 @@
 /*
 #define PIC_ALL_ENABLED ((~PIC_TIMER))
 */
-#define PIC_ALL_ENABLED ((~PIC_TIMER) & (~PIC_KB))
+#define PIC_ALL_ENABLED (~(PIC_TIMER | PIC_KB))
 
 void remap_PIC(char offset1, char offset2);
 void pic_reset(uint_8 addr_pic1, uint_8 addr_pic2);
