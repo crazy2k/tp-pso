@@ -11,18 +11,25 @@
 #include <con.h>
 #include <utils.h>
 #include <kb.h>
+#include <serial.h>
 
+
+typedef void (*isr_t)(uint32_t index, uint32_t error_code, task_state_t *st);
 
 // IDT e idtr
 uint64_t idt[IDT_LENGTH] = {0};
 idtr_t idtr = { .size = sizeof(idt) - 1, .addr = idt };
+isr_t isrs[IDT_LENGTH] = {NULL};
 
 extern void (*idt_stateful_handlers[IDT_LENGTH])();
 
-static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
-    *st);
+static int register_isr(uint32_t index, isr_t isr);
+static void timer_isr(uint32_t index, uint32_t error_code, task_state_t *st);
 static void keyboard_isr(uint32_t index, uint32_t error_code,
     task_state_t *st);
+static void serial_isr(uint32_t index, uint32_t error_code, task_state_t *st);
+static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
+    *st);
 
 void idt_init(void) {
     // Configuramos los handlers en la IDT
@@ -36,6 +43,11 @@ void idt_init(void) {
             idt_set_handler(i, idt_stateful_handlers[i], IDT_DESC_P | IDT_DESC_D |
                 IDT_DESC_INT | IDT_DESC_DPL(0));
     }
+
+    register_isr(IDT_INDEX_TIMER, timer_isr);
+    register_isr(IDT_INDEX_KB, keyboard_isr);
+    register_isr(IDT_INDEX_COM13, serial_isr);
+    register_isr(IDT_INDEX_SYSC, syscall_caller);
 
     // Cargamos la IDT
     lidt(&idtr);
@@ -81,23 +93,40 @@ int idt_set_handler(uint32_t index, void (*handler)(), uint64_t attr) {
     return 0;
 }
 
+/* Registra una rutina de atencion ``isr`` para la excepcion/interrupcion cuyo
+ * indice en la IDT es ``index``.
+ *
+ * Si el indice pasado es incorrecto, se devuelve IDT_BAD_INDEX. Si la
+ * excepcion/interrupcion ya tiene una rutina de atencion registrada, devuelve
+ * IDT_BUSY. Si no hay problemas con el registro, devuelve 0.
+ */
+static int register_isr(uint32_t index, isr_t isr) {
+
+    // Chequeamos si el numero de irq es valido
+    if ((index < 0) || (index > IDT_LAST_INDEX))
+        return IDT_BAD_INDEX;
+
+    // Chequeamos si la interrupcion ya esta siendo atendida
+    if (isrs[index] != NULL)
+        return IDT_BUSY;
+
+    isrs[index] = isr;
+
+    return 0;
+}
+
+static void default_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
+    debug_kernelpanic(st, index, error_code);
+}
+
 void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     outb(PIC1_COMMAND, OCW2);
 
-    if (index == IDT_INDEX_TIMER) {
-        pid pid = sched_tick();
-        loader_switchto(pid);
-    }
-    else if (index == IDT_INDEX_KB)
-        keyboard_isr(index, error_code, st);
+    if (isrs[index] == NULL)
+        default_isr(index, error_code, st);
+    else
+        isrs[index](index, error_code, st);
 
-    else if (index == IDT_INDEX_SYSC) {
-        syscall_caller(index, error_code, st);
-    }
-    else {
-        breakpoint();
-        debug_kernelpanic(st, index, error_code);
-    }
 }
 
 static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
@@ -135,8 +164,17 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
     }
 }
 
+static void timer_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
+    pid pid = sched_tick();
+    loader_switchto(pid);
+}
+
 static void keyboard_isr(uint32_t index, uint32_t error_code,
     task_state_t *st) {
 
     kb_process_byte(inb(0x60));
+}
+
+static void serial_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
+    serial_recv();
 }
