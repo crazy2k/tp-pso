@@ -13,6 +13,7 @@
 #define SYSCALLS_NUM_CLOSE 7
 #define SYSCALLS_NUM_OPENCON 8
 #define SYSCALLS_NUM_NEXTCON 9
+#define SYSCALLS_NUM_PREVCON 10
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -47,8 +48,9 @@
     int write(int fd, const void *buf, uint32_t size);
     int seek(int fd, uint32_t size);
     int close(int fd);
-    int opencon();
-    void nextcon();
+    int open_console();
+    void next_console();
+    void prev_console();
 
 
 #endif
