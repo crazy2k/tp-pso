@@ -49,6 +49,9 @@ chardev* con_open(void) {
 
     APPEND(&open_con_chardevs, ccdev);
 
+    if (!con_get_current_console())
+        con_focus(ccdev);
+
     return (chardev *)ccdev;
 }
 
