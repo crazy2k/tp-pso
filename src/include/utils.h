@@ -4,6 +4,13 @@
 
 #include "tipos.h"
 
+typedef struct {
+    void *buf;
+    uint32_t offset;
+    uint32_t remaining;
+} circular_buf_t;
+
+
 void *memcpy(void *dest, const void *src, size_t n);
 
 void *memset(void * ptr, int value, size_t num);
