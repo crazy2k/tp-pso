@@ -114,5 +114,7 @@ void serial_init() {
     // de la interrupcion
     outb(SP_PORT + PORT_FCTRL, FC_FIFO | FC_CL_RCVFIFO | FC_CL_XMTFIFO |
         FC_TRIGGER_14);
-}
 
+    // Marcamos Data Terminal Ready, Request to Send, OUT2
+    outb(SP_PORT + PORT_MCTRL, 0x0B);
+}
