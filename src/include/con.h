@@ -20,7 +20,6 @@ struct con_chardev {
     void *kb_buf;
     uint32_t kb_buf_offset;
     uint32_t kb_buf_remaining;
-    uint32_t kb_buf_status;
 
     uint8_t current_attr;
 
