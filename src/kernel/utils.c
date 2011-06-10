@@ -84,7 +84,7 @@ char sc2ascii(unsigned char sc) {
 
 
 
-int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size) {
+int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size) {
     uint32_t n = (size < cbuf->remaining) ? size : cbuf->remaining;
 
     cbuf->remaining -= n;
@@ -100,11 +100,11 @@ int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
 
 
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size) {
-    copy_to_circ_buff(cbuf, &src, 1, buf_size);
+    write_to_circ_buff(cbuf, &src, 1, buf_size);
 }
 
 
-int copy_to_circ_buff(circular_buf_t *cbuf, char *src, uint32_t size, uint32_t buf_size) {
+int write_to_circ_buff(circular_buf_t *cbuf, char *src, uint32_t size, uint32_t buf_size) {
     char *kb_cbuf = (char *)cbuf->buf;
 
     int i;

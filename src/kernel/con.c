@@ -69,7 +69,7 @@ sint_32 con_read(chardev *this, void *buf, uint_32 size) {
     while (ccdev->kb_buf.remaining == 0)
         loader_enqueue(&ccdev->waiting_process);
 
-    return copy_from_circ_buff((char *)buf, &ccdev->kb_buf, size, KB_BUF_SIZE);
+    return read_from_circ_buff((char *)buf, &ccdev->kb_buf, size, KB_BUF_SIZE);
 }
 
 sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
