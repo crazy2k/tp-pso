@@ -85,9 +85,7 @@ char sc2ascii(unsigned char sc) {
 
 
 int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size) {
-    uint32_t rem = cbuf->remaining;
-
-    uint32_t n = (size < rem) ? size : rem;
+    uint32_t n = (size < cbuf->remaining) ? size : cbuf->remaining;
 
     cbuf->remaining -= n;
 
@@ -95,7 +93,7 @@ int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
 
     int i;
     for(i = 0; i < n; i++) 
-        dst[i] = kb_cbuf[(cbuf->offset - rem + i) % buf_size]; 
+        dst[i] = kb_cbuf[(cbuf->offset - cbuf->remaining + i) % buf_size]; 
 
     return i;
 }
