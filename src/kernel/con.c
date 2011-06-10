@@ -42,9 +42,11 @@ chardev* con_open(void) {
     ccdev->screen_buf_offset = 0;
     ccdev->focused = FALSE;
 
-    ccdev->kb_buf.buf = mm_mem_kalloc();
-    ccdev->kb_buf.offset = 0;
-    ccdev->kb_buf.remaining = 0;
+    ccdev->kb_buf = ((circular_buf_t) { 
+        .buf = mm_mem_kalloc(),
+        .offset = 0,
+        .remaining = 0
+    });
 
     ccdev->waiting_process = -1 ;
 
