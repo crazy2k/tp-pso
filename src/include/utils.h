@@ -27,6 +27,7 @@ char sc2ascii(unsigned char sc);
 
 int copy_to_circ_buff(circular_buf_t *cbuf, char* src, uint32_t size, uint32_t buf_size);
 int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size);
+void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 
 
 #define LINK_NODES(fst, sec) \
