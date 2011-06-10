@@ -99,14 +99,8 @@ int copy_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
 }
 
 
-
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size) {
-    cbuf->remaining = (cbuf->remaining == buf_size) ?
-        buf_size : cbuf->remaining + 1;
-
-    ((uint8_t *)cbuf->buf)[cbuf->offset] = src;
-
-    cbuf->offset = (cbuf->offset + 1) % buf_size;
+    copy_to_circ_buff(cbuf, &src, 1, buf_size);
 }
 
 
