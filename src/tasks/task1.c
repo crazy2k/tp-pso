@@ -4,7 +4,6 @@
 int main(void) {
 
    // __asm__ __volatile__("xchg %bx, %bx");
-
     
     int con = open_console();
 
