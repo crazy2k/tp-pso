@@ -26,6 +26,7 @@ typedef sint_32 pid;
 #define __LOW2_BITS__ 0x00000003
 #define __LOW16_BITS__ 0x0000FFFF
 #define __LOW12_BITS__ 0x00000FFF
+#define __LOW28_BITS__ 0x0FFFFFFF
 #define __HIGH16_BITS__ 0xFFFF0000
 #define __16_23_BITS__ 0x00FF0000
 #define __24_31_BITS__ 0xFF000000

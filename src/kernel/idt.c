@@ -12,6 +12,7 @@
 #include <utils.h>
 #include <kb.h>
 #include <serial.h>
+#include <hdd.h>
 
 
 typedef void (*isr_t)(uint32_t index, uint32_t error_code, task_state_t *st);
@@ -30,6 +31,9 @@ static void keyboard_isr(uint32_t index, uint32_t error_code,
 static void serial_isr(uint32_t index, uint32_t error_code, task_state_t *st);
 static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
     *st);
+static void primary_hdd_isr(uint32_t index, uint32_t error_code, task_state_t
+    *st);
+
 
 void idt_init(void) {
     // Configuramos los handlers en la IDT
@@ -48,6 +52,7 @@ void idt_init(void) {
     register_isr(IDT_INDEX_KB, keyboard_isr);
     register_isr(IDT_INDEX_COM13, serial_isr);
     register_isr(IDT_INDEX_SYSC, syscall_caller);
+    register_isr(IDT_INDEX_HDD_PRIMARY, primary_hdd_isr);
 
     // Cargamos la IDT
     lidt(&idtr);
@@ -177,4 +182,10 @@ static void keyboard_isr(uint32_t index, uint32_t error_code,
 
 static void serial_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
     serial_recv();
+}
+
+static void primary_hdd_isr(uint32_t index, uint32_t error_code,
+    task_state_t *st) {
+
+    hdd_recv();
 }

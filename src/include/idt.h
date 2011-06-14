@@ -17,13 +17,15 @@ extern idtr_t idtr;
 
 // Indices de interrupciones y excepciones
 
-#define IDT_INDEX_GP    13ul
-#define IDT_INDEX_PF    14ul
-#define IDT_INDEX_TIMER 32ul
-#define IDT_INDEX_KB    33ul
-#define IDT_INDEX_COM24 35ul
-#define IDT_INDEX_COM13 36ul
-#define IDT_INDEX_SYSC  0x30ul
+#define IDT_INDEX_GP            13ul
+#define IDT_INDEX_PF            14ul
+#define IDT_INDEX_TIMER         32ul
+#define IDT_INDEX_KB            33ul
+#define IDT_INDEX_COM24         35ul
+#define IDT_INDEX_COM13         36ul
+#define IDT_INDEX_SYSC          0x30ul
+#define IDT_INDEX_HDD_PRIMARY   46ul
+#define IDT_INDEX_HDD_SECONDARY 47ul
 
 // Campos de descriptores de la IDT
 
