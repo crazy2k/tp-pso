@@ -3,6 +3,7 @@
 
 #include <tipos.h>
 #include <device.h>
+#include <utils.h>
 
 #ifdef __KERNEL__
 
@@ -17,13 +18,8 @@ struct serial_chardev {
 
     uint16_t port;
 
-    void *buf;
-    uint32_t buf_offset;
-    uint32_t buf_remaining;
-    uint32_t buf_status;
-
-    serial_chardev *next;
-    serial_chardev *prev;
+    circular_buf_t buf;
+    int waiting_process;
 }__attribute__((__packed__));
 
 

@@ -6,6 +6,9 @@
 #include <debug.h>
 #include <utils.h>
 #include <mm.h>
+#include <loader.h>
+
+#define BUF_SIZE 1024
 
 #define MAX_SERIAL_CHARDEVS 4
 
@@ -99,15 +102,45 @@ void serial_init() {
 }
 
 sint_32 serial_read(chardev* this, void* buf, uint_32 size) {
-	return 0;
+    if (this->clase != DEVICE_SERIAL_CHARDEV)
+        return -1;
+
+    serial_chardev *scdev = (serial_chardev *)this;
+
+    while (scdev->buf.remaining == 0)
+        loader_enqueue(&scdev->waiting_process);
+
+    return read_from_circ_buff((char *)buf, &scdev->buf, size,
+        BUF_SIZE);
 }
 
-sint_32 serial_write(chardev* this, const void* buf, uint_32 size) {
-	return 0;
+#define TRANSMITTER_EMPTY(port) (inb((port) + PORT_LSTAT) & 0x20)
+sint_32 serial_write(chardev *this, const void *buf, uint_32 size) {
+    if (this->clase != DEVICE_SERIAL_CHARDEV)
+        return -1;
+
+    serial_chardev *scdev = (serial_chardev *)this;
+    uint8_t *cbuf = (uint8_t *)buf;
+
+    int i;
+    for (i = 0; i < size; i++) {
+        while (!TRANSMITTER_EMPTY(scdev->port));
+
+        outb(scdev->port, cbuf[i]);
+    }
+
+	return size;
 }
 
 uint_32 serial_flush(chardev* this) {
-	return 0;
+    if (this->clase != DEVICE_SERIAL_CHARDEV)
+        return -1;
+
+    serial_chardev *scdev = (serial_chardev *)this;
+
+    mm_mem_free(scdev->buf.buf);
+
+    return 0;
 }
 
 chardev *serial_open(int no) { /* 0 para COM1, 1 para COM2, ... */
@@ -130,9 +163,11 @@ static void initialize_serial_chardev(serial_chardev *scdev, uint16_t port) {
 
     scdev->port = port;
 
-    scdev->buf = mm_mem_kalloc();
-    scdev->buf_offset = 0;
-    scdev->buf_remaining = 0;
+    scdev->buf = ((circular_buf_t) {
+        .buf = mm_mem_kalloc(),
+        .offset = 0,
+        .remaining = 0
+    });
 
     // Inicializamos el puerto serie
     initialize_serial_port(port);
@@ -140,7 +175,7 @@ static void initialize_serial_chardev(serial_chardev *scdev, uint16_t port) {
 
 static void initialize_serial_port(uint16_t port) {
     // Desactivamos interrupciones
-    outb(port + PORT_IER, 0x00); 
+    outb(port + PORT_IER, 0x00);
 
     // Encendemos DLAB (Divisor Latch Access Bit)
     outb(port + PORT_LCTRL, LC_DLAB);
@@ -181,10 +216,5 @@ static void recv_byte(serial_chardev *scdev) {
 
     uint8_t b = inb(scdev->port);
 
-    scdev->buf_remaining = (scdev->buf_remaining == BUF_SIZE) ?
-        BUF_SIZE : scdev->buf_remaining + 1;
-
-    ((uint8_t *)scdev->buf)[scdev->buf_offset] = b;
-
-    scdev->buf_offset = (scdev->buf_offset + 1) % BUF_SIZE;
+    put_char_to_circ_buff(&scdev->buf, b, BUF_SIZE);
 }
