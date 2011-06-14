@@ -1,4 +1,5 @@
-#include  <syscalls.h>
+#include <user/syscalls.h>
+#include <user/con.h>
 
 int main(void) {
 
