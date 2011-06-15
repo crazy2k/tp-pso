@@ -12,13 +12,13 @@ void con_print(uint32_t console, char* src, int size) {
 }
 
 int con_scan(uint32_t console, char* dest, int size) {
-    int result = 0, i readed;
+    int result = 0, i, chars;
     char chr;
 
     while (TRUE) { 
-        readed = read(console, console_read_buff, READ_BUFF_SIZE);
+        chars = read(console, console_read_buff, READ_BUFF_SIZE);
 
-        for (i = 0; < readed; i++) {
+        for (i = 0; < chars; i++) {
             chr = console_read_buff[i]
 
             switch (chr) {
