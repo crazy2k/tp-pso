@@ -34,7 +34,7 @@ blockdev* hdd_open(int nro);
 
 void hdd_init(void);
 
-void hdd_recv();
+void hdd_recv_primary();
 
 #endif
 

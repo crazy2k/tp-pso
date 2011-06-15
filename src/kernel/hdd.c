@@ -41,6 +41,7 @@
 
 
 static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id);
+static void hdd_recv(hdd_blockdev *hbdev);
 
 static hdd_blockdev hdd_blockdevs[MAX_HDD_BLOCKDEVS];
 
@@ -133,6 +134,27 @@ static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type) {
     });
 }
 
-void hdd_recv() {
+void hdd_recv_primary() {
+    uint8_t drive = inb(PRIMARY_BASE + PORT_DRIVE);
 
+    enum type t;
+    if (drive & 1)
+        t = PRIMARY_SLAVE;
+    else
+        t = PRIMARY_MASTER;
+
+    hdd_recv(&hdd_blockdevs[t]);
+}
+
+static void hdd_recv(hdd_blockdev *hbdev) {
+    uint16_t base = GET_BASE(hbdev);
+
+    uint8_t status = inb(base + PORT_COMMAND);
+
+    int i;
+    for (i = 0; i < (hbdev->size/sizeof(uint16_t)); i++) {
+        uint16_t w = inw(base + PORT_DATA);
+        put_char_to_circ_buff(&hbdev->buf, (uint8_t)w, BUF_SIZE);
+        put_char_to_circ_buff(&hbdev->buf, (uint8_t)(w >> 8), BUF_SIZE);
+    }
 }

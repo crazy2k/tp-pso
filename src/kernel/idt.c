@@ -187,5 +187,5 @@ static void serial_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
 static void primary_hdd_isr(uint32_t index, uint32_t error_code,
     task_state_t *st) {
 
-    hdd_recv();
+    hdd_recv_primary();
 }
