@@ -124,8 +124,11 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
     return read_from_circ_buff((char *)buf, &hbdev->buf, size, BUF_SIZE);
 }
 
-blockdev *hdd_open(int nro) {
-    return 0;
+blockdev *hdd_open(int no) {
+    if (no < 0 || no > 3)
+        return NULL;
+
+    return (blockdev *)(&hdd_blockdevs[no]);
 }
 
 static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type) {
