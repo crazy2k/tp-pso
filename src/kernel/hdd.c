@@ -3,11 +3,14 @@
 #include <i386.h>
 #include <loader.h>
 #include <mm.h>
+#include <vga.h>
 
 
 #define MAX_HDD_BLOCKDEVS 4
 
 #define BUF_SIZE 4096
+
+#define SECTOR_SIZE 512
 
 /*
 #define PRIMARY_MASTER_ID   0
@@ -100,8 +103,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     outb(base + PORT_FEATURES, NULL);
 
-    // XXX: De momento dejamos 2 sectores para probar
-    outb(base + PORT_SECTOR_COUNT, 2);
+    outb(base + PORT_SECTOR_COUNT, size/SECTOR_SIZE);
 
     outb(base + PORT_SECTOR_NUMBER, (uint8_t)lba);
     outb(base + PORT_CYLINDER_LO, (uint8_t)(lba >> 8));
@@ -125,7 +127,7 @@ static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type) {
     hbdev->flush = NULL;
     hbdev->read = hdd_block_read;
     hbdev->write = hdd_block_write;
-    hbdev->size = 512;
+    hbdev->size = SECTOR_SIZE;
     hbdev->type = type;
     hbdev->buf = ((circular_buf_t) {
         .buf = mm_mem_kalloc(),
