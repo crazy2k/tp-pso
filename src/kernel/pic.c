@@ -55,3 +55,26 @@ void remap_PIC(char offset1, char offset2) {
 }
 
 
+void pic_set_mask(uint8_t line) {
+    uint16_t port;
+
+    if (line < 8)
+        port = PIC1_DATA;
+    else {
+        port = PIC2_DATA;
+        line -= 8;
+    }
+    outb(port, (inb(port) | (1 << line)));
+}
+
+void pic_clear_mask(uint8_t line) {
+    uint16_t port;
+
+    if (line < 8) {
+        port = PIC1_DATA;
+    } else {
+        port = PIC2_DATA;
+        line -= 8;
+    }
+    outb(port, (inb(port) & ~(1 << line)));
+}

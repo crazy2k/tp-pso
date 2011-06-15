@@ -33,20 +33,20 @@
 #define PIC1_OFFSET 0x20
 #define PIC2_OFFSET 0x28
 
-#define PIC_TIMER       0x1
-#define PIC_KB          0x2
-#define PIC_COM24       0x8
-#define PIC_COM13       0x10
-
-/*
-#define PIC_ALL_ENABLED ((~PIC_TIMER))
-*/
-#define PIC_ALL_ENABLED (~(PIC_TIMER | PIC_KB | PIC_COM13))
+#define PIC_TIMER           0
+#define PIC_KB              1
+#define PIC_SLAVE           2
+#define PIC_COM24           3
+#define PIC_COM13           4
+#define PIC_PRIMARY_HDD     14
+#define PIC_SECONDARY_HDD   15
 
 void remap_PIC(char offset1, char offset2);
 void pic_reset(uint_8 addr_pic1, uint_8 addr_pic2);
 void pic_enable();
 void pic_disable();
+void pic_set_mask(uint8_t line);
+void pic_clear_mask(uint8_t line);
 
 
 #endif
