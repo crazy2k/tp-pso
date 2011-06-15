@@ -129,6 +129,7 @@ static void default_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
 
 void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
     outb(PIC1_COMMAND, OCW2);
+    outb(PIC2_COMMAND, OCW2);
 
     if (isrs[index] == NULL)
         default_isr(index, error_code, st);
