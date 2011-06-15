@@ -169,4 +169,6 @@ static void hdd_recv(hdd_blockdev *hbdev) {
         put_char_to_circ_buff(&hbdev->buf, (uint8_t)w, BUF_SIZE);
         put_char_to_circ_buff(&hbdev->buf, (uint8_t)(w >> 8), BUF_SIZE);
     }
+
+    loader_unqueue(&hbdev->waiting_process);
 }
