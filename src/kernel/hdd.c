@@ -60,31 +60,38 @@ sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 si
     return -1; //Opcional
 }
 
-static uint16_t get_base(hdd_blockdev *hbdev) {
-    switch (hbdev->type) {
-        case PRIMARY_MASTER:
-        case PRIMARY_SLAVE:
-            return PRIMARY_BASE;
-        case SECONDARY_MASTER:
-        case SECONDARY_SLAVE:
-            return SECONDARY_BASE;
-        default:
-            return NULL;
-    }
-}
 
-static bool is_master(hdd_blockdev *hbdev) {
-    switch (hbdev->type) {
-        case PRIMARY_MASTER:
-        case SECONDARY_MASTER:
-            return TRUE;
-        case PRIMARY_SLAVE:
-        case SECONDARY_SLAVE:
-            return FALSE;
-        default:
-            return FALSE;
-    }
-}
+#define GET_BASE(hbdev) \
+    ({ \
+        uint16_t _base = NULL; \
+        switch ((hbdev)->type) { \
+            case PRIMARY_MASTER: \
+            case PRIMARY_SLAVE: \
+                _base = PRIMARY_BASE; \
+                break; \
+            case SECONDARY_MASTER: \
+            case SECONDARY_SLAVE: \
+                _base = SECONDARY_BASE; \
+                break; \
+        } \
+        _base; \
+    })
+
+#define IS_MASTER(hbdev) \
+    ({ \
+        bool _is_master = FALSE; \
+        switch (hbdev->type) { \
+            case PRIMARY_MASTER: \
+            case SECONDARY_MASTER: \
+                _is_master = TRUE; \
+                break; \
+            case PRIMARY_SLAVE: \
+            case SECONDARY_SLAVE: \
+                _is_master = FALSE; \
+                break; \
+        } \
+        _is_master; \
+    })
 
 #define LBA_HIGHEST_4BITS(lba) ((uint8_t)(((lba) >> 24) & 0x0F))
 // ``pos`` es un LBA de 28 bits
@@ -96,9 +103,9 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
     hdd_blockdev *hbdev = (hdd_blockdev *)this;
 
     uint32_t lba = pos & __LOW28_BITS__;
-    uint16_t base = get_base(hbdev);
+    uint16_t base = GET_BASE(hbdev);
 
-    uint32_t drive_data = (is_master(hbdev)) ? 0xE0 : 0xF0;
+    uint32_t drive_data = (IS_MASTER(hbdev)) ? 0xE0 : 0xF0;
     outb(base + PORT_DRIVE, LBA_HIGHEST_4BITS(lba) | drive_data);
 
     outb(base + PORT_FEATURES, NULL);
