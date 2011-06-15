@@ -82,12 +82,10 @@ char sc2ascii(unsigned char sc) {
     return sc2ascii_table[idx];
 }
 
+int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size,
+    uint32_t buf_size) {
 
-
-int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size) {
     uint32_t n = (size < cbuf->remaining) ? size : cbuf->remaining;
-
-    cbuf->remaining -= n;
 
     char *kb_cbuf = (char *)cbuf->buf;
 
@@ -95,9 +93,10 @@ int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
     for(i = 0; i < n; i++) 
         dst[i] = kb_cbuf[(cbuf->offset - cbuf->remaining + i) % buf_size]; 
 
+    cbuf->remaining -= n;
+
     return i;
 }
-
 
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size) {
     write_to_circ_buff(cbuf, &src, 1, buf_size);
