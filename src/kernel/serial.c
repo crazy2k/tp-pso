@@ -215,6 +215,7 @@ static void recv_byte(serial_chardev *scdev) {
     }
 
     uint8_t b = inb(scdev->port);
-
     put_char_to_circ_buff(&scdev->buf, b, BUF_SIZE);
+
+    loader_unqueue(&scdev->waiting_process);
 }
