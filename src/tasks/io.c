@@ -13,14 +13,13 @@ void write_line(uint32_t fd, char* src, int size) {
 
 int read_line(uint32_t fd, char* dest, int size) {
     int pos = 0; 
-    int i, result;
     int total = size < READ_BUFF_SIZE ? size : READ_BUFF_SIZE;    
-    char chr;
+    uint8_t byte;
 
-    for (i = 0; i < total && (pos > 0 && read_buf[pos-1] != NULL); i++) { 
-        result = read(fd, &chr, 1);
+    while (pos < total && (pos = 0 || read_buf[pos-1] != NULL)) { 
+        read(fd, &byte, 1);
 
-        switch (chr) {
+        switch (byte) {
             //carriage return:
             case '\n':
             case '\r':
@@ -29,8 +28,8 @@ int read_line(uint32_t fd, char* dest, int size) {
             break;
             //caracteres imprimibles
             case 32 ... 126: 
-                read_buf[pos++] = chr;
-                write(fd, &chr, 1);
+                read_buf[pos++] = byte;
+                write(fd, &byte, 1);
             break;
 
         }
