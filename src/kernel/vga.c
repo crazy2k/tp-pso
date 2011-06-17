@@ -1,7 +1,7 @@
 #include <i386.h>
 #include <tipos.h>
 #include <stdarg.h>
-#include "vga.h"
+#include <vga.h>
 
 uint_16 vga_port = 0x3D0;
 
@@ -119,4 +119,16 @@ void vga_cls() {
 
 void vga_clline(void *pos) {
     vga_clear(pos, pos + VGA_ROW_SIZE);
+}
+
+void update_cursor(int row, int col)
+{
+    uint8_t position = (row*80) + col;
+
+    // cursor LOW port to vga INDEX register
+    outb(0x3D4, 0x0F);
+    outb(0x3D5, (uint8_t)(position&0xFF));
+    // cursor HIGH port to vga INDEX register
+    outb(0x3D4, 0x0E);
+    outb(0x3D5, (uint8_t)((position>>8)&0xFF));
 }
