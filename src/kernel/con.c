@@ -16,6 +16,7 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size);
 uint_32 con_flush(chardev *this);
 
 
+static void update_console_cursor(con_chardev *ccdev);
 static void scroll_down(con_chardev *ccdev);
 
 static con_chardev con_chardevs[MAX_CON_CHARDEVS];
@@ -91,6 +92,8 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
             ccdev->current_attr);
         ccdev->screen_buf_offset += VGA_CHAR_SIZE;
     }
+
+//    update_console_cursor((con_chardev *)this);
     return i;
 }
 
@@ -122,6 +125,7 @@ void con_focus(con_chardev *con) {
     memcpy((void *)VGA_ADDR, con->screen_buf, VGA_SCREEN_SIZE);
     current_console = con;
     con->focused = TRUE;
+//    update_console_cursor(con);
 }
 
 void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
@@ -144,3 +148,6 @@ static void scroll_down(con_chardev *ccdev) {
     vga_clline(VGA_LINE_BEGIN(screen + ccdev->screen_buf_offset, screen));
 }
 
+static void update_console_cursor(con_chardev *ccdev) {
+    vga_update_cursor(ccdev->screen_buf_offset / VGA_COLS, ccdev->screen_buf_offset % VGA_COLS);
+}
