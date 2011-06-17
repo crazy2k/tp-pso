@@ -88,9 +88,16 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
         if (ccdev->screen_buf_offset >= VGA_SCREEN_SIZE)
             scroll_down(ccdev);
 
-        vga_putchar(out_base + ccdev->screen_buf_offset, cbuf[i],
-            ccdev->current_attr);
-        ccdev->screen_buf_offset += VGA_CHAR_SIZE;
+        int char_offset;
+
+        if (cbuf[i] == '\n' || cbuf[i] == '\r')
+            char_offset = VGA_ROW_SIZE - (ccdev->screen_buf_offset % VGA_ROW_SIZE);
+        else { 
+            vga_putchar(out_base + ccdev->screen_buf_offset, cbuf[i],
+                ccdev->current_attr);
+            char_offset = VGA_CHAR_SIZE;
+        }
+        ccdev->screen_buf_offset += char_offset;
     }
 
 //    update_console_cursor((con_chardev *)this);
