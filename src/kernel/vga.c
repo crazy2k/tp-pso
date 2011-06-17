@@ -12,9 +12,8 @@
 uint_16 vga_port = 0x3D0;
 
 
-static void update_cursor(int row, int col);
-
 void vga_init(void) {
+    update_cursor(0,0);
 }
 
 void *vga_putchar(void *addr, const char chr, uint8_t attr) {
@@ -126,7 +125,7 @@ void vga_clline(void *pos) {
     vga_clear(pos, pos + VGA_ROW_SIZE);
 }
 
-void update_cursor(int row, int col)
+void vga_update_cursor(int row, int col)
 {
     uint8_t position = (row*80) + col;
 
