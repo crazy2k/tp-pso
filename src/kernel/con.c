@@ -149,5 +149,5 @@ static void scroll_down(con_chardev *ccdev) {
 }
 
 static void update_console_cursor(con_chardev *ccdev) {
-    vga_update_cursor(ccdev->screen_buf_offset / VGA_COLS, ccdev->screen_buf_offset % VGA_COLS);
+    vga_update_cursor(ccdev->screen_buf_offset / VGA_ROW_SIZE, ccdev->screen_buf_offset % VGA_ROW_SIZE);
 }
