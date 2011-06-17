@@ -36,7 +36,9 @@ SYM_KERN=$(DIROUT)kernel.sym
 # Tareas
 TASKS=tasks/task1.pso
 TASKS_ELF:=$(TASKS:.pso=.elf)
-OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o tasks/syscalls_funcs.o tasks/user_console.o
+OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o tasks/syscalls_funcs.o tasks/utils.o tasks/io.o 
+
+BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o tasks/utils.o
 
 # Imagenes
 DISK_LABEL="KERNEL  PSO"
@@ -72,8 +74,8 @@ tasks/%.pso: tasks/%.elf
 tasks/%.o: tasks/%.c
 	$(CC) $(CFLAGS:__KERNEL__=__TASK__) -c -o $@ $<
 
-tasks/%.elf: tasks/pso_head.o tasks/syscalls.o tasks/%.o tasks/pso_tail.o tasks/syscalls_funcs.o tasks/user_console.o $(BIN_LIB)
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0x400000 -o $@ tasks/pso_head.o tasks/syscalls.o tasks/syscalls_funcs.o tasks/user_console.o $(@:.elf=.o) $(LDPSO) tasks/pso_tail.o
+tasks/%.elf: tasks/pso_head.o tasks/syscalls.o tasks/%.o tasks/pso_tail.o $(BIN_LIB)
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0x400000 -o $@ tasks/pso_head.o tasks/syscalls.o $(BIN_LIB) $(@:.elf=.o) $(LDPSO) tasks/pso_tail.o
 
 $(BIN_KERN).elf: $(OBJS_KERN) 
 	$(LD) $(LDFLAGS) -N -e start -Ttext 0x1200 -o $@ $(OBJS_KERN) $(LDPSO)
@@ -104,7 +106,7 @@ $(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE)
 
 # Otros
 clean:
-	rm -f $(BIN_KERN) $(IMG_FLOPPY) $(IMG_BASE) $(OBJS_KERN) $(DUMP_KERN) $(SYM_KERN) $(OBJS_TASKS) $(TASKS) $(TASKS:.pso=.elf)
+	rm -f $(BIN_KERN) $(IMG_FLOPPY) $(IMG_BASE) $(OBJS_KERN) $(DUMP_KERN) $(SYM_KERN) $(OBJS_TASKS) $(TASKS) $(TASKS:.pso=.elf) $(BIN_LIB)
 	#rm -f deps
 
 # Dependencias

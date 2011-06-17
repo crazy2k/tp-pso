@@ -11,7 +11,7 @@ void vga_writechar(uint16_t row, uint16_t col, const char chr, uint8_t attr);
 void vga_printf(uint_16 f, uint_16 c, const char* format, uint_8 attr, ...) __attribute__ ((format (printf, 3, 5)));
 void vga_cls();
 void vga_clline(void *pos);
-void update_cursor(int row, int col);
+void vga_update_cursor(int row, int col);
 
 #define VGA_ADDR 0xB8000ul
 #define VGA_CHAR_SIZE 2

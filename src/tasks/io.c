@@ -1,40 +1,43 @@
-#include <user/con.h>
+#include <user/io.h>
+#include <user/utils.h>
 
 #define READ_BUFF_SIZE (80 * 25) 
 
-static char console_read_buff[READ_BUFF_SIZE];
+static char read_buf[READ_BUFF_SIZE];
 
 
-void con_print(uint32_t console, char* src, int size) {
-
-    write(console, src, size);
-
+void write_line(uint32_t fd, char* src, int size) {
+    write(fd, src, size);
+    write(fd, "\n", 1);
 }
 
-int con_scan(uint32_t console, char* dest, int size) {
-    int result = 0, i, chars;
+int read_line(uint32_t fd, char* dest, int size) {
+    int pos = 0; 
+    int i, result;
+    int total = size < READ_BUFF_SIZE ? size : READ_BUFF_SIZE;    
     char chr;
 
-    while (TRUE) { 
-        chars = read(console, console_read_buff, READ_BUFF_SIZE);
+    for (i = 0; i < total && (pos > 0 && read_buf[pos-1] != NULL); i++) { 
+        result = read(fd, &chr, 1);
 
-        for (i = 0; < chars; i++) {
-            chr = console_read_buff[i]
+        switch (chr) {
+            //carriage return:
+            case '\n':
+            case '\r':
+                read_buf[pos++] = NULL;
+                write(fd, "\n", 1);
+            break;
+            //caracteres imprimibles
+            case 32 ... 126: 
+                read_buf[pos++] = chr;
+                write(fd, &chr, 1);
+            break;
 
-            switch (chr) {
-                //carriage return:
-                case '\r':
-                    dest[result++] = 'current';
-                    return result;
-                break;
-                //caracteres imprimibles
-                case 32 ... 126: 
-                    dest[result++] = 'current';
-                break;
-
-            }
         }
-    }
+    } 
+
+    memcpy(dest, read_buf, pos);
+    return pos;
 }
 
 /*            switch (chr) {
