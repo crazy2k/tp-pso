@@ -3,7 +3,16 @@
 #include <stdarg.h>
 #include <vga.h>
 
+#define VGA_TEMPBUFSIZE 40
+#define VGA_UI_BASE 16
+#define VGA_UI_LOG2BASE 4
+#define VGA_UI_REPLENGTH (sizeof(uint32_t)*8/VGA_UI_LOG2BASE)
+
+
 uint_16 vga_port = 0x3D0;
+
+
+static void update_cursor(int row, int col);
 
 void vga_init(void) {
 }
@@ -39,7 +48,6 @@ void vga_writechar(uint16_t row, uint16_t col, const char chr, uint8_t attr) {
 }
 
 
-#define VGA_TEMPBUFSIZE 40
 void *vga_putd(void *addr, long int num, uint8_t attr) {
     if (num < 0) {
         vga_putchar(addr, '-', attr);
@@ -57,9 +65,6 @@ void *vga_putd(void *addr, long int num, uint8_t attr) {
 }
 
 
-#define VGA_UI_BASE 16
-#define VGA_UI_LOG2BASE 4
-#define VGA_UI_REPLENGTH (sizeof(uint32_t)*8/VGA_UI_LOG2BASE)
 void *vga_putx(void *addr, uint32_t n, uint8_t attr) {
     char chars[VGA_UI_BASE],
          str[VGA_UI_REPLENGTH + 1],
