@@ -8,7 +8,7 @@ int main(void) {
     int con = open_console();
     int res = 0;
 
-    write(con, "chau", 4);
+    write(con, "shell>", 6);
     write(con, " ", 1);
 
     char buff[20] = { 0 };
@@ -18,7 +18,7 @@ int main(void) {
 
         res = read_line(con, buff, 80);
 
-        __asm__ __volatile__("xchg %bx, %bx");
+//        __asm__ __volatile__("xchg %bx, %bx");
 
         if (res > 0)
             write_line(con, buff, res);
