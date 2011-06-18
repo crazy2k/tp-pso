@@ -5,9 +5,9 @@
 #include  <user/syscalls.h>
 
 
-void write_line(uint32_t fd, char* src, int size);
+void println(uint32_t fd, char* src, int size);
 
-int read_line(uint32_t fd, char* dest, int size);
+int scanln(uint32_t fd, char* dest, int size);
 
 
 #endif

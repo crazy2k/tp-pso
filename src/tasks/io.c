@@ -1,19 +1,19 @@
 #include <user/io.h>
 #include <user/utils.h>
 
-#define READ_BUFF_SIZE (80 * 25) 
+#define READ_BUF_SIZE (80 * 25) 
 
-static char read_buf[READ_BUFF_SIZE];
+static char read_buf[READ_BUF_SIZE];
 
 
-void write_line(uint32_t fd, char* src, int size) {
+void println(uint32_t fd, char* src, int size) {
     write(fd, src, size);
     write(fd, "\n", 1);
 }
 
-int read_line(uint32_t fd, char* dest, int size) {
+int scanln(uint32_t fd, char* dest, int size) {
     int pos = 0; 
-    int total = size < READ_BUFF_SIZE ? size : READ_BUFF_SIZE;    
+    int total = size < READ_BUF_SIZE ? size : READ_BUF_SIZE;    
     uint8_t byte;
 
     while (pos < total && (pos == 0 || read_buf[pos-1] != NULL)) {

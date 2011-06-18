@@ -16,12 +16,12 @@ int main(void) {
 
     while (1) {
 
-        res = read_line(con, buff, 80);
+        res = scanln(con, buff, 80);
 
 //        __asm__ __volatile__("xchg %bx, %bx");
 
         if (res > 0)
-            write_line(con, buff, res);
+            println(con, buff, res);
 
 
 
