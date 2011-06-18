@@ -46,8 +46,8 @@ chardev* fs_open(const char* filename, uint_32 flags) {
 	/* Checkea el pedido de apertura como lectura o escritura */
 	if ((flags & FS_OPEN_RDWR) == 0) return NULL; /* Pedido frutero */
 
-/*	if (!strcmp(filename, "/serial0")) return serial_open(0);
-	if (!strcmp(filename, "/serial1")) return serial_open(1);*/
+	if (!strcmp(filename, "/serial0")) return serial_open(0);
+	if (!strcmp(filename, "/serial1")) return serial_open(1);
 	if (strncmp(filename, CONSOLE_PATH, strlen(CONSOLE_PATH)) == 0) {
         int num = strtoi(filename + strlen(CONSOLE_PATH));
         return con_open(num, flags);
