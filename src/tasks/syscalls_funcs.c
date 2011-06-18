@@ -49,8 +49,8 @@ int close(int fd) {
     return syscall(SYSCALLS_NUM_CLOSE, (uint32_t)fd, 0, 0, 0, 0);
 }
 
-int open_console() {
-    return syscall(SYSCALLS_NUM_OPENCON, 0, 0, 0, 0, 0);
+int open(const char* path, uint32_t mode) {
+    return syscall(SYSCALLS_NUM_OPEN, (uint32_t)path, mode, 0, 0, 0);
 }
 
 void next_console() {

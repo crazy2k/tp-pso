@@ -11,7 +11,7 @@
 #define SYSCALLS_NUM_WRITE 5
 #define SYSCALLS_NUM_SEEK 6
 #define SYSCALLS_NUM_CLOSE 7
-#define SYSCALLS_NUM_OPENCON 8
+#define SYSCALLS_NUM_OPEN 8
 #define SYSCALLS_NUM_NEXTCON 9
 #define SYSCALLS_NUM_PREVCON 10
 
@@ -28,6 +28,7 @@
     int sys_write(int fd, const void *buf, uint32_t size);
     int sys_seek(int fd, uint32_t size);
     int sys_close(int fd);
+    int sys_open(char* path, uint32_t mode);
 
 
 #else
@@ -48,7 +49,7 @@
     int write(int fd, const void *buf, uint32_t size);
     int seek(int fd, uint32_t size);
     int close(int fd);
-    int open_console();
+    int open(const char* path, uint32_t mode);
     void next_console();
     void prev_console();
 

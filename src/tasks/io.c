@@ -25,11 +25,22 @@ int scanln(uint32_t fd, char* dest, int size) {
                 write(fd, &byte, 1);
                 read_buf[pos++] = byte;
             break;
+
             //carriage return:
             case '\n':
             case '\r':
                 write(fd, "\n", 1);
                 read_buf[pos++] = NULL;
+            break;
+
+            //backspace:
+            case 8:
+            //delete:
+            case 127:
+            break;
+
+            //tab:
+            case 9:
             break;
 
         }
@@ -38,51 +49,3 @@ int scanln(uint32_t fd, char* dest, int size) {
     memcpy(dest, read_buf, pos);
     return pos;
 }
-
-/*            switch (chr) {
-                //carriage return:
-                case 13:
-                    if (terminal->len < DEV_TERMINAL_BUF_LENGTH) {
-                        kputc('\n');
-                        terminal->buffer[dev_terminal_next_pos(terminal)] = '\n';
-                        terminal->len++;
-                    }
-                break;
-                //caracteres imprimibles
-                case 32 ... 126:
-                    if (terminal->len < DEV_TERMINAL_BUF_LENGTH - 1) {
-                        kputc(chr);
-                        terminal->buffer[dev_terminal_next_pos(terminal)] = chr;
-                        terminal->len++;
-                    }
-                break;
-
-                //backspace:
-                case 8:
-                    if (terminal->len > 0) {
-                        cur_pos = get_current_pos();
-
-                        set_current_pos(cur_pos - SCREEN_CHAR_SIZE);
-                        kputc(' ');
-                        set_current_pos(cur_pos - SCREEN_CHAR_SIZE);
-                        terminal->len--;
-                    }
-                break;
-
-                //tab:
-                case 9:
-                    if (terminal->len < DEV_TERMINAL_BUF_LENGTH - 4) {
-                        kputs("    ");
-                        for (int i = 0; i < 4; i++) {                        
-                            terminal->buffer[dev_terminal_next_pos(terminal)] = ' ';
-                            terminal->len++;
-                        }
-                    }
-                break;
-
-                //delete:
-                case 127:
-
-                break;
-        }
-    }*/

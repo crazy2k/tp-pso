@@ -16,47 +16,64 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size);
 uint_32 con_flush(chardev *this);
 
 
+static chardev* con_create(con_chardev *ccdev);
 static void update_console_cursor(con_chardev *ccdev);
 static void scroll_down(con_chardev *ccdev);
 
-static con_chardev con_chardevs[MAX_CON_CHARDEVS];
-static con_chardev *free_con_chardevs = NULL;
+static con_chardev con_chardevs[MAX_CON_CHARDEVS] = { { NULL } };
 static con_chardev *open_con_chardevs = NULL;
 
 static con_chardev *current_console = NULL;
 
 
+
 void con_init() {
-    CREATE_FREE_OBJS_LIST(free_con_chardevs, con_chardevs, MAX_CON_CHARDEVS);
+
 }
 
-chardev* con_open(void) {
-    con_chardev *ccdev = POP(&free_con_chardevs);
 
-    ccdev->clase = DEVICE_CON_CHARDEV;
-    ccdev->refcount = 0;
-    ccdev->flush = con_flush;
-    ccdev->read = con_read;
-    ccdev->write = con_write;
+chardev* con_open(uint32_t number, uint32_t mode) {
+    if (number < MAX_CON_CHARDEVS) {
+        con_chardev* con = &con_chardevs[number];
 
-    ccdev->screen_buf = mm_mem_kalloc();
-    ccdev->screen_buf_offset = 0;
-    ccdev->focused = FALSE;
+        if (!IS_AT_LIST(con)) {
+            con_create(con);
+        }
 
-    ccdev->kb_buf = ((circular_buf_t) { 
-        .buf = mm_mem_kalloc(),
-        .offset = 0,
-        .remaining = 0
-    });
+        con->refcount++;
 
-    ccdev->waiting_process = -1 ;
+        return (chardev*) con;
+    } else
+        return NULL;
+}
 
-    ccdev->current_attr = 0x0F;
+chardev* con_create(con_chardev *ccdev) {
+    if (ccdev) {
+        ccdev->clase = DEVICE_CON_CHARDEV;
+        ccdev->refcount = 0;
+        ccdev->flush = con_flush;
+        ccdev->read = con_read;
+        ccdev->write = con_write;
 
-    APPEND(&open_con_chardevs, ccdev);
+        ccdev->screen_buf = mm_mem_kalloc();
+        ccdev->screen_buf_offset = 0;
+        ccdev->focused = FALSE;
 
-    if (!con_get_current_console())
-        con_focus(ccdev);
+        ccdev->kb_buf = ((circular_buf_t) { 
+            .buf = mm_mem_kalloc(),
+            .offset = 0,
+            .remaining = 0
+        });
+
+        ccdev->waiting_process = -1 ;
+
+        ccdev->current_attr = 0x0F;
+
+        APPEND(&open_con_chardevs, ccdev);
+
+        if (!con_get_current_console())
+            con_focus(ccdev);
+    }
 
     return (chardev *)ccdev;
 }
@@ -114,7 +131,6 @@ uint_32 con_flush(chardev *this) {
     mm_mem_free(ccdev->kb_buf.buf);
 
     UNLINK_NODE(&open_con_chardevs, ccdev);
-    APPEND(&free_con_chardevs, ccdev);
 
     return 0;
 }

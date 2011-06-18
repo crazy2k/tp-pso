@@ -161,8 +161,8 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_NUM_CLOSE:
             st->eax = sys_close(st->ebx);
             break;
-        case SYSCALLS_NUM_OPENCON:
-            st->eax = loader_add_file(con_open());
+        case SYSCALLS_NUM_OPEN:
+            st->eax = sys_open((char *)st->ebx, st->ecx);
             break;
         case SYSCALLS_NUM_NEXTCON:
             con_focus(con_get_current_console()->next);

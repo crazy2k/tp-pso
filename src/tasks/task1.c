@@ -1,11 +1,12 @@
 #include <user/syscalls.h>
 #include <user/io.h>
+#include <fs.h>
 
 int main(void) {
 
    // __asm__ __volatile__("xchg %bx, %bx");
     
-    int con = open_console();
+    int con = open("/console0", FS_OPEN_RDWR);
     int res = 0;
 
     write(con, "shell>", 6);

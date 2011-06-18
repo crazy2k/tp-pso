@@ -16,12 +16,11 @@
 // Dispositivos
 #include <serial.h>
 #include <con.h>
+#include <fs.h>
+#include <utils.h>
 
 
-static sint_32 strcmp(const char* p, const char* q) {
-	for (; *p && *q && *p==*q; p++,q++);
-	return *p?(*q?(sint_32)*p-(sint_32)*q:1):*q?-1:0;
-}
+#define CONSOLE_PATH "/console"
 
 /*
  * Disco 1;
@@ -47,14 +46,17 @@ chardev* fs_open(const char* filename, uint_32 flags) {
 	/* Checkea el pedido de apertura como lectura o escritura */
 	if ((flags & FS_OPEN_RDWR) == 0) return NULL; /* Pedido frutero */
 
-	if (!strcmp(filename, "/serial0")) return serial_open(0);
-	if (!strcmp(filename, "/serial1")) return serial_open(1);
-	if (!strcmp(filename, "/console")) return con_open();
+/*	if (!strcmp(filename, "/serial0")) return serial_open(0);
+	if (!strcmp(filename, "/serial1")) return serial_open(1);*/
+	if (strncmp(filename, CONSOLE_PATH, strlen(CONSOLE_PATH) - 1) == 0) {
+        int num = atoi(filename + sizeof(CONSOLE_PATH));
+        return con_open(num, flags);
+    }        
 
 	/*
 	 * Pedido para el disco 1: Usamos fat12 para abrirlo
 	 */ 
-	if (!strcmp(filename, "/disk/")) return fat12_open(&disk, filename+5, flags);
+/*	if (!strcmp(filename, "/disk/")) return fat12_open(&disk, filename+5, flags);*/
 	
 	return NULL;
 }

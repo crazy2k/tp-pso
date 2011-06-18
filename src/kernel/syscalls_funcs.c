@@ -1,8 +1,10 @@
 #include <syscalls.h>
 #include <mm.h>
+#include <fs.h>
 #include <loader.h>
 #include <sched.h>
 #include <errors.h>
+#include <vga.h>
 
 void sys_exit() {
     loader_exit();
@@ -62,4 +64,8 @@ int sys_close(int fd) {
         return -ENOFUNC;
 
     return cdev->flush(cdev);
+}
+
+int sys_open(char *path, uint32_t mode) {
+    return loader_add_file(fs_open(path, mode));
 }

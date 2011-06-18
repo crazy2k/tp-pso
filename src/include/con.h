@@ -29,7 +29,7 @@ struct con_chardev {
 
 void con_init();
 
-chardev* con_open(void);
+chardev* con_open(uint32_t number, uint32_t mode);
 
 void con_focus(con_chardev *con);
 con_chardev *con_get_current_console();
