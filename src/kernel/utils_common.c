@@ -21,7 +21,7 @@ void *memset(void *s, int c, size_t n) {
     return s;
 }
 
-int strcmp(char * src, char * dst) {
+int strcmp(const char * src, const char * dst) {
     int ret = 0 ;
 
     while(!(ret = (unsigned int)*src - (unsigned int)*dst) && *dst) {
@@ -85,6 +85,41 @@ int strlen(const char* str) {
         while(str[result]) result++;
 
     return result;
+}
+
+char *strcpy(char *s1, const char *s2) {
+    char *dst = s1;
+    const char *src = s2;
+
+    while ((*dst++ = *src++) != '\0')
+        ;
+
+    return s1;
+}
+
+char *strcat(char *s1, const char *s2) {
+    char *s = s1;
+
+    while (*s != '\0')
+        s++;
+
+    strcpy(s, s2);
+    return s1;
+}
+
+char *strncat(char *s1, const char *s2, size_t n) {
+    char *s = s1;
+
+    while (*s != '\0')
+        s++;
+
+    while (n != 0 && (*s = *s2++) != '\0') {
+        n--;
+        s++;
+    }
+    if (*s != '\0')
+        *s = '\0';
+    return s1;
 }
 
 int strtoi(const char *str) {
