@@ -31,6 +31,7 @@ void con_init();
 
 chardev* con_open(uint32_t number, uint32_t mode);
 
+void con_ctl(con_chardev *ccdev, uint32_t oper);
 void con_focus(con_chardev *con);
 con_chardev *con_get_current_console();
 void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b);

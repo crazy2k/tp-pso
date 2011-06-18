@@ -6,6 +6,7 @@
 void vga_init(void);
 
 void *vga_putchar(void *addr, const char chr, uint8_t attr);
+void *vga_puts(void *addr, const char *msg, uint8_t attr);
 void vga_write(uint_16 f, uint_16 c, const char* msg, uint_8 attr);
 void vga_writechar(uint16_t row, uint16_t col, const char chr, uint8_t attr);
 void vga_printf(uint_16 f, uint_16 c, const char* format, uint_8 attr, ...) __attribute__ ((format (printf, 3, 5)));

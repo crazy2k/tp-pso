@@ -60,3 +60,7 @@ void next_console() {
 void prev_console() {
     syscall(SYSCALLS_NUM_PREVCON, 0, 0, 0, 0, 0);
 }
+
+void con_ctl(uint32_t con, uint32_t oper) {
+    syscall(SYSCALLS_CONSOLE_CTL, con, oper, 0, 0, 0);
+}

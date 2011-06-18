@@ -36,12 +36,22 @@ int scanln(uint32_t fd, char* dest, int size) {
 
             //backspace:
             case 8:
+                if (pos > 0) {
+                    int i;
+                    for (i = 0; i < (read_buf[pos] == '\t' ? 4 : 1); i++)
+                        con_ctl(fd, CON_CTL_BACKSPACE);
+                    pos--;
+                }
+            break;
             //delete:
             case 127:
+                con_ctl(fd, CON_CTL_CLS_SCREEN);
             break;
 
             //tab:
             case 9:
+                write(fd, "\t", 1);
+                read_buf[pos++] = '\t';
             break;
 
         }

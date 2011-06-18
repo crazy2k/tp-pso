@@ -14,8 +14,14 @@
 #define SYSCALLS_NUM_OPEN 8
 #define SYSCALLS_NUM_NEXTCON 9
 #define SYSCALLS_NUM_PREVCON 10
+#define SYSCALLS_CONSOLE_CTL 11
 
 #define SYSCALLS_INTERRUPT 0x30ul
+
+
+#define CON_CTL_CLS_SCREEN 1
+#define CON_CTL_DELETE_CUR_CHAR 2
+#define CON_CTL_BACKSPACE 3
 
 
 #ifdef __KERNEL__
@@ -50,6 +56,7 @@
     int seek(int fd, uint32_t size);
     int close(int fd);
     int open(const char* path, uint32_t mode);
+    void con_ctl(uint32_t con, uint32_t oper);
     void next_console();
     void prev_console();
 
