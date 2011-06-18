@@ -8,6 +8,8 @@
 
 #define MAX_CON_CHARDEVS 16
 #define KB_BUF_SIZE 1024
+#define TAB_STR "    "
+#define TAB_SIZE (sizeof(TAB_STR) - 1)
 
 
 // XXX: Deberian ser static?
@@ -17,6 +19,9 @@ uint_32 con_flush(chardev *this);
 
 
 static chardev* con_create(con_chardev *ccdev);
+static void con_backspace(con_chardev *ccdev);
+static void con_delete_cur_char(con_chardev *ccdev);
+static void con_clear_screen(con_chardev *ccdev);
 static void update_console_cursor(con_chardev *ccdev);
 static void scroll_down(con_chardev *ccdev);
 
@@ -109,6 +114,11 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
 
         if (cbuf[i] == '\n' || cbuf[i] == '\r')
             char_offset = VGA_ROW_SIZE - (ccdev->screen_buf_offset % VGA_ROW_SIZE);
+        else if (cbuf[i] == '\t') {
+            vga_puts(out_base + ccdev->screen_buf_offset, TAB_STR,
+                ccdev->current_attr);
+            char_offset = VGA_CHAR_SIZE * TAB_SIZE;
+        }
         else { 
             vga_putchar(out_base + ccdev->screen_buf_offset, cbuf[i],
                 ccdev->current_attr);
@@ -159,6 +169,45 @@ void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
 
 con_chardev *con_get_current_console() {
     return current_console;
+}
+
+
+void con_ctl(con_chardev *ccdev, uint32_t oper) {
+    switch (oper) {
+        case CON_CTL_DELETE_CUR_CHAR:
+            con_delete_cur_char(ccdev);
+        break;
+        case CON_CTL_CLS_SCREEN:
+            con_clear_screen(ccdev);
+        break;
+        case CON_CTL_BACKSPACE:
+            con_backspace(ccdev);
+    }
+    
+}
+
+static void con_backspace(con_chardev *ccdev) {
+    if (ccdev->screen_buf_offset > 0) {
+        ccdev->screen_buf_offset -= VGA_CHAR_SIZE;
+        con_delete_cur_char(ccdev);
+    }
+}
+
+
+static void con_delete_cur_char(con_chardev *ccdev) {
+    void *addr = (ccdev->focused ? (void *)VGA_ADDR : ccdev->screen_buf) + 
+        ccdev->screen_buf_offset;
+
+    vga_putchar(addr, ' ', 0x0F);
+}
+
+static void con_clear_screen(con_chardev *ccdev) {
+    void *addr = (ccdev->focused) ? (void *)VGA_ADDR : ccdev->screen_buf;
+    void *end = addr + VGA_ROWS*VGA_COLS*VGA_CHAR_SIZE;
+
+    for (; addr < end; addr += VGA_CHAR_SIZE)
+        vga_putchar(addr, ' ', 0x0F);
+    ccdev->screen_buf_offset = 0;
 }
 
 static void scroll_down(con_chardev *ccdev) {
