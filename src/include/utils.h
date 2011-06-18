@@ -16,6 +16,7 @@ void *memcpy(void *dest, const void *src, size_t n);
 void *memset(void * ptr, int value, size_t num);
 
 int strcmp(char * src, char * dst);
+int strncmp(const char *s1, const char *s2, size_t n);
 
 void custom_kpanic_msg(char* custom_msg);
 

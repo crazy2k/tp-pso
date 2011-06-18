@@ -41,6 +41,23 @@ int strcmp(char * src, char * dst) {
     return ret;
 }
 
+int strncmp(const char *s1, const char *s2, size_t n) {
+    unsigned char uc1, uc2;
+
+    if (n == 0)
+        return 0;
+
+    while (n-- > 0 && *s1 == *s2) {
+        if (n == 0 || *s1 == '\0')
+            return 0;
+        s1++;
+        s2++;
+    }
+    uc1 = (*(unsigned char *) s1);
+    uc2 = (*(unsigned char *) s2);
+    return ((uc1 < uc2) ? -1 : (uc1 > uc2));
+}
+
 void custom_kpanic_msg(char* custom_msg) {
     cli(); 
     vga_write(0, 0, PANIC_PREFIX,  VGA_BC_RED | VGA_FC_WHITE | VGA_FC_LIGHT); 
