@@ -16,20 +16,20 @@ int read_line(uint32_t fd, char* dest, int size) {
     int total = size < READ_BUFF_SIZE ? size : READ_BUFF_SIZE;    
     uint8_t byte;
 
-    while (pos < total && (pos = 0 || read_buf[pos-1] != NULL)) { 
+    while (pos < total && (pos == 0 || read_buf[pos-1] != NULL)) {
         read(fd, &byte, 1);
 
         switch (byte) {
+            //caracteres imprimibles
+            case 32 ... 126: 
+                write(fd, &byte, 1);
+                read_buf[pos++] = byte;
+            break;
             //carriage return:
             case '\n':
             case '\r':
-                read_buf[pos++] = NULL;
                 write(fd, "\n", 1);
-            break;
-            //caracteres imprimibles
-            case 32 ... 126: 
-                read_buf[pos++] = byte;
-                write(fd, &byte, 1);
+                read_buf[pos++] = NULL;
             break;
 
         }
