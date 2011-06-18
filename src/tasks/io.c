@@ -1,3 +1,4 @@
+#include <user/syscalls.h>
 #include <user/io.h>
 #include <user/utils.h>
 

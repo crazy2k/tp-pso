@@ -49,7 +49,7 @@ chardev* fs_open(const char* filename, uint_32 flags) {
 /*	if (!strcmp(filename, "/serial0")) return serial_open(0);
 	if (!strcmp(filename, "/serial1")) return serial_open(1);*/
 	if (strncmp(filename, CONSOLE_PATH, strlen(CONSOLE_PATH) - 1) == 0) {
-        int num = atoi(filename + sizeof(CONSOLE_PATH));
+        int num = strtoi(filename + sizeof(CONSOLE_PATH));
         return con_open(num, flags);
     }        
 

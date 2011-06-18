@@ -28,7 +28,7 @@ OBJS_KERN=kernel/kinit.o kernel/a20.o kernel/kernel.o kernel/gdt.o kernel/idt.o 
   kernel/mm.o kernel/debug.o kernel/loader.o kernel/tasks.o \
   kernel/syscalls.o kernel/sem.o kernel/utils.o kernel/loader_helpers.o \
   kernel/syscalls_funcs.o kernel/con.o kernel/device.o kernel/kb.o \
-  kernel/serial.o kernel/hdd.o kernel/fs.o
+  kernel/serial.o kernel/hdd.o kernel/fs.o kernel/utils_common.o
 BIN_KERN=$(DIROUT)kernel.bin
 DUMP_KERN=$(DIROUT)kernel.bin.asm $(DIROUT)kernel.bin.elf $(DIROUT)kernel.bin.dbg
 SYM_KERN=$(DIROUT)kernel.sym
@@ -36,9 +36,9 @@ SYM_KERN=$(DIROUT)kernel.sym
 # Tareas
 TASKS=tasks/task1.pso
 TASKS_ELF:=$(TASKS:.pso=.elf)
-OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o tasks/syscalls_funcs.o tasks/utils.o tasks/io.o 
+OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
-BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o tasks/utils.o
+BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
 # Imagenes
 DISK_LABEL="KERNEL  PSO"

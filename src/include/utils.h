@@ -2,24 +2,13 @@
 
 #define __UTILS_H__
 
-#include "tipos.h"
+#include <utils_common.h>
 
 typedef struct {
     void *buf;
     uint32_t offset;
     uint32_t remaining;
 } circular_buf_t;
-
-
-void *memcpy(void *dest, const void *src, size_t n);
-
-void *memset(void * ptr, int value, size_t num);
-
-int strcmp(char * src, char * dst);
-int strncmp(const char *s1, const char *s2, size_t n);
-char *strstr(const char *in, const char *str);
-int strlen(const char* str);
-int atoi(const char *str);
 
 void custom_kpanic_msg(char* custom_msg);
 
