@@ -11,8 +11,8 @@ int main(void) {
     write(con, "shell>", 6);
     write(con, " ", 1);
 
-    char buff[20] = { 0 };
-    //char chr;
+    char buff[80] = { 0 };
+//    char chr;
 
     while (1) {
 
@@ -24,11 +24,12 @@ int main(void) {
             write_line(con, buff, res);
 
 
-/*
-       read(con, &chr, 1);
 
-       if (buff[0] & 0x7F)
-            write(con, &chr, 1);
+/*
+       res = read(con, &chr, 1);
+
+       if (chr)
+            write_line(con, &chr, 1);
 */
 
     }
