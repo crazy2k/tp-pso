@@ -38,8 +38,6 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 #define UNLINK_NODE(list, node) \
     if (*(list) != NULL) { \
         if ((node)->next == (node)) { \
-            (node)->next = NULL; \
-            (node)->prev = NULL; \
             *(list) = NULL; \
         } \
         else { \
@@ -48,6 +46,8 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
             (node)->next->prev = (node)->prev; \
             (node)->prev->next = (node)->next; \
         } \
+        (node)->next = NULL; \
+        (node)->prev = NULL; \
     }
 
 // APPEND(<node type> **list, <node type> *node);
