@@ -58,6 +58,58 @@ int strncmp(const char *s1, const char *s2, size_t n) {
     return ((uc1 < uc2) ? -1 : (uc1 > uc2));
 }
 
+
+
+char *strstr(const char *in, const char *str){
+    char c;
+    size_t len;
+
+    c = *str++;
+    if (!c)
+        return (char *) in;
+
+    len = strlen(str);
+    do {
+        char sc;
+
+        do {
+            sc = *in++;
+            if (!sc)
+                return (char *) 0;
+        } while (sc != c);
+    } while (strncmp(in, str, len) != 0);
+
+    return (char *) (in - 1);
+}
+
+int strlen(const char* str) {
+    int result = 0;
+
+    if (str)
+        while(str[result]) result++;
+
+    return result;
+}
+
+int atoi(const char *str) {
+    int num = 0, i;
+    bool neg = FALSE;
+
+    while (*str == ' ') str++;
+
+    for (i = 0; i <= strlen(str); i++) {
+        if (str[i] >= '0' && str[i] <= '9')
+            num = num * 10 + str[i] - '0';
+        else if (i == 0 && str[0] == '-')
+            neg = TRUE;
+        else
+            break;
+    }
+
+    return neg ? -num : num;
+}
+
+
 void custom_kpanic_msg(char* custom_msg) {
     cli(); 
     vga_write(0, 0, PANIC_PREFIX,  VGA_BC_RED | VGA_FC_WHITE | VGA_FC_LIGHT); 
