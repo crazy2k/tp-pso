@@ -13,7 +13,7 @@ uint_16 vga_port = 0x3D0;
 
 
 void vga_init(void) {
-    vga_update_cursor(0,0);
+//    vga_update_cursor(0,0);
 }
 
 void *vga_putchar(void *addr, const char chr, uint8_t attr) {
