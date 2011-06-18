@@ -31,6 +31,8 @@ int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 
 
+#define IS_AT_LIST(node) ((node)->prev && (node)->next)
+
 #define LINK_NODES(fst, sec) \
     (fst)->next = (sec); \
     (sec)->prev = (fst);
@@ -39,8 +41,6 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 #define UNLINK_NODE(list, node) \
     if (*(list) != NULL) { \
         if ((node)->next == (node)) { \
-            (node)->next = NULL; \
-            (node)->prev = NULL; \
             *(list) = NULL; \
         } \
         else { \
@@ -49,6 +49,8 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
             (node)->next->prev = (node)->prev; \
             (node)->prev->next = (node)->next; \
         } \
+        (node)->next = NULL; \
+        (node)->prev = NULL; \
     }
 
 // APPEND(<node type> **list, <node type> *node);
