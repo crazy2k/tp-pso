@@ -51,6 +51,9 @@ static char sc2kc(uint8_t sc) {
 void kb_process_byte(uint8_t b) {
     uint32_t mask = 0; 
 
+    if (!con_get_current_console())
+        return;
+
     uint8_t kc = sc2kc(MASK_RELEASE(b));
     switch (kc) {
         case KB_KC_LSHIFT:
