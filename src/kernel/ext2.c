@@ -127,8 +127,17 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (!(part_info->initialized))
         initialize_part_info(part_info);
 
-    ext2_inode *inode = path2inode(part_info,
-        get_inode(part_info, EXT2_ROOT_INODE_NO), filename + 6);
+    void *buf = mm_mem_kalloc();
+
+    ext2_inode *inode = get_inode(part_info, 2);
+
+    get_data(part_info, inode, buf);
+
+    ext2_direntry *direntry0 = buf;
+    vga_write(10, 0, direntry0->name, 0x0F);
+
+    //ext2_inode *inode = path2inode(part_info,
+    //    get_inode(part_info, EXT2_ROOT_INODE_NO), filename + 6);
 }
 
 static void initialize_part_info(ext2 *part_info) {
