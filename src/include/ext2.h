@@ -13,8 +13,8 @@ typedef struct {
     uint32_t free_blocks_count;
     uint32_t free_inodes_count;
     uint32_t first_data_block;
-    uint32_t block_size;
-    uint32_t fragment_size;
+    uint32_t log2_block_size;
+    uint32_t log2_fragment_size;
     uint32_t blocks_per_group;
     uint32_t fragments_per_group;
     uint32_t inodes_per_group;

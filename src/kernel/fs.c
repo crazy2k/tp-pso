@@ -53,10 +53,8 @@ chardev *fs_open(const char *filename, uint32_t flags) {
         return con_open(num, flags);
     }        
 
-	/*
-	 * Pedido para el disco 1: Usamos fat12 para abrirlo
-	 */ 
-	if (!strcmp(filename, "/disk/")) return ext2_open(&disk, filename, flags);
+	if (!strncmp(filename, "/disk/", 6))
+        return ext2_open(&disk, filename, flags);
 	
 	return NULL;
 }

@@ -71,11 +71,13 @@ typedef struct {
     uint16_t links_count;
     uint32_t sectors_count;
     uint32_t flags;
+    uint32_t os1;
     uint32_t blocks[EXT2_INODE_TOTALBLOCKS];
     uint32_t version;
     uint32_t file_acl;
     uint32_t dir_acl;
     uint32_t fragment_addr;
+    uint8_t os2[12];
 } __attribute__((__packed__)) ext2_inode;
 
 /*
@@ -94,9 +96,6 @@ enum
     MinDirentSize = 4+2+1+1
 };
 */
-
-int read_from_blockdev(blockdev *bdev, uint64_t offset, void *buf,
-    uint32_t size);
 
 uint8_t file_data_buf[PAGE_SIZE*4];
 
@@ -160,7 +159,9 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     ext2_block_group_descriptor *bgd = part_info->bgd_table + bg_no;
 
     // Obtenemos la direccion en el blockdev de la tabla de inodos
-    uint64_t inode_table_bdaddr = (bgd->inode_table_bno)*(sb->block_size);
+    uint32_t block_size = 1024 << sb->log2_block_size;
+
+    uint64_t inode_table_bdaddr = (bgd->inode_table_bno)*block_size;
 
     // Calculamos el indice del inodo en la tabla de inodos
     uint32_t inode_index = (no - 1) % part_info->superblock->inodes_per_group;
@@ -191,7 +192,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     if (inode->size > sizeof(file_data_buf))
         return -1;
 
-    uint32_t block_size = part_info->superblock->block_size;
+    uint32_t block_size = 1024 << part_info->superblock->log2_block_size;
 
     void *buf_pos;
     int i;
