@@ -12,6 +12,7 @@
 // Sistemas de archivos
 #include <fat12.h>
 #include <fat16.h>
+#include <ext2.h>
 
 // Dispositivos
 #include <serial.h>
