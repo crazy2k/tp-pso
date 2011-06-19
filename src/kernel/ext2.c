@@ -3,16 +3,20 @@
 #include <ext2.h>
 #include <utils.h>
 #include <mm.h>
+#include <debug.h>
 
 #define EXT2_SUPERBLOCK_OFFSET      1024
 #define EXT2_SUPERBLOCK_SIZE        1024
 #define EXT2_SUPERBLOCK_MAGIC       0xEF53
 #define EXT2_ROOT_INODE_NO          2
-#define EXT2_NDIRBLOCKS             12
-#define EXT2_INDBLOCK               EXT2_NDIRBLOCKS
-#define EXT2_DINDBLOCK              (EXT2_INDBLOCK + 1)
-#define EXT2_TINDBLOCK              (EXT2_DINDBLOCK + 1)
-#define EXT2_NBLOCKS                (EXT2_TINDBLOCK + 1)
+
+#define EXT2_INODE_DIRECT_COUNT     12
+#define EXT2_INODE_INDIRECT_COUNT   1
+#define EXT2_INODE_DINDIRECT_COUNT  1
+#define EXT2_INODE_TINDIRECT_COUNT  1
+#define EXT2_INODE_TOTALBLOCKS      \
+    EXT2_INODE_DIRECT_COUNT + EXT2_INODE_INDIRECT_COUNT + \
+    EXT2_INODE_DINDIRECT_COUNT + EXT2_INODE_TINDIRECT_COUNT
 
 #define EXT2_INODE_TYPE_FIFO        0x1000
 #define EXT2_INODE_TYPE_CHARDEV     0x2000
@@ -65,9 +69,9 @@ typedef struct {
     uint32_t dtime;
     uint16_t gid;
     uint16_t links_count;
-    uint32_t blocks_count;
+    uint32_t sectors_count;
     uint32_t flags;
-    uint32_t blocks[EXT2_NBLOCKS];
+    uint32_t blocks[EXT2_INODE_TOTALBLOCKS];
     uint32_t version;
     uint32_t file_acl;
     uint32_t dir_acl;

@@ -46,9 +46,9 @@ typedef struct {
  * Block Group Descriptor
  */
 typedef struct {
-    uint32_t block_bitmap_baddr;
-    uint32_t inode_bitmap_baddr;
-    uint32_t inode_table_baddr;
+    uint32_t block_bitmap_bno;
+    uint32_t inode_bitmap_bno;
+    uint32_t inode_table_bno;
     uint16_t free_blocks_count;
     uint16_t free_inodes_count;
     uint16_t dirs_count;
