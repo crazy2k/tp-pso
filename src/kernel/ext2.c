@@ -127,8 +127,8 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
 static void initialize_part_info(ext2 *part_info) {
     // XXX: Aca asumo que el superblock entra en una pagina
     part_info->superblock = mm_mem_kalloc();
-    read_from_blockdev(part_info->part, EXT2_SUPERBLOCK_OFFSET, part_info->superblock,
-        EXT2_SUPERBLOCK_SIZE);
+    read_from_blockdev(part_info->part, EXT2_SUPERBLOCK_OFFSET,
+        part_info->superblock, EXT2_SUPERBLOCK_SIZE);
 
     ext2_superblock *sb = part_info->superblock;
 
@@ -137,8 +137,9 @@ static void initialize_part_info(ext2 *part_info) {
     uint32_t bg_count = sb->blocks_count/sb->blocks_per_group;
 
     part_info->bgd_table = mm_mem_kalloc();
-    read_from_blockdev(part_info->part, EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_SIZE,
-        part_info->bgd_table, bg_count*sizeof(ext2_block_group_descriptor));
+    read_from_blockdev(part_info->part,
+        EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_SIZE, part_info->bgd_table,
+        bg_count*sizeof(ext2_block_group_descriptor));
 }
 
 static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
