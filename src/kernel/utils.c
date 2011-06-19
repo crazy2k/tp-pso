@@ -86,21 +86,21 @@ int write_to_circ_buff(circular_buf_t *cbuf, char *src, uint32_t size, uint32_t 
 }
 
 
-int read_from_blockdev(blockdev *hbdev, uint64_t offset, void *buf, uint32_t size) {    
+int read_from_blockdev(blockdev *bdev, uint64_t offset, void *buf, uint32_t size) {    
     static char read_buf[READ_BUF];
 
-    uint32_t remainder = offset % hbdev->size,
-             pos = offset / hbdev->size,
-             sectors_size = align_to_next(size + remainder, hbdev->size),
+    uint32_t remainder = offset % bdev->size,
+             pos = offset / bdev->size,
+             sectors_size = align_to_next(size + remainder, bdev->size),
              last_remainder = sectors_size - size - remainder;
 
-    hdd_block_read(hbdev, pos, read_buf, hbdev->size);
-    memcpy(buf, read_buf + remainder, hbdev->size - remainder);
+    bdev->read(bdev, pos, read_buf, bdev->size);
+    memcpy(buf, read_buf + remainder, bdev->size - remainder);
 
-    hdd_block_read(hbdev, pos + 1, buf + hbdev->size - remainder, sectors_size - hbdev->size * 2);
+    bdev->read(bdev, pos + 1, buf + bdev->size - remainder, sectors_size - bdev->size * 2);
 
-    hdd_block_read(hbdev, (sectors_size/hbdev->size) - 1, read_buf, hbdev->size);
-    memcpy(buf + (size - (hbdev-> size - last_remainder)), read_buf, last_remainder);
+    bdev->read(bdev, (sectors_size/bdev->size) - 1, read_buf, bdev->size);
+    memcpy(buf + (size - (bdev-> size - last_remainder)), read_buf, last_remainder);
     
     return size;
 }
