@@ -31,6 +31,8 @@ struct hdd_blockdev {
 
 
 blockdev* hdd_open(int nro);
+sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
+    uint32_t size);
 
 void hdd_init(void);
 
