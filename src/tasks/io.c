@@ -43,9 +43,10 @@ int scanln(uint32_t fd, char* dest, int size) {
                     pos--;
                 }
             break;
+
             //delete:
             case 127:
-                con_ctl(fd, CON_CTL_CLS_SCREEN);
+                con_ctl(fd, CON_CTL_DELETE_CUR_CHAR);
             break;
 
             //tab:
