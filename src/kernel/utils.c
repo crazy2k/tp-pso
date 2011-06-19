@@ -102,7 +102,7 @@ int read_from_blockdev(blockdev *bdev, uint64_t offset, void *buf, uint32_t size
         bdev->read(bdev, pos + 1, buf + bdev->size - remainder, middle_sectors_size);
     
 
-    if (last_remainder > 0) {
+    if (remainder + size > bdev->size && last_remainder > 0) {
         bdev->read(bdev, (sectors_size/bdev->size) - 1, read_buf, bdev->size);
         memcpy(buf + (size - (bdev->size - last_remainder)), read_buf, (bdev->size - last_remainder));
     }
