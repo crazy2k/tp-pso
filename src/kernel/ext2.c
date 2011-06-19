@@ -98,10 +98,14 @@ enum
 int read_from_blockdev(blockdev *bdev, uint64_t offset, void *buf,
     uint32_t size);
 
+uint8_t file_data_buf[PAGE_SIZE*4];
+
 
 static void initialize_part_info(ext2 *part_info);
 static ext2_inode *get_inode(ext2 *part_info, uint32_t no);
-static ext2_inode *path2inode(ext2_inode *dir, const char *relpath);
+static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
+    const char *relpath);
+static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
 
 
 void ext2_init() {
@@ -124,8 +128,8 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (!(part_info->initialized))
         initialize_part_info(part_info);
 
-    ext2_inode *inode = path2inode(get_inode(part_info, EXT2_ROOT_INODE_NO),
-        filename + 6);
+    ext2_inode *inode = path2inode(part_info,
+        get_inode(part_info, EXT2_ROOT_INODE_NO), filename + 6);
 }
 
 static void initialize_part_info(ext2 *part_info) {
@@ -136,7 +140,8 @@ static void initialize_part_info(ext2 *part_info) {
 
     ext2_superblock *sb = part_info->superblock;
 
-    kassert(sb->magic != EXT2_SUPERBLOCK_MAGIC);
+    if (sb->magic != EXT2_SUPERBLOCK_MAGIC)
+        return;
 
     uint32_t bg_count = sb->blocks_count/sb->blocks_per_group;
 
@@ -155,23 +160,52 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     ext2_block_group_descriptor *bgd = part_info->bgd_table + bg_no;
 
     // Obtenemos la direccion en el blockdev de la tabla de inodos
-    uint64_t inode_table_bdaddr = (bgd->inode_table_baddr)*(sb->block_size);
+    uint64_t inode_table_bdaddr = (bgd->inode_table_bno)*(sb->block_size);
 
     // Calculamos el indice del inodo en la tabla de inodos
     uint32_t inode_index = (no - 1) % part_info->superblock->inodes_per_group;
 
     // Calculamos la direccion en el blockdev del inodo
-    uint64_t inode_bpaddr = inode_table_bdaddr +
+    uint64_t inode_bdaddr = inode_table_bdaddr +
         inode_index*sizeof(ext2_inode);
 
     ext2_inode *inode = mm_mem_kalloc();
-    read_from_blockdev(part_info->part, inode_bpaddr, inode,
+    read_from_blockdev(part_info->part, inode_bdaddr, inode,
         sizeof(ext2_inode));
 
     return inode;
 }
 
-static ext2_inode *path2inode(ext2_inode *dir, const char *relpath) {
+static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
+    const char *relpath) {
+
     if (TYPE_FROM_MODE(dir->mode) != EXT2_INODE_TYPE_DIR)
         return NULL;
+
+    get_data(part_info, dir, file_data_buf);
+}
+
+static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
+
+    // Chequeamos si el archivo es mas grande que el buffer que tenemos
+    if (inode->size > sizeof(file_data_buf))
+        return -1;
+
+    uint32_t block_size = part_info->superblock->block_size;
+
+    void *buf_pos;
+    int i;
+    for (i = 0, buf_pos = buf;
+        i < EXT2_INODE_DIRECT_COUNT;
+        i++, buf_pos += block_size) {
+
+        // Obtenemos el numero del bloque en el que se hallan los datos
+        uint32_t bno = inode->blocks[i];
+        // Obtenemos la direccion del bloque en el blockdev
+        uint64_t bdaddr = bno*block_size;
+
+        read_from_blockdev(part_info->part, bdaddr, buf_pos, block_size);
+    }
+
+    return 0;
 }
