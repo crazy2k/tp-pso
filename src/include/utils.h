@@ -3,6 +3,7 @@
 #define __UTILS_H__
 
 #include <utils_common.h>
+#include <device.h>
 
 typedef struct {
     void *buf;
@@ -21,6 +22,7 @@ char sc2ascii(unsigned char sc);
 int write_to_circ_buff(circular_buf_t *cbuf, char* src, uint32_t size, uint32_t buf_size);
 int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size);
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
+int read_from_blockdev(blockdev *bdev, uint64_t offset, void *buf, uint32_t size);
 
 
 #define IS_AT_LIST(node) ((node)->prev && (node)->next)

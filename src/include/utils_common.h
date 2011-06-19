@@ -17,5 +17,9 @@ char *strcat(char *s1, const char *s2);
 char *strncat(char *s1, const char *s2, size_t n);
 
 int power(int x, int y);
+long max(long var1, long var2);
+long min(long var1, long var2);
+
+int align_to_next(int number, int mult);
 
 #endif

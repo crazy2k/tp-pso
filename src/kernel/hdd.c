@@ -10,7 +10,7 @@
 
 #define BUF_SIZE 4096
 
-#define SECTOR_SIZE 512
+#define DEFAULT_SECTOR_SIZE 512
 
 /*
 #define PRIMARY_MASTER_ID   0
@@ -46,8 +46,9 @@
 #define LBA_HIGHEST_4BITS(lba) ((uint8_t)(((lba) >> 24) & 0x0F))
 
 
-static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id);
+static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id, uint32_t sector_size);
 static void hdd_recv(hdd_blockdev *hbdev);
+static sint_32 hdd_block_read_sectors(hdd_blockdev *this, uint32_t pos, void *buf, uint32_t size);
 
 static hdd_blockdev hdd_blockdevs[MAX_HDD_BLOCKDEVS];
 
@@ -56,7 +57,7 @@ void hdd_init(void) {
     memset(hdd_blockdevs, 0, sizeof(hdd_blockdevs));
 
     initialize_hdd_blockdev(&hdd_blockdevs[PRIMARY_MASTER],
-        PRIMARY_MASTER);
+        PRIMARY_MASTER, DEFAULT_SECTOR_SIZE);
 }
 
 sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 size) {
@@ -103,10 +104,26 @@ sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 si
  */
 sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
     uint32_t size) {
+
     if (this->clase != DEVICE_HDD_BLOCKDEV)
         return -1;
 
     hdd_blockdev *hbdev = (hdd_blockdev *)this;
+
+    sint_32 read_chars = 0;
+
+    while (read_chars < size)
+        read_chars += hdd_block_read_sectors(hbdev, pos + (read_chars/hbdev->size), buf + read_chars, size - read_chars);
+
+    return size;
+}
+/* Lee una cantidad de sectores especificada en sectors, si estos no caben en el 
+ * buffer sólo lee hasta llenar el buffer del distositivo.
+ */
+sint_32 hdd_block_read_sectors(hdd_blockdev *hbdev, uint32_t pos, void *buf,
+    uint32_t size) {
+
+    size = min(BUF_SIZE, size);
 
     uint32_t lba = pos & __LOW28_BITS__;
     uint16_t base = GET_BASE(hbdev);
@@ -116,7 +133,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     outb(base + PORT_FEATURES, NULL);
 
-    outb(base + PORT_SECTOR_COUNT, size/this->size);
+    outb(base + PORT_SECTOR_COUNT, size/hbdev->size);
 
     outb(base + PORT_SECTOR_NUMBER, (uint8_t)lba);
     outb(base + PORT_CYLINDER_LO, (uint8_t)(lba >> 8));
@@ -137,13 +154,13 @@ blockdev *hdd_open(int no) {
     return (blockdev *)(&hdd_blockdevs[no]);
 }
 
-static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type) {
+static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t sector_size) {
     hbdev->clase = DEVICE_HDD_BLOCKDEV;
     hbdev->refcount = 0;
     hbdev->flush = NULL;
     hbdev->read = hdd_block_read;
     hbdev->write = hdd_block_write;
-    hbdev->size = SECTOR_SIZE;
+    hbdev->size = sector_size;
     hbdev->type = type;
     hbdev->buf = ((circular_buf_t) {
         .buf = mm_mem_kalloc(),

@@ -1,8 +1,10 @@
 #include <utils.h>
 #include <vga.h>
+#include <hdd.h>
 #include <i386.h>
 
 #define PANIC_PREFIX "PANIC : "
+#define READ_BUF 4096
 
 void custom_kpanic_msg(char* custom_msg) {
     cli(); 
@@ -81,4 +83,24 @@ int write_to_circ_buff(circular_buf_t *cbuf, char *src, uint32_t size, uint32_t 
     cbuf->offset = (cbuf->offset + size) % buf_size;
 
     return i;
+}
+
+
+int read_from_blockdev(blockdev *hbdev, uint64_t offset, void *buf, uint32_t size) {    
+    static char read_buf[READ_BUF];
+
+    uint32_t remainder = offset % hbdev->size,
+             pos = offset / hbdev->size,
+             sectors_size = align_to_next(size + remainder, hbdev->size),
+             last_remainder = sectors_size - size - remainder;
+
+    hdd_block_read(hbdev, pos, read_buf, hbdev->size);
+    memcpy(buf, read_buf + remainder, hbdev->size - remainder);
+
+    hdd_block_read(hbdev, pos + 1, buf + hbdev->size - remainder, sectors_size - hbdev->size * 2);
+
+    hdd_block_read(hbdev, (sectors_size/hbdev->size) - 1, read_buf, hbdev->size);
+    memcpy(buf + (size - (hbdev-> size - last_remainder)), read_buf, last_remainder);
+    
+    return size;
 }
