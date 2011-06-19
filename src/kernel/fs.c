@@ -25,7 +25,7 @@
 /*
  * Disco 1;
  */ 
-fat12 disk;
+ext2 disk;
 
 /*
  * Se pueden agregar más discos así:
@@ -37,14 +37,13 @@ fat12 disk;
  //~ ntfs disk6;
 
 void fs_init(void) {
-	/* Inicializar los dispositivos (ojo con las llamadas bloqueantes) */
-	// Ejemplo: fat12_create(&disk, fdd_open(0));
-	// Ejemplo: fat16_create(&disk2, hdd_open(0));
+    ext2_create(&disk, hdd_open(0));
 }
 
-chardev* fs_open(const char* filename, uint_32 flags) {
-	/* Checkea el pedido de apertura como lectura o escritura */
-	if ((flags & FS_OPEN_RDWR) == 0) return NULL; /* Pedido frutero */
+chardev *fs_open(const char *filename, uint32_t flags) {
+    // Chequeamos si el archivo se abre minimamente para lectura o escritura
+	if ((flags & FS_OPEN_RDWR) == 0)
+        return NULL;
 
 	if (!strcmp(filename, "/serial0")) return serial_open(0);
 	if (!strcmp(filename, "/serial1")) return serial_open(1);
@@ -56,7 +55,7 @@ chardev* fs_open(const char* filename, uint_32 flags) {
 	/*
 	 * Pedido para el disco 1: Usamos fat12 para abrirlo
 	 */ 
-/*	if (!strcmp(filename, "/disk/")) return fat12_open(&disk, filename+5, flags);*/
+	if (!strcmp(filename, "/disk/")) return ext2_open(&disk, filename, flags);
 	
 	return NULL;
 }

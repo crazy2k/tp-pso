@@ -43,6 +43,9 @@
 #define SECONDARY_DEV_ALTST SECONDARY_DEV_CTRL
 
 
+#define LBA_HIGHEST_4BITS(lba) ((uint8_t)(((lba) >> 24) & 0x0F))
+
+
 static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id);
 static void hdd_recv(hdd_blockdev *hbdev);
 
@@ -93,8 +96,11 @@ sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 si
         _is_master; \
     })
 
-#define LBA_HIGHEST_4BITS(lba) ((uint8_t)(((lba) >> 24) & 0x0F))
-// ``pos`` es un LBA de 28 bits
+
+/* Lee los sectores necesarios. Parte del sector indicado por el LBA de 28
+ * bits en ``pos`` y lee ``size`` bytes (se asume que ``size`` es un multiplo
+ * del tamanio del sector del dispositivo).
+ */
 sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
     uint32_t size) {
     if (this->clase != DEVICE_HDD_BLOCKDEV)
@@ -110,7 +116,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     outb(base + PORT_FEATURES, NULL);
 
-    outb(base + PORT_SECTOR_COUNT, size/SECTOR_SIZE);
+    outb(base + PORT_SECTOR_COUNT, size/this->size);
 
     outb(base + PORT_SECTOR_NUMBER, (uint8_t)lba);
     outb(base + PORT_CYLINDER_LO, (uint8_t)(lba >> 8));
