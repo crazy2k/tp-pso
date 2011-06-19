@@ -4,16 +4,25 @@
 #include <utils.h>
 #include <mm.h>
 
-#define EXT2_SUPERBLOCK_OFFSET 1024
-#define EXT2_SUPERBLOCK_SIZE 1024
-#define EXT2_SUPERBLOCK_MAGIC 0xEF53
-#define EXT2_ROOT_INODE_NO 2
-#define EXT2_NDIRBLOCKS 12
-#define EXT2_INDBLOCK EXT2_NDIRBLOCKS
-#define EXT2_DINDBLOCK (EXT2_INDBLOCK + 1)
-#define EXT2_TINDBLOCK (EXT2_DINDBLOCK + 1)
-#define EXT2_NBLOCKS (EXT2_TINDBLOCK + 1)
+#define EXT2_SUPERBLOCK_OFFSET      1024
+#define EXT2_SUPERBLOCK_SIZE        1024
+#define EXT2_SUPERBLOCK_MAGIC       0xEF53
+#define EXT2_ROOT_INODE_NO          2
+#define EXT2_NDIRBLOCKS             12
+#define EXT2_INDBLOCK               EXT2_NDIRBLOCKS
+#define EXT2_DINDBLOCK              (EXT2_INDBLOCK + 1)
+#define EXT2_TINDBLOCK              (EXT2_DINDBLOCK + 1)
+#define EXT2_NBLOCKS                (EXT2_TINDBLOCK + 1)
 
+#define EXT2_INODE_TYPE_FIFO        0x1000
+#define EXT2_INODE_TYPE_CHARDEV     0x2000
+#define EXT2_INODE_TYPE_DIR         0x4000
+#define EXT2_INODE_TYPE_BLOCKDEV    0x6000
+#define EXT2_INODE_TYPE_REGULAR     0x8000
+#define EXT2_INODE_TYPE_SLINK       0xA000
+#define EXT2_INODE_TYPE_SOCKET      0xC000
+
+#define TYPE_FROM_MODE(mode) ((mode) & 0xF000)
 
 /*
 FIRSTINODE = 11,
@@ -29,17 +38,6 @@ IREAD = 0400,
 ISVTX = 01000,
 ISGID = 02000,
 ISUID = 04000,
-
-// type in Inode.mode
-IFMT = 0170000,
-IFIFO = 0010000,
-IFCHR = 0020000,
-IFDIR = 0040000,
-IFBLK = 0060000,
-IFREG = 0100000,
-IFLNK = 0120000,
-IFSOCK = 0140000,
-IFWHT = 0160000
 
 #define DIRLEN(namlen)  (((namlen)+8+3)&~3)
 
@@ -99,6 +97,7 @@ int read_from_blockdev(blockdev *bdev, uint64_t offset, void *buf,
 
 static void initialize_part_info(ext2 *part_info);
 static ext2_inode *get_inode(ext2 *part_info, uint32_t no);
+static ext2_inode *path2inode(ext2_inode *dir, const char *relpath);
 
 
 void ext2_init() {
@@ -121,7 +120,8 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (!(part_info->initialized))
         initialize_part_info(part_info);
 
-    //get_inode(EXT2_ROOT_INODE_NO);
+    ext2_inode *inode = path2inode(get_inode(part_info, EXT2_ROOT_INODE_NO),
+        filename + 6);
 }
 
 static void initialize_part_info(ext2 *part_info) {
@@ -167,6 +167,7 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     return inode;
 }
 
-ext2_inode *path2inode(ext2_inode *dir, char *relpath) {
-    return NULL;
+static ext2_inode *path2inode(ext2_inode *dir, const char *relpath) {
+    if (TYPE_FROM_MODE(dir->mode) != EXT2_INODE_TYPE_DIR)
+        return NULL;
 }
