@@ -131,6 +131,9 @@ static void initialize_part_info(ext2 *part_info) {
         EXT2_SUPERBLOCK_SIZE);
 
     ext2_superblock *sb = part_info->superblock;
+
+    kassert(sb->magic != EXT2_SUPERBLOCK_MAGIC);
+
     uint32_t bg_count = sb->blocks_count/sb->blocks_per_group;
 
     part_info->bgd_table = mm_mem_kalloc();
