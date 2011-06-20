@@ -69,6 +69,7 @@ typedef struct {
 } __attribute__((__packed__)) ext2;
 
 
+void ext2_init();
 void ext2_create(ext2 *part_info, blockdev *part);
 chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags);
 
