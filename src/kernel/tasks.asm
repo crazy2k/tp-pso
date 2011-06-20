@@ -12,3 +12,4 @@ task_%1_pso_end:
 %endmacro
 
 include_task task1, "tasks/task1.pso"
+include_task shell, "tasks/shell.pso"
