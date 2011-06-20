@@ -22,7 +22,7 @@ int main(void) {
 //        __asm__ __volatile__("xchg %bx, %bx");
 
         if (res > 0)
-            println(con, buff, res);
+            write_str(con, buff);
 
 
 

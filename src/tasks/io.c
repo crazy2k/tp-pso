@@ -7,8 +7,20 @@
 static char read_buf[READ_BUF_SIZE];
 
 
-void println(uint32_t fd, char* src, int size) {
-    write(fd, src, size);
+void write_hex(uint32_t fd, uint32_t num) {
+
+}
+
+void write_decimal(uint32_t fd, uint32_t num) {
+
+}
+
+void write_str(uint32_t fd, char* src) {    
+    write(fd, src, strlen(src));
+}
+
+void println(uint32_t fd, char* src) {
+    write_str(fd, src);
     write(fd, "\n", 1);
 }
 
@@ -17,8 +29,8 @@ int scanln(uint32_t fd, char* dest, int size) {
 }
 
 int scanln_autocomp(uint32_t fd, char* dest, int size, int (*autocompl) (char *read_buf, int pos) ) {
-    int pos = 0; 
-    int total = size < READ_BUF_SIZE ? size : READ_BUF_SIZE;    
+    int pos = 0;
+    int total = min(size, READ_BUF_SIZE);
     uint8_t byte;
     int chars, i;
 
