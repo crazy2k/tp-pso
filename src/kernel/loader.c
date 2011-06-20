@@ -9,6 +9,7 @@
 #include <con.h>
 #include <hdd.h>
 #include <vga.h>
+#include <fs.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000
@@ -129,7 +130,11 @@ void loader_init(void) {
 
     current_pcb = idle_pcb;
 
+
     sti();
+
+    fs_open("/disk/", FS_OPEN_RDONLY);
+
     idle_main();
 }
 

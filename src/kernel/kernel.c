@@ -24,5 +24,7 @@ void kernel_init(void) {
     mm_init();
     sched_init();
     con_init();
+    ext2_init();
+    fs_init();
     loader_init();
 }
