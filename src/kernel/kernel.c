@@ -11,6 +11,7 @@
 #include <con.h>
 #include <serial.h>
 #include <hdd.h>
+#include <fs.h>
 
 extern void* _end;
 /* Entry-point del modo protegido luego de cargar los registros de
@@ -24,7 +25,6 @@ void kernel_init(void) {
     mm_init();
     sched_init();
     con_init();
-    ext2_init();
     fs_init();
     loader_init();
 }

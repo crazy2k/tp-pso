@@ -38,6 +38,7 @@ ext2 disk;
  //~ ntfs disk6;
 
 void fs_init(void) {
+    ext2_init();
     ext2_create(&disk, hdd_open(0));
 }
 
