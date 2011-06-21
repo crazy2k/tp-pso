@@ -20,6 +20,7 @@ int power(int x, int y);
 long max(long var1, long var2);
 long min(long var1, long var2);
 
+int align_to_lower(int number, int mult);
 int align_to_next(int number, int mult);
 
 #endif

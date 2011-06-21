@@ -157,8 +157,11 @@ long min(long var1, long var2) {
     return var1 > var2 ? var2 : var1;
 }
 
+int align_to_lower(int number, int mult) {
+   return ((number / mult)) * mult;
+}
 
 int align_to_next(int number, int mult) {
-   return (number / mult) + (number % mult > 0 ? 1 : 0);
+   return ((number / mult) + (number % mult > 0 ? 1 : 0)) * mult;
 }
 
