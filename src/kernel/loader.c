@@ -22,6 +22,7 @@ extern void initialize_task(pso_file *f);
 
 extern func_main idle_main;
 extern pso_file task_task1_pso;
+extern pso_file task_task1_pso, task_shell_pso;
 
 /*
  * TSS
@@ -126,7 +127,7 @@ void loader_init(void) {
 
     // Cargamos otras tareas
 
-    loader_load(&task_task1_pso, 3);
+    loader_load(&task_shell_pso, 3);
 
     current_pcb = idle_pcb;
 
