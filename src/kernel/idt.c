@@ -156,8 +156,10 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
             break;
         case SYSCALLS_NUM_WRITE:
             st->eax = sys_write(st->ebx, (void *)st->ecx, st->edx);
+            break;
         case SYSCALLS_NUM_SEEK:
             st->eax = sys_seek(st->ebx, st->ecx);
+            break;
         case SYSCALLS_NUM_CLOSE:
             st->eax = sys_close(st->ebx);
             break;
