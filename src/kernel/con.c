@@ -1,6 +1,7 @@
 #include <con.h>
 #include <device.h>
 #include <vga.h>
+#include <kb.h>
 #include <utils.h>
 #include <mm.h>
 #include <debug.h>
@@ -161,9 +162,19 @@ void con_focus(con_chardev *con) {
 }
 
 void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
-    put_char_to_circ_buff(&ccdev->kb_buf, b, KB_BUF_SIZE);
-
-    loader_unqueue(&ccdev->waiting_process);
+    switch(b) {
+        case KB_KC_SHIFT_ALT_LEFT:
+	        __asm __volatile("xchg %%bx, %%bx" : :);
+            con_focus(ccdev->prev);
+        break;
+        case KB_KC_SHIFT_ALT_RIGHT:
+	        __asm __volatile("xchg %%bx, %%bx" : :);
+            con_focus(ccdev->next);
+        break;
+        default:
+            put_char_to_circ_buff(&ccdev->kb_buf, b, KB_BUF_SIZE);
+            loader_unqueue(&ccdev->waiting_process);
+    }
 }
 
 con_chardev *con_get_current_console() {

@@ -53,14 +53,6 @@ int open(const char* path, uint32_t mode) {
     return syscall(SYSCALLS_NUM_OPEN, (uint32_t)path, mode, 0, 0, 0);
 }
 
-void next_console() {
-    syscall(SYSCALLS_NUM_NEXTCON, 0, 0, 0, 0, 0);
-}
-
-void prev_console() {
-    syscall(SYSCALLS_NUM_PREVCON, 0, 0, 0, 0, 0);
-}
-
 void con_ctl(uint32_t con, uint32_t oper) {
     syscall(SYSCALLS_CONSOLE_CTL, con, oper, 0, 0, 0);
 }
