@@ -6,18 +6,18 @@
 #define SHELL_BUF_SIZE 160
 #define PROMTP "shell> "
 
+char shell_buf[SHELL_BUF_SIZE] = { 0 };
 
 static char *skip_spaces(char* str);
 static char *get_word(char** str);
+static void print_help(int fd);
 
 
 int main(void) {
 
+    char *rest, *command;
     int con = open("/console0", FS_OPEN_RDWR);
     int res;
-
-    char shell_buf[SHELL_BUF_SIZE] = { 0 };
-    char *rest, *command;
 
     while (TRUE) {
 
@@ -31,11 +31,12 @@ int main(void) {
             rest = skip_spaces(rest);
             
             if (strcmp(command,"echo") == 0) {
-                write_str(con, rest);
-            } else if (strcmp(command,"help") == 0) {
-            
-            } else { 
-                write_str("Comando desconocido", rest);
+                println(con, rest);
+            } else if (strcmp(command, "help") == 0) {
+                print_help(con);
+            } else {
+                if (run(command) == -1)
+                    println(con, "Comando desconocido");
             }
         }
     }
@@ -70,3 +71,6 @@ static char *get_word(char** str) {
     return result;
 }
 
+static void print_help(int fd) {
+    println(fd, "Help!!");
+}
