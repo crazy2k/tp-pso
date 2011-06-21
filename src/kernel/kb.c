@@ -49,7 +49,7 @@ static char sc2kc(uint8_t sc) {
 }
 
 void kb_process_byte(uint8_t b) {
-    uint32_t mask; 
+    uint32_t status_key; 
 
     if (!con_get_current_console())
         return;
@@ -58,29 +58,32 @@ void kb_process_byte(uint8_t b) {
     switch (kc) {
         case KB_KC_LSHIFT:
         case KB_KC_RSHIFT:
-            mask = KB_STATUS_SHIFT;
+            status_key = KB_STATUS_SHIFT;
         break;
         case KB_KC_LALT:
-            mask = KB_STATUS_ALT;
+            status_key = KB_STATUS_ALT;
         break;
         case KB_KC_LCTRL:
-            mask = KB_STATUS_CTRL;
+            status_key = KB_STATUS_CTRL;
         break;
         default:
-             mask = 0;
+             status_key = 0;
     }
 
-    if (mask) {
+    if (status_key) {
         if (IS_KEY_RELEASE(b))
-            kb_status |= mask;
+            kb_status |= status_key;
         else 
-            kb_status &= ~mask;
+            kb_status &= ~status_key;
     } else if(!IS_KEY_RELEASE(b)) {
-        if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT) && kc == KB_KC_LEFT)
-            con_put_to_kb_buf(con_get_current_console(), KB_KC_SHIFT_ALT_LEFT);
-        else if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT) && kc == KB_KC_RIGHT)
-            con_put_to_kb_buf(con_get_current_console(), KB_KC_SHIFT_ALT_RIGHT);
-        else if (kc != KB_KC_NULL)
+        // Si Alt + Shift estan siendo presionadas
+        if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT)) {
+            if (kc == KB_KC_LEFT)
+                kc = KB_KC_SHIFT_ALT_LEFT;
+            else if (kc == KB_KC_RIGHT)
+                kc = KB_KC_SHIFT_ALT_RIGHT;
+        }
+        if (kc != KB_KC_NULL)
             con_put_to_kb_buf(con_get_current_console(), kc);
     }
 }
