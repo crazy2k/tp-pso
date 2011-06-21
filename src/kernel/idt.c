@@ -173,6 +173,9 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_CONSOLE_CTL:
             con_ctl((con_chardev *) loader_get_file(st->ebx), st->ecx);
             break;
+        case SYSCALLS_RUN:
+            sys_run((char *)st->ebx);
+            break;
     }
 }
 
