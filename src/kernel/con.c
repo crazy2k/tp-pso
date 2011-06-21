@@ -41,9 +41,8 @@ chardev* con_open(uint32_t number, uint32_t mode) {
     if (number < MAX_CON_CHARDEVS) {
         con_chardev* con = &con_chardevs[number];
 
-        if (!IS_AT_LIST(con)) {
+        if (!IS_AT_LIST(con)) 
             con_create(con);
-        }
 
         con->refcount++;
 
