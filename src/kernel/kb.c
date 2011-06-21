@@ -45,11 +45,11 @@ char sc2kc_table[KB_RELEASE_BASE] = {
 
 static char sc2kc(uint8_t sc) {
     int idx = (int)sc;
-    return sc2kc_table[idx];
+    return idx < KB_RELEASE_BASE ? sc2kc_table[idx] : KB_KC_NULL;
 }
 
 void kb_process_byte(uint8_t b) {
-    uint32_t mask = 0; 
+    uint32_t mask; 
 
     if (!con_get_current_console())
         return;
@@ -59,13 +59,15 @@ void kb_process_byte(uint8_t b) {
         case KB_KC_LSHIFT:
         case KB_KC_RSHIFT:
             mask = KB_STATUS_SHIFT;
-            break;
+        break;
         case KB_KC_LALT:
             mask = KB_STATUS_ALT;
-            break;
+        break;
         case KB_KC_LCTRL:
             mask = KB_STATUS_CTRL;
-            break;
+        break;
+        default:
+             mask = 0;
     }
 
     if (mask) {
@@ -74,18 +76,11 @@ void kb_process_byte(uint8_t b) {
         else 
             kb_status &= ~mask;
     } else if(!IS_KEY_RELEASE(b)) {
-        if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT)) {
-            switch (kc) { 
-                case KB_KC_LEFT:
-                    con_put_to_kb_buf(con_get_current_console(),
-                        KB_KC_SHIFT_ALT_LEFT);
-                    break;
-                case KB_KC_RIGHT:
-                    con_put_to_kb_buf(con_get_current_console(),
-                        KB_KC_SHIFT_ALT_RIGHT);
-                    break;
-            }
-        } else if (kc != KB_KC_ERROR && kc != KB_KC_NULL)
+        if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT) && kc == KB_KC_LEFT)
+            con_put_to_kb_buf(con_get_current_console(), KB_KC_SHIFT_ALT_LEFT);
+        else if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT) && kc == KB_KC_RIGHT)
+            con_put_to_kb_buf(con_get_current_console(), KB_KC_SHIFT_ALT_RIGHT);
+        else if (kc != KB_KC_NULL)
             con_put_to_kb_buf(con_get_current_console(), kc);
     }
 }
