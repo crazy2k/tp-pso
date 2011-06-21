@@ -9,7 +9,7 @@ int main(void) {
     int con = open("/console0", FS_OPEN_RDWR);
     int res = 0;
 
-    write(con, "shell>", 6);
+    write(con, "task1>", 6);
     write(con, " ", 1);
 
     char buff[80] = { 0 };
