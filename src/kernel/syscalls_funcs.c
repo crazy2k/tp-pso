@@ -69,3 +69,10 @@ int sys_close(int fd) {
 int sys_open(char *path, uint32_t mode) {
     return loader_add_file(fs_open(path, mode));
 }
+
+int sys_run(const char *path) {
+    /* TODO: Buscar binario en el FS*/
+    /* TODO: Ejecutar una instancia del proceso */
+
+    return NULL;
+}

@@ -15,6 +15,7 @@
 #define SYSCALLS_NUM_NEXTCON 9
 #define SYSCALLS_NUM_PREVCON 10
 #define SYSCALLS_CONSOLE_CTL 11
+#define SYSCALLS_RUN 12
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -35,6 +36,7 @@
     int sys_seek(int fd, uint32_t size);
     int sys_close(int fd);
     int sys_open(char* path, uint32_t mode);
+    int sys_run(const char* path);
 
 
 #else
@@ -57,6 +59,7 @@
     int close(int fd);
     int open(const char* path, uint32_t mode);
     void con_ctl(uint32_t con, uint32_t oper);
+    int run(const char* path);
     void next_console();
     void prev_console();
 
