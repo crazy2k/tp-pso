@@ -166,10 +166,10 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_NUM_OPEN:
             st->eax = sys_open((char *)st->ebx, st->ecx);
             break;
-        case SYSCALLS_CONSOLE_CTL:
+        case SYSCALLS_NUM_CON_CTL:
             con_ctl((con_chardev *) loader_get_file(st->ebx), st->ecx);
             break;
-        case SYSCALLS_RUN:
+        case SYSCALLS_NUM_RUN:
             sys_run((char *)st->ebx);
             break;
     }
@@ -182,7 +182,6 @@ static void timer_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
 
 static void keyboard_isr(uint32_t index, uint32_t error_code,
     task_state_t *st) {
-
     kb_process_byte(inb(0x60));
 }
 

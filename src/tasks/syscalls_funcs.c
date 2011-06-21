@@ -54,9 +54,9 @@ int open(const char* path, uint32_t mode) {
 }
 
 void con_ctl(uint32_t con, uint32_t oper) {
-    syscall(SYSCALLS_CONSOLE_CTL, con, oper, 0, 0, 0);
+    syscall(SYSCALLS_NUM_CON_CTL, con, oper, 0, 0, 0);
 }
 
 int run(const char* path) {
-    return syscall(SYSCALLS_RUN, (uint32_t)path, 0, 0, 0, 0);
+    return syscall(SYSCALLS_NUM_RUN, (uint32_t)path, 0, 0, 0, 0);
 }
