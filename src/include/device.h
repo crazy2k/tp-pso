@@ -56,4 +56,10 @@ void device_init(void);
 
 int device_descriptor(chardev* dev);
 
+typedef struct { 
+    uint32_t sector;
+    uint32_t offset;
+} __attribute__((__packed__)) bd_addr_t;
+
+
 #endif
