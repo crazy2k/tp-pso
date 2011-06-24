@@ -17,8 +17,6 @@ uint32_t disable_interrupts();
 
 void restore_eflags(uint32_t eflags);
 
-char sc2ascii(unsigned char sc);
-
 int write_to_circ_buff(circular_buf_t *cbuf, char* src, uint32_t size, uint32_t buf_size);
 int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t buf_size);
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
