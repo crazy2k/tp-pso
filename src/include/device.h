@@ -56,6 +56,8 @@ void device_init(void);
 
 int device_descriptor(chardev* dev);
 
+int read_from_bdev(blockdev *bdev, uint64_t offset, void *buf, uint32_t size);
+
 typedef struct { 
     uint32_t sector;
     uint32_t offset;
