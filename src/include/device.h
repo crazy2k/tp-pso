@@ -52,16 +52,16 @@ struct str_blockdev {
 	uint_32 size;
 } __attribute__((packed));
 
-void device_init(void);
-
-int device_descriptor(chardev* dev);
-
-int read_from_bdev(blockdev *bdev, uint64_t offset, void *buf, uint32_t size);
-
 typedef struct { 
     uint32_t sector;
     uint32_t offset;
 } __attribute__((__packed__)) bd_addr_t;
+
+void device_init(void);
+
+int device_descriptor(chardev* dev);
+
+void* read_from_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size);
 
 
 #endif

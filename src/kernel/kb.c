@@ -10,8 +10,7 @@ static uint32_t kb_status = NULL;
 
 static char sc2kc(uint8_t sc);
 
-
-char sc2kc_table[KB_RELEASE_BASE] = {
+static char sc2kc_table[KB_RELEASE_BASE] = {
     [0x00] = KB_KC_ERROR,
     [0x01] = 27,
     [0x02] = '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', '-', '=', 8,
@@ -42,6 +41,16 @@ char sc2kc_table[KB_RELEASE_BASE] = {
     [0x57] = KB_KC_F(11), KB_KC_F(12),
     [0x59 ... (KB_RELEASE_BASE - 1)] = KB_KC_NULL,
 };
+
+static bool isletter(uint8_t c) {
+    switch(c) {
+        case 'a' ... 'z':
+        case 'A' ... 'Z':
+            return TRUE;
+        default:
+            return FALSE;
+    }
+}
 
 static char sc2kc(uint8_t sc) {
     int idx = (int)sc;
@@ -76,12 +85,17 @@ void kb_process_byte(uint8_t b) {
         else 
             kb_status &= ~status_key;
     } else if(!IS_KEY_RELEASE(b)) {
-        // Si Alt + Shift estan siendo presionadas
-        if (kb_status & (KB_STATUS_SHIFT | KB_STATUS_ALT)) {
-            if (kc == KB_KC_LEFT)
-                kc = KB_KC_SHIFT_ALT_LEFT;
-            else if (kc == KB_KC_RIGHT)
-                kc = KB_KC_SHIFT_ALT_RIGHT;
+        if (kb_status & KB_STATUS_SHIFT) {
+            if (isletter(kc))
+                kc -= ('a' - 'A');
+
+            // Si Alt + Shift estan siendo presionadas
+            if (kb_status & (KB_STATUS_ALT)) {
+                if (kc == KB_KC_LEFT)
+                    kc = KB_KC_SHIFT_ALT_LEFT;
+                else if (kc == KB_KC_RIGHT)
+                    kc = KB_KC_SHIFT_ALT_RIGHT;
+            }
         }
         if (kc != KB_KC_NULL)
             con_put_to_kb_buf(con_get_current_console(), kc);

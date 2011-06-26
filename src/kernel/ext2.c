@@ -28,6 +28,17 @@
 
 #define TYPE_FROM_MODE(mode) ((mode) & 0xF000)
 
+// Offset dentro del disco a bd_addr. (Sólo para 32 bits).
+#define OFFSET_TO_BD_ADDR(bd, dev_offset) ((bd_addr_t) { \
+    .sector = (dev_offset) / (bd)->size, \
+    .offset = (dev_offset) % (bd)->size \
+})
+
+#define BLOCK_TO_BD_ADDR(fs, bd, block, offset) ({ \
+    _shft = fs-> +  
+    ((bd_addr_t) {}); \
+})
+
 /*
 FIRSTINODE = 11,
 VALIDFS = 0x0001,
@@ -143,7 +154,8 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
 static void initialize_part_info(ext2 *part_info) {
     // XXX: Aca asumo que el superblock entra en una pagina
     part_info->superblock = mm_mem_kalloc();
-    read_from_blockdev(part_info->part, EXT2_SUPERBLOCK_OFFSET,
+    read_from_bdev(part_info->part, 
+        OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET),
         part_info->superblock, EXT2_SUPERBLOCK_SIZE);
 
     ext2_superblock *sb = part_info->superblock;
@@ -154,8 +166,9 @@ static void initialize_part_info(ext2 *part_info) {
     uint32_t bg_count = sb->blocks_count/sb->blocks_per_group;
 
     part_info->bgd_table = mm_mem_kalloc();
-    read_from_blockdev(part_info->part,
-        EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_SIZE, part_info->bgd_table,
+    read_from_bdev(part_info->part,
+        OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_SIZE),
+        part_info->bgd_table,
         bg_count*sizeof(ext2_block_group_descriptor));
 }
 
@@ -170,20 +183,19 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     // Obtenemos la direccion en el blockdev de la tabla de inodos
     uint32_t block_size = 1024 << sb->log2_block_size;
 
-    uint64_t inode_table_bdaddr = (bgd->inode_table_bno)*block_size;
-
     // Calculamos el indice del inodo en la tabla de inodos
     uint32_t inode_index = (no - 1) % part_info->superblock->inodes_per_group;
 
     // Calculamos la direccion en el blockdev del inodo
-    uint64_t inode_bdaddr = inode_table_bdaddr +
-        inode_index*sizeof(ext2_inode);
+    uint32_t bn = bgd->inode_table_bno + ((inode_index*sizeof(ext2_inode)) / block_size);
+    uint32_t offset = (inode_index * sizeof(ext2_inode)) % block_size;
+
 
     ext2_inode *inode = mm_mem_kalloc();
-    read_from_blockdev(part_info->part, inode_bdaddr, inode,
-        sizeof(ext2_inode));
 
-    return inode;
+    return read_from_bdev(part_info->part,
+        BLOCK_TO_BD_ADDR(part_info->part, bn, offset), 
+        inode, sizeof(ext2_inode));
 }
 
 static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
@@ -211,10 +223,10 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
 
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
-        // Obtenemos la direccion del bloque en el blockdev
-        uint64_t bdaddr = bno*block_size;
 
-        read_from_blockdev(part_info->part, bdaddr, buf_pos, block_size);
+        read_from_bdev(part_info->part, 
+            BLOCK_TO_BD_ADDR(part_info->part, bno, 0), 
+            buf_pos, block_size);
     }
 
     return 0;

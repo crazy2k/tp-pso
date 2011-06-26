@@ -22,6 +22,7 @@ struct hdd_blockdev {
 	blockdev_read_t *read;
 	blockdev_write_t *write;
 	uint_32 size;
+	uint_32 log2_size;
 
     enum type type;
 
