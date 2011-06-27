@@ -19,12 +19,15 @@ extern void* _end;
 void kernel_init(void) {
     vga_init();
     idt_init();
-    hdd_init();
     serial_init();
     debug_init();
     mm_init();
     sched_init();
     con_init();
+
+    hdd_init();
+    ext2_init();
     fs_init();
+
     loader_init();
 }
