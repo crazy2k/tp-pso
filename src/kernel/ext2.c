@@ -34,9 +34,31 @@
     .offset = (dev_offset) % (bd)->size \
 })
 
-#define BLOCK_TO_BD_ADDR(fs, bd, block, offset) ({ \
-    _shft = fs-> +  
-    ((bd_addr_t) {}); \
+bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
+    uint32_t sector_size = part_info->part->size,
+             block_size = 1024 << part_info->superblock->log2_block_size;
+    uint32_t c;
+
+    if (block_size >= sector_size) {
+        c = block_size/sector_size;
+
+        return ((bd_addr_t) { 
+            .sector = bno*c + offset/sector_size,
+            .offset = offset % sector_size
+        });
+    } else {
+        c = sector_size/block_size;
+    
+        return ((bd_addr_t) { 
+            .sector = bno/c,
+            .offset = offset + (bno % c) * block_size 
+        });
+    }
+}
+
+#define BLOCK_TO_BD_ADDR(fs, block, offset) ({ \
+    int __shft = 0;  \
+    ((bd_addr_t) {}) \
 })
 
 /*
@@ -194,7 +216,7 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     ext2_inode *inode = mm_mem_kalloc();
 
     return read_from_bdev(part_info->part,
-        BLOCK_TO_BD_ADDR(part_info->part, bn, offset), 
+        baddr2bdaddr(part_info, bn, offset), 
         inode, sizeof(ext2_inode));
 }
 
@@ -225,7 +247,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
         uint32_t bno = inode->blocks[i];
 
         read_from_bdev(part_info->part, 
-            BLOCK_TO_BD_ADDR(part_info->part, bno, 0), 
+            baddr2bdaddr(part_info, bno, 0), 
             buf_pos, block_size);
     }
 
