@@ -10,10 +10,7 @@
 
 #define BUF_SIZE 4096
 
-#define DEFAULT_LOG2_SECTOR_SIZE 0
-#define DEFAULT_SECTOR_SIZE LOG2_TO_SECTOR_SIZE(DEFAULT_LOG2_SECTOR_SIZE)
-
-#define LOG2_TO_SECTOR_SIZE(log2) (512 << (log2))
+#define DEFAULT_SECTOR_SIZE 512
 /*
 #define PRIMARY_MASTER_ID   0
 #define PRIMARY_SLAVE_ID    1
@@ -48,7 +45,7 @@
 #define LBA_HIGHEST_4BITS(lba) ((uint8_t)(((lba) >> 24) & 0x0F))
 
 
-static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id, uint32_t log2_sector_size);
+static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id, uint32_t sector_size);
 static void hdd_recv(hdd_blockdev *hbdev);
 static sint_32 hdd_block_read_sectors(hdd_blockdev *this, uint32_t pos, void *buf, uint32_t size);
 
@@ -59,7 +56,7 @@ void hdd_init(void) {
     memset(hdd_blockdevs, 0, sizeof(hdd_blockdevs));
 
     initialize_hdd_blockdev(&hdd_blockdevs[PRIMARY_MASTER],
-        PRIMARY_MASTER, DEFAULT_LOG2_SECTOR_SIZE);
+        PRIMARY_MASTER, DEFAULT_SECTOR_SIZE);
 }
 
 sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 size) {
@@ -158,14 +155,13 @@ blockdev *hdd_open(int no) {
     return (blockdev *)(&hdd_blockdevs[no]);
 }
 
-static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t log2_sector_size) {
+static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t sector_size) {
     hbdev->clase = DEVICE_HDD_BLOCKDEV;
     hbdev->refcount = 0;
     hbdev->flush = NULL;
     hbdev->read = hdd_block_read;
     hbdev->write = hdd_block_write;
-    hbdev->size = LOG2_TO_SECTOR_SIZE(log2_sector_size);
-    hbdev->log2_size = log2_sector_size;
+    hbdev->size = sector_size;
     hbdev->type = type;
     hbdev->buf = ((circular_buf_t) {
         .buf = mm_mem_kalloc(),
@@ -189,7 +185,7 @@ void hdd_recv_primary() {
 static void hdd_recv(hdd_blockdev *hbdev) {
     uint16_t base = GET_BASE(hbdev);
 
-    uint8_t status = inb(base + PORT_COMMAND);
+    inb(base + PORT_COMMAND);
 
     int i;
     for (i = 0; i < (hbdev->size/sizeof(uint16_t)); i++) {
