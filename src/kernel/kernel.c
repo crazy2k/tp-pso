@@ -12,6 +12,7 @@
 #include <serial.h>
 #include <hdd.h>
 #include <fs.h>
+#include <ext2.h>
 
 extern void* _end;
 /* Entry-point del modo protegido luego de cargar los registros de
