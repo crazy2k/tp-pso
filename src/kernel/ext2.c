@@ -150,6 +150,32 @@ void ext2_create(ext2 *part_info, blockdev *part) {
     part_info->part = part;
 }
 
+static print_inode(ext2_inode *inode) {
+    debug_printf("** Inode %x: " , 2);
+    debug_printf("**  mode: %x\n" , inode->mode);
+    debug_printf("**  uid: %x\n" , inode->uid);
+    debug_printf("**  size: %x\n" , inode->size);
+    debug_printf("**  atime: %x\n" , inode->atime);
+    debug_printf("**  ctime: %x\n" , inode->ctime);
+    debug_printf("**  mtime: %x\n" , inode->mtime);
+    debug_printf("**  dtime: %x\n" , inode->dtime);
+    debug_printf("**  gid: %x\n" , inode->gid);
+    debug_printf("**  links_count: %x\n" , inode->links_count);
+    debug_printf("**  sectors_count: %x\n" , inode->sectors_count);
+    debug_printf("**  flags: %x\n" , inode->flags);
+    debug_printf("**  os1: %x\n" , inode->os1);
+    debug_printf("**  version: %x\n" , inode->version);
+    debug_printf("**  file_acl: %x\n" , inode->file_acl);
+    debug_printf("**  dir_acl: %x\n" , inode->dir_acl);
+    debug_printf("**  fragment_addr: %x\n" , inode->fragment_addr);
+    debug_printf("**  blocks: %x\n" , inode->blocks[0]);
+    debug_printf("**  blocks: %x\n" , inode->blocks[1]);
+    debug_printf("**  blocks: %x\n" , inode->blocks[2]);
+    debug_printf("**  blocks: %x\n" , inode->blocks[3]);
+    debug_printf("**  blocks: %x\n" , inode->blocks[4]);
+    debug_printf("**  blocks: %x\n" , inode->blocks[5]);
+}
+
 /* Aqui se realiza la inicializacion de la estructura ext2. El resto de las
  * funciones no exportadas asumen que la estructura esta inicializada.
  */
