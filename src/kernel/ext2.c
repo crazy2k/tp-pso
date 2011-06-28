@@ -34,6 +34,15 @@
     .offset = (dev_offset) % (bd)->size \
 })
 
+#define GET_INODE_SIZE(part_info) \
+    ({ \
+        uint16_t _inode_size = sizeof(ext2_inode); \
+        if ((part_info)->superblock->revision_level > 0) \
+            _inode_size = (part_info)->superblock->inode_size; \
+        _inode_size; \
+    )}
+
+
 bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
     uint32_t sector_size = part_info->part->size,
              block_size = 1024 << part_info->superblock->log2_block_size;
@@ -222,16 +231,20 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     uint32_t inode_index = (no - 1) % part_info->superblock->inodes_per_group;
 
     // Calculamos la direccion en el blockdev del inodo
-    uint32_t bn = bgd->inode_table_bno + ((inode_index*sizeof(ext2_inode)) / block_size);
-    uint32_t offset = (inode_index * sizeof(ext2_inode)) % block_size;
-
+    uint16_t inode_size = GET_INODE_SIZE(part_info);
+    uint32_t bn = bgd->inode_table_bno +
+        ((inode_index*inode_size) / block_size);
+    uint32_t offset = (inode_index*inode_size) % block_size;
 
     ext2_inode *inode = mm_mem_kalloc();
 
+    debug_printf("** get_inode(): bno: %x, offset: %x\n", bn, offset);
+
     return read_from_bdev(part_info->part,
-        baddr2bdaddr(part_info, bn, offset), 
-        inode, sizeof(ext2_inode));
+        baddr2bdaddr(part_info, bn, offset),
+        inode, inode_size);
 }
+
 
 static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
     const char *relpath) {
