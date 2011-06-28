@@ -2,6 +2,7 @@
 #include <errors.h>
 #include <loader.h>
 #include <utils.h>
+#include <debug.h>
 
 #define READ_BUF 4096
 
@@ -19,20 +20,38 @@ void* read_from_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size) {
              first_lineal_sector = addr.sector + (addr.offset ? 1 : 0),
              lineal_sectors_size = align_to_lower(size - first_remainder, bdev->size),
              last_remainder_sector = first_lineal_sector + (lineal_sectors_size / bdev->size);
+
+    debug_printf("** read_from_bdev(): "
+        "size: %x\n", size);
+
     
     if (first_remainder > 0) {
         bdev->read(bdev, addr.sector, read_buf, bdev->size);
-        memcpy(buf, read_buf, min(size, first_remainder));
+        memcpy(buf, read_buf + addr.offset, min(first_remainder, size));
         size -= first_remainder;
+        debug_printf("** read_from_bdev(): first_remainder > 0: "
+            "first_rem: %x, size: %x\n", first_remainder, size);
     }
     if (size > 0 && lineal_sectors_size > 0) {
         bdev->read(bdev, first_lineal_sector, buf + first_remainder, lineal_sectors_size);
         size -= lineal_sectors_size;
+        debug_printf("** read_from_bdev(): size > 0 && lineal ... > 0: "
+            "size: %x\n", size);
     }
     if (size > 0) {
         bdev->read(bdev, last_remainder_sector, read_buf, bdev->size);
         memcpy(buf + first_remainder + lineal_sectors_size, read_buf, size);
+
+        debug_printf("** read_from_bdev(): size > 0: "
+            "size: %x\n", size);
     }
+
+    debug_printf("** read_from_bdev(): buffer: ");
+    uint32_t *buf32 = buf;
+    int i;
+    for (i = 0; i < 128/4; i++)
+        debug_printf("%x ", *(buf32 + i));
+    debug_printf("\n");
 
     return buf;
 }
