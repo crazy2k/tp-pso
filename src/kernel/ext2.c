@@ -56,10 +56,6 @@ bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
     }
 }
 
-#define BLOCK_TO_BD_ADDR(fs, block, offset) ({ \
-    int __shft = 0;  \
-    ((bd_addr_t) {}) \
-})
 
 /*
 FIRSTINODE = 11,
