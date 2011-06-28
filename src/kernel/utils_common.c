@@ -54,9 +54,14 @@ int strncmp(const char *s1, const char *s2, size_t n) {
     return ((uc1 < uc2) ? -1 : (uc1 > uc2));
 }
 
+char *strchr(const char *s, int c) {
+    while (*s != (char)c)
+        if (!*s++)
+            return 0;
+    return (char *)s;
+}
 
-
-char *strstr(const char *in, const char *str){
+char *strstr(const char *in, const char *str) {
     char c;
     size_t len;
 
