@@ -255,27 +255,36 @@ static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
     get_data(part_info, dir, file_data_buf);
 }
 
+/* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
+ * son 12KB)
+ */
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
-
     // Chequeamos si el archivo es mas grande que el buffer que tenemos
     if (inode->size > sizeof(file_data_buf))
         return -1;
 
     uint32_t block_size = 1024 << part_info->superblock->log2_block_size;
 
+    uint32_t remaining = inode->size;
+    debug_printf("** get_data(): remaining before: %x\n" , remaining);
+
     void *buf_pos;
     int i;
     for (i = 0, buf_pos = buf;
-        i < EXT2_INODE_DIRECT_COUNT;
-        i++, buf_pos += block_size) {
+        (i < EXT2_INODE_DIRECT_COUNT) && (remaining > 0);
+        i++, buf_pos += block_size, remaining -= block_size) {
 
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
+
+        debug_printf("** get_data(): bno: %x\n" , bno);
 
         read_from_bdev(part_info->part, 
             baddr2bdaddr(part_info, bno, 0), 
             buf_pos, block_size);
     }
+
+    debug_printf("** get_data(): remaining after: %x\n" , remaining);
 
     return 0;
 }
