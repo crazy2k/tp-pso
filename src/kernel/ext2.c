@@ -126,7 +126,8 @@ enum
 };
 */
 
-uint8_t file_data_buf[PAGE_SIZE*4];
+static uint8_t file_data_buf[PAGE_SIZE*4];
+static uint8_t inode_buf[256];
 
 
 static void initialize_part_info(ext2 *part_info);
