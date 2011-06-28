@@ -56,10 +56,6 @@ bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
     }
 }
 
-#define BLOCK_TO_BD_ADDR(fs, block, offset) ({ \
-    int __shft = 0;  \
-    ((bd_addr_t) {}) \
-})
 
 /*
 FIRSTINODE = 11,
@@ -130,7 +126,8 @@ enum
 };
 */
 
-uint8_t file_data_buf[PAGE_SIZE*4];
+static uint8_t file_data_buf[PAGE_SIZE*4];
+static uint8_t inode_buf[256];
 
 
 static void initialize_part_info(ext2 *part_info);
@@ -186,17 +183,7 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (!(part_info->initialized))
         initialize_part_info(part_info);
 
-    void *buf = mm_mem_kalloc();
-
-    ext2_inode *inode = get_inode(part_info, 2);
-
-    get_data(part_info, inode, buf);
-
-    ext2_direntry *direntry0 = buf;
-    vga_write(10, 0, direntry0->name, 0x0F);
-
-    //ext2_inode *inode = path2inode(part_info,
-    //    get_inode(part_info, EXT2_ROOT_INODE_NO), filename + 6);
+    /* TODO: Abrir archivo en char device */
 }
 
 static void initialize_part_info(ext2 *part_info) {
