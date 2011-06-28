@@ -3,10 +3,14 @@
 
 #include <isr.h>
 
+#define DEBUG_PRINTCHAR(c) outb(0xE9, (c))
+
 void debug_init(void);
 
 void debug_kernelpanic(const task_state_t *st, uint32_t index, uint32_t
     error_code);
+
+void debug_printf(const char* format, ...);
 
 extern uint32_t debug_backtrace_limit;
 

@@ -5,6 +5,7 @@
 #include <mm.h>
 #include <sched.h>
 #include <i386.h>
+#include <stdarg.h>
 
 const char* exp_name[] = {
 	"Divide Error",
@@ -26,6 +27,10 @@ const char* exp_name[] = {
 	"Floating point exception",
 	"Alignment check"
 };
+
+
+static void debug_prints(const char *msg);
+static void debug_printx(uint32_t n);
 
 static void print_regs(const task_state_t *st);
 static void print_stack(uint32_t *stack);
@@ -161,6 +166,61 @@ static void get_call_info(uint32_t ret_addr, uint32_t *at, uint32_t
             }
         }
     }
+}
+
+static void debug_prints(const char *msg) {
+    char c;
+    while ((c = *msg++) != '\0')
+        DEBUG_PRINTCHAR(c);
+}
+
+
+#define DEBUG_TEMPBUFSIZE 40
+#define DEBUG_UI_BASE 16
+#define DEBUG_UI_LOG2BASE 4
+#define DEBUG_UI_REPLENGTH (sizeof(uint32_t)*8/DEBUG_UI_LOG2BASE)
+
+static void debug_printx(uint32_t n) {
+    char chars[DEBUG_UI_BASE],
+         str[DEBUG_UI_REPLENGTH + 1],
+         base = '0';
+
+    int i;
+    for (i = 0; i < DEBUG_UI_BASE; i++) {
+        if (i == 10)
+            base = 'A';
+
+        chars[i] = base + (i % 10);
+    }
+
+    for (i = DEBUG_UI_REPLENGTH - 1; i >= 0; i--, n /= DEBUG_UI_BASE)
+        str[i] = chars[n % DEBUG_UI_BASE];
+
+    str[DEBUG_UI_REPLENGTH] = '\0';
+
+    debug_prints("0x");
+    debug_prints(str);
+}
+
+
+void debug_printf(const char* format, ...) {
+    va_list vargs;
+    va_start(vargs, format);
+
+    debug_prints("** KERNEL DEBUG: ");
+
+    char c;
+    while ((c = *format++) != '\0') {
+        if (c != '%')
+            DEBUG_PRINTCHAR(c);
+        else {
+            c = *format++;
+            if (c == 'x')
+                debug_printx((uint32_t)va_arg(vargs, int));
+        }
+    }
+
+    va_end(vargs);
 }
                 
 
