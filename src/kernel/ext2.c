@@ -140,7 +140,7 @@ static uint8_t inode_buf[256];
 
 
 static void initialize_part_info(ext2 *part_info);
-static ext2_inode *get_inode(ext2 *part_info, uint32_t no);
+static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode_buf);
 static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
     const char *relpath);
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
@@ -216,7 +216,7 @@ static void initialize_part_info(ext2 *part_info) {
         bg_count*sizeof(ext2_block_group_descriptor));
 }
 
-static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
+static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
     // Obtenemos el numero de Block Group
     ext2_superblock *sb = part_info->superblock;
     uint32_t bg_no = (no - 1)/sb->inodes_per_group;
@@ -235,8 +235,6 @@ static ext2_inode *get_inode(ext2 *part_info, uint32_t no) {
     uint32_t bn = bgd->inode_table_bno +
         ((inode_index*inode_size) / block_size);
     uint32_t offset = (inode_index*inode_size) % block_size;
-
-    ext2_inode *inode = mm_mem_kalloc();
 
     debug_printf("** get_inode(): bno: %x, offset: %x\n", bn, offset);
 
