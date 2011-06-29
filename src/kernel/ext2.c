@@ -104,8 +104,24 @@ typedef struct {
     uint32_t inode_no;
     uint16_t direntry_length;
     uint8_t name_length;
-    char *name;
+    char type;
+    char name[];
 } __attribute__((__packed__)) ext2_direntry;
+
+/*
+typedef struct {
+    uint32_t inode_no;
+    uint16_t direntry_length;
+    union {
+        uint16_t name_length;
+        struct {
+            uint8_t name_length;
+            char type;
+        } typed;
+    };
+    uint8_t name[];
+} __attribute__((__packed__)) ext2_direntry;
+*/
 
 /*
 enum
