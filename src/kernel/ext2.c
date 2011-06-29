@@ -141,7 +141,7 @@ static uint8_t inode_buf[256];
 
 static void initialize_part_info(ext2 *part_info);
 static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode_buf);
-static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
+static uint32_t path2inode(ext2 *part_info, uint32_t dir_no,
     const char *relpath);
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
 
@@ -246,13 +246,44 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
 }
 
 
-static ext2_inode *path2inode(ext2 *part_info, ext2_inode *dir,
-    const char *relpath) {
+/* Por ahora solo soporta inodes de 128 o 256 bytes */
+static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath) {
+    int offset = 0, next_inode = 0;
+    ext2_inode *dir_inode = (ext2_inode *) inode_buf;
+    
+    // El primer caracter debe ser siempre '/'
+    if (!relpath || relpath[0] != '/')
+        return 0;
+    else 
+        relpath += 1;
 
-    if (TYPE_FROM_MODE(dir->mode) != EXT2_INODE_TYPE_DIR)
-        return NULL;
+    // Cargar el inode
+    get_inode(part_info, dir_no, dir_inode);
 
-    get_data(part_info, dir, file_data_buf);
+    // Un nodo intermedio debe ser un directorio
+    if (TYPE_FROM_MODE(dir_inode->mode) != EXT2_INODE_TYPE_DIR)
+        return 0;
+
+    char* next_path = strchr(relpath, '/');
+    int name_size = next_path ? next_path - relpath : strlen(relpath);
+
+    // Cargar datos para el inode
+    get_data(part_info, dir_inode, file_data_buf);
+
+    // Buscar un entry dentro del directorio que corresponde con el path actual
+    while(offset < dir_inode->size && next_inode == 0) {
+        ext2_direntry *entry = (ext2_direntry *) file_data_buf + offset;
+        if (name_size == entry->name_length && strncmp(relpath, entry->name, name_size) == 0) 
+            next_inode = entry->inode_no ;
+        else
+            offset += entry->direntry_length;
+    }
+    
+    // La direccion del fs debe corresponder a un archivo existente
+    if (next_inode == 0)
+        return 0;
+
+    return next_path ? path2inode(part_info, next_inode, next_path) : next_inode;
 }
 
 /* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
