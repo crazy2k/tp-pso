@@ -273,7 +273,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     if (inode->size > sizeof(file_data_buf))
         return -1;
 
-    uint32_t block_size = 1024 << part_info->superblock->log2_block_size;
+    uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     uint32_t remaining = inode->size;
     debug_printf("** get_data(): remaining before: %x\n" , remaining);
@@ -294,9 +294,27 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             buf_pos, block_size);
     }
 
+
+
     debug_printf("** get_data(): remaining after: %x\n" , remaining);
 
     return 0;
+}
+
+static int get_indirect_data(ext2 *part_info, uint32_t bno, level, uint32_t remainder, void *buf) {
+
+    if (level > 0) {
+
+        for ()
+            
+    } else {
+        if (remainder > 0) {
+
+            return remainder - ;
+        } else
+            return 0;
+    }
+
 }
 
 static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
