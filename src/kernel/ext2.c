@@ -191,6 +191,9 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
         initialize_part_info(part_info);
 
     /* TODO: Abrir archivo en char device */
+    uint32_t i = path2inode(part_info, 2, filename + 6);
+    debug_printf("El inodo ganador es.... %x\n", i);
+    breakpoint();
 }
 
 static void initialize_part_info(ext2 *part_info) {

@@ -134,7 +134,7 @@ void loader_init(void) {
 
     sti();
 
-    fs_open("/disk/", FS_OPEN_RDONLY);
+    fs_open("/disk/pablo/a/esgroso", FS_OPEN_RDONLY);
 
     idle_main();
 }
