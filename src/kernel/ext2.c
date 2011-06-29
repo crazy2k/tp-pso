@@ -206,6 +206,8 @@ static void initialize_part_info(ext2 *part_info) {
         return;
 
     uint32_t bg_count = sb->blocks_count/sb->blocks_per_group;
+    if ((sb->blocks_count % sb->blocks_per_group) > 0)
+        bg_count += 1;
 
     part_info->bgd_table = mm_mem_kalloc();
     read_from_bdev(part_info->part,
