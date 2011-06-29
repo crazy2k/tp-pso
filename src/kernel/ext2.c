@@ -43,29 +43,6 @@
     })
 
 
-bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
-    uint32_t sector_size = part_info->part->size,
-             block_size = 1024 << part_info->superblock->log2_block_size;
-    uint32_t c;
-
-    if (block_size >= sector_size) {
-        c = block_size/sector_size;
-
-        return ((bd_addr_t) { 
-            .sector = bno*c + offset/sector_size,
-            .offset = offset % sector_size
-        });
-    } else {
-        c = sector_size/block_size;
-    
-        return ((bd_addr_t) { 
-            .sector = bno/c,
-            .offset = offset + (bno % c) * block_size 
-        });
-    }
-}
-
-
 /*
 FIRSTINODE = 11,
 VALIDFS = 0x0001,
@@ -144,6 +121,7 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode_buf);
 static uint32_t path2inode(ext2 *part_info, uint32_t dir_no,
     const char *relpath);
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
+static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset);
 
 
 void ext2_init() {
@@ -274,7 +252,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     while(offset < dir_inode->size && next_inode == 0) {
         ext2_direntry *entry = (ext2_direntry *) file_data_buf + offset;
         if (name_size == entry->name_length && strncmp(relpath, entry->name, name_size) == 0) 
-            next_inode = entry->inode_no ;
+            next_inode = entry->inode_no;
         else
             offset += entry->direntry_length;
     }
@@ -319,3 +297,27 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
 
     return 0;
 }
+
+static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
+    uint32_t sector_size = part_info->part->size,
+             block_size = 1024 << part_info->superblock->log2_block_size;
+    uint32_t c;
+
+    if (block_size >= sector_size) {
+        c = block_size/sector_size;
+
+        return ((bd_addr_t) { 
+            .sector = bno*c + offset/sector_size,
+            .offset = offset % sector_size
+        });
+    } else {
+        c = sector_size/block_size;
+    
+        return ((bd_addr_t) { 
+            .sector = bno/c,
+            .offset = offset + (bno % c) * block_size 
+        });
+    }
+}
+
+
