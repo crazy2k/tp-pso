@@ -40,7 +40,7 @@
         if ((part_info)->superblock->revision_level > 0) \
             _inode_size = (part_info)->superblock->inode_size; \
         _inode_size; \
-    )}
+    })
 
 
 bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
@@ -238,9 +238,11 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
 
     debug_printf("** get_inode(): bno: %x, offset: %x\n", bn, offset);
 
-    return read_from_bdev(part_info->part,
+    read_from_bdev(part_info->part,
         baddr2bdaddr(part_info, bn, offset),
         inode, inode_size);
+
+    return NULL;
 }
 
 
