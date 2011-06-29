@@ -52,7 +52,8 @@ typedef struct {
     uint16_t free_blocks_count;
     uint16_t free_inodes_count;
     uint16_t dirs_count;
-    uint16_t :14;
+    uint16_t pad;
+    uint8_t reserved[12];
 } __attribute__((__packed__)) ext2_block_group_descriptor;
 
 
