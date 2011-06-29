@@ -232,11 +232,9 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     uint32_t offset = 0, next_inode = 0;
     ext2_inode *dir_inode = (ext2_inode *) inode_buf;
     
-    // El primer caracter debe ser siempre '/'
-    if (!relpath || relpath[0] != '/')
-        return 0;
-    else 
-        relpath += 1;
+    // Si el path es vacio devolver el propio dir
+    if (!relpath || relpath[0] == '\0')
+        return dir_no;
 
     // Cargar el inode
     get_inode(part_info, dir_no, dir_inode);
@@ -264,7 +262,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     if (next_inode == 0)
         return 0;
 
-    return next_path ? path2inode(part_info, next_inode, next_path) : next_inode;
+    return next_path ? path2inode(part_info, next_inode, next_path + 1) : next_inode;
 }
 
 /* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
