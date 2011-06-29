@@ -296,12 +296,14 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             buf_pos, block_size);
     }
     
-    /* for (i = 1; (i < 4) && (remaining > 0); 
-        i++, buf_pos += (indirect_block_size(part_info, i)))
+    // Leemoos los datos desde bloques indirectors, si los hay
+    for (i = 1; (i < 4) && (remaining > 0); 
+        i++, buf_pos += indirect_block_size(part_info, i)) {
 
         remaining = get_indirect_data(part_info, 
             inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], 
-            i, remaining buf_pos); */
+            i, remaining, buf_pos);
+    }
 
 
     debug_printf("** get_data(): remaining after: %x\n" , remaining);
