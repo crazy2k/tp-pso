@@ -207,8 +207,6 @@ void debug_printf(const char* format, ...) {
     va_list vargs;
     va_start(vargs, format);
 
-    debug_prints("** KERNEL DEBUG: ");
-
     char c;
     while ((c = *format++) != '\0') {
         if (c != '%')

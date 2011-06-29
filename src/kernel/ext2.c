@@ -235,8 +235,6 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
         ((inode_index*inode_size) / block_size);
     uint32_t offset = (inode_index*inode_size) % block_size;
 
-    debug_printf("** get_inode(): bno: %x, offset: %x\n", bn, offset);
-
     read_from_bdev(part_info->part,
         baddr2bdaddr(part_info, bn, offset),
         inode, inode_size);
@@ -294,7 +292,6 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     uint32_t remaining = inode->size;
-    debug_printf("** get_data(): remaining before: %x\n" , remaining);
 
     void *buf_pos;
     int i;
@@ -304,8 +301,6 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
 
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
-
-        debug_printf("** get_data(): bno: %x\n" , bno);
 
         read_from_bdev(part_info->part, 
             baddr2bdaddr(part_info, bno, 0), 
@@ -320,9 +315,6 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], 
             i, remaining, buf_pos);
     }
-
-
-    debug_printf("** get_data(): remaining after: %x\n" , remaining);
 
     return 0;
 }
