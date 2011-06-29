@@ -42,6 +42,8 @@
         _inode_size; \
     })
 
+#define GET_BLOCK_SIZE(part_info) \
+    (1024 << (part_info)->superblock->log2_block_size)
 
 /*
 FIRSTINODE = 11,
@@ -196,14 +198,13 @@ static void initialize_part_info(ext2 *part_info) {
 
 static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
     // Obtenemos el numero de Block Group
-    ext2_superblock *sb = part_info->superblock;
-    uint32_t bg_no = (no - 1)/sb->inodes_per_group;
+    uint32_t bg_no = (no - 1)/part_info->superblock->inodes_per_group;
 
     // Obtenemos el descriptor correspondiente al Block Group
     ext2_block_group_descriptor *bgd = part_info->bgd_table + bg_no;
 
     // Obtenemos la direccion en el blockdev de la tabla de inodos
-    uint32_t block_size = 1024 << sb->log2_block_size;
+    uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     // Calculamos el indice del inodo en la tabla de inodos
     uint32_t inode_index = (no - 1) % part_info->superblock->inodes_per_group;
@@ -300,7 +301,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
 
 static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
     uint32_t sector_size = part_info->part->size,
-             block_size = 1024 << part_info->superblock->log2_block_size;
+             block_size = GET_BLOCK_SIZE(part_info);
     uint32_t c;
 
     if (block_size >= sector_size) {
