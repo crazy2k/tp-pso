@@ -250,7 +250,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     get_data(part_info, dir_inode, file_data_buf);
 
     // Buscar un entry dentro del directorio que corresponde con el path actual
-    while(offset < dir_inode->size && next_inode == 0) {
+    while (offset < dir_inode->size && next_inode == 0) {
         ext2_direntry *entry = (ext2_direntry *) file_data_buf + offset;
         if (name_size == entry->name_length && strncmp(relpath, entry->name, name_size) == 0) 
             next_inode = entry->inode_no;
