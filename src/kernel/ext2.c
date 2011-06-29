@@ -156,7 +156,7 @@ void ext2_create(ext2 *part_info, blockdev *part) {
     part_info->part = part;
 }
 
-static print_inode(ext2_inode *inode) {
+static void print_inode(ext2_inode *inode) {
     debug_printf("** Inode:\n");
     debug_printf("**  mode: %x\n" , inode->mode);
     debug_printf("**  uid: %x\n" , inode->uid);
