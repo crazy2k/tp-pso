@@ -123,6 +123,8 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode_buf);
 static uint32_t path2inode(ext2 *part_info, uint32_t dir_no,
     const char *relpath);
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
+static uint32_t get_indirect_data(ext2 *part_info, uint32_t bno, int level, uint32_t remaining, void *buf);
+static int indirect_block_size(ext2 *part_info, int level);
 static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset);
 
 
@@ -293,7 +295,13 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             baddr2bdaddr(part_info, bno, 0), 
             buf_pos, block_size);
     }
+    
+    /* for (i = 1; (i < 4) && (remaining > 0); 
+        i++, buf_pos += (indirect_block_size(part_info, i)))
 
+        remaining = get_indirect_data(part_info, 
+            inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], 
+            i, remaining buf_pos); */
 
 
     debug_printf("** get_data(): remaining after: %x\n" , remaining);
@@ -301,20 +309,37 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     return 0;
 }
 
-static int get_indirect_data(ext2 *part_info, uint32_t bno, level, uint32_t remainder, void *buf) {
+static uint32_t get_indirect_data(ext2 *part_info, uint32_t bno, int level, uint32_t remaining, void *buf) {
+    uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     if (level > 0) {
+        int i; 
+        int total_blocks = block_size/sizeof(uint32_t);
+        uint32_t iblock_size = indirect_block_size(part_info, level - 1);
+        uint32_t *blocks = (uint32_t *)mm_mem_kalloc();
 
-        for ()
-            
-    } else {
-        if (remainder > 0) {
+        read_from_bdev(part_info->part,
+            baddr2bdaddr(part_info, bno, 0), 
+            (void *) blocks, block_size);
 
-            return remainder - ;
-        } else
-            return 0;
+        for (i = 0; i < total_blocks; i++, buf += iblock_size)
+            remaining = get_indirect_data(part_info, blocks[i], level - 1, remaining, buf);
+
+        mm_mem_free((void *)blocks);
+    } else if (remaining > 0) {
+        read_from_bdev(part_info->part,
+            baddr2bdaddr(part_info, bno, 0), 
+            buf, block_size);
+        remaining -= block_size;
     }
 
+    return remaining;
+}
+
+static int indirect_block_size(ext2 *part_info, int level) {
+    uint32_t block_size = GET_BLOCK_SIZE(part_info);
+
+    return block_size * power(block_size/sizeof(uint32_t), level);
 }
 
 static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
@@ -338,5 +363,3 @@ static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
         });
     }
 }
-
-
