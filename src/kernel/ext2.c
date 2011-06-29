@@ -248,7 +248,7 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
 
 /* Por ahora solo soporta inodes de 128 o 256 bytes */
 static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath) {
-    int offset = 0, next_inode = 0;
+    uint32_t offset = 0, next_inode = 0;
     ext2_inode *dir_inode = (ext2_inode *) inode_buf;
     
     // El primer caracter debe ser siempre '/'
