@@ -16,7 +16,7 @@ static void print_help(int fd);
 int main(void) {
 
     char *rest, *command;
-    int con = open("/console0", FS_OPEN_RDWR);
+    int con = open("/console", FS_OPEN_RDWR);
     int res;
 
     while (TRUE) {
