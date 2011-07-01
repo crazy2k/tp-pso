@@ -158,6 +158,21 @@ long max(long var1, long var2) {
     return var1 < var2 ? var2 : var1;
 }
 
+int isdigit(int var) {
+    return (char)var >= '0' && (char)var <= '9';
+}
+
+int isnumeric(const char *str) {
+  while(*str)
+  {
+    if(!isdigit(*str))
+      return FALSE;
+    str++;
+  }
+
+  return TRUE;
+}
+
 long min(long var1, long var2) {
     return var1 > var2 ? var2 : var1;
 }
