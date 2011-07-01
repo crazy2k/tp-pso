@@ -1,6 +1,8 @@
 #ifndef __CON_H__
 #define __CON_H__
 
+#define NEW_CONSOLE -1
+
 #include <tipos.h>
 #include <device.h>
 #include <utils.h>

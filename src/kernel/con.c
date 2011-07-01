@@ -27,60 +27,35 @@ static void update_console_cursor(con_chardev *ccdev);
 static void scroll_down(con_chardev *ccdev);
 
 static con_chardev con_chardevs[MAX_CON_CHARDEVS] = { { NULL } };
-static con_chardev *open_con_chardevs = NULL;
+static con_chardev *opened_con_chardevs = NULL;
+static con_chardev *free_con_chardevs = NULL;
 
 static con_chardev *current_console = NULL;
 
 
 
 void con_init() {
-
+    CREATE_FREE_OBJS_LIST(free_con_chardevs, con_chardevs, MAX_CON_CHARDEVS);
 }
 
 
 chardev* con_open(uint32_t number, uint32_t mode) {
-    if (number < MAX_CON_CHARDEVS) {
-        con_chardev* con = &con_chardevs[number];
+    con_chardev* con;
 
-        if (!IS_AT_LIST(con)) 
+    if (number < MAX_CON_CHARDEVS) {
+        con = &con_chardevs[number];
+        if (!IS_AT_LIST(opened_con_chardevs, con)) 
             con_create(con);
 
-        con->refcount++;
+    } else if (number == NEW_CONSOLE && !IS_EMPTY(free_con_chardevs)) {
+        con = POP(&free_con_chardevs);
+        con_create(con);
 
-        return (chardev*) con;
     } else
         return NULL;
-}
 
-chardev* con_create(con_chardev *ccdev) {
-    if (ccdev) {
-        ccdev->clase = DEVICE_CON_CHARDEV;
-        ccdev->refcount = 0;
-        ccdev->flush = con_flush;
-        ccdev->read = con_read;
-        ccdev->write = con_write;
-
-        ccdev->screen_buf = mm_mem_kalloc();
-        ccdev->screen_buf_offset = 0;
-        ccdev->focused = FALSE;
-
-        ccdev->kb_buf = ((circular_buf_t) { 
-            .buf = mm_mem_kalloc(),
-            .offset = 0,
-            .remaining = 0
-        });
-
-        ccdev->waiting_process = -1 ;
-
-        ccdev->current_attr = 0x0F;
-
-        APPEND(&open_con_chardevs, ccdev);
-
-        if (!con_get_current_console())
-            con_focus(ccdev);
-    }
-
-    return (chardev *)ccdev;
+    con->refcount++;
+    return (chardev*) con;
 }
 
 sint_32 con_read(chardev *this, void *buf, uint_32 size) {
@@ -140,7 +115,8 @@ uint_32 con_flush(chardev *this) {
     mm_mem_free(ccdev->screen_buf);
     mm_mem_free(ccdev->kb_buf.buf);
 
-    UNLINK_NODE(&open_con_chardevs, ccdev);
+    UNLINK_NODE(&opened_con_chardevs, ccdev);
+    APPEND(&free_con_chardevs, ccdev);
 
     return 0;
 }
@@ -194,6 +170,37 @@ void con_ctl(con_chardev *ccdev, uint32_t oper) {
             con_backspace(ccdev);
     }
     
+}
+
+static chardev* con_create(con_chardev *ccdev) {
+    if (ccdev) {
+        ccdev->clase = DEVICE_CON_CHARDEV;
+        ccdev->refcount = 0;
+        ccdev->flush = con_flush;
+        ccdev->read = con_read;
+        ccdev->write = con_write;
+
+        ccdev->screen_buf = mm_mem_kalloc();
+        ccdev->screen_buf_offset = 0;
+        ccdev->focused = FALSE;
+
+        ccdev->kb_buf = ((circular_buf_t) { 
+            .buf = mm_mem_kalloc(),
+            .offset = 0,
+            .remaining = 0
+        });
+
+        ccdev->waiting_process = -1 ;
+
+        ccdev->current_attr = 0x0F;
+
+        APPEND(&opened_con_chardevs, ccdev);
+
+        if (!con_get_current_console())
+            con_focus(ccdev);
+    }
+
+    return (chardev *)ccdev;
 }
 
 static void con_backspace(con_chardev *ccdev) {

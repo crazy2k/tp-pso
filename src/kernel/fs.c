@@ -49,8 +49,13 @@ chardev *fs_open(const char *filename, uint32_t flags) {
 	if (!strcmp(filename, "/serial0")) return serial_open(0);
 	if (!strcmp(filename, "/serial1")) return serial_open(1);
 	if (strncmp(filename, CONSOLE_PATH, strlen(CONSOLE_PATH)) == 0) {
-        int num = strtoi(filename + strlen(CONSOLE_PATH));
-        return con_open(num, flags);
+        if (strlen(filename) == strlen(CONSOLE_PATH))
+            return con_open(NEW_CONSOLE, flags);
+        else if (isnumeric(filename + strlen(CONSOLE_PATH))) {
+            int num = strtoi(filename + strlen(CONSOLE_PATH));
+            return con_open(num, flags);
+        } else
+            return NULL;
     }        
 
 	if (!strncmp(filename, "/disk/", 6))
