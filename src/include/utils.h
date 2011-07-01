@@ -69,7 +69,7 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
         _node; \
     })
 
-// NODES_ARRAY_TO_LIST(<node type> **list_ptr, <node type> array[], int size);
+// NODES_ARRAY_TO_LIST(<node type> *list_ptr, <node type> array[], int size);
 #define NODES_ARRAY_TO_LIST(list_ptr, array, size) \
     ({ \
         (list_ptr) = NULL; \
@@ -78,7 +78,7 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
             APPEND(&(list_ptr), &(array)[__i]); \
     })
 
-// CREATE_FREE_OBJS_LIST(<node type> **list_ptr, <node type> array[], int size);
+// CREATE_FREE_OBJS_LIST(<node type> *list_ptr, <node type> array[], int size);
 #define CREATE_FREE_OBJS_LIST(list_ptr, array, size) \
     ({ \
         memset((array), 0, sizeof((array))); \
