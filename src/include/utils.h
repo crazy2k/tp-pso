@@ -25,6 +25,8 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 // IS_AT_LIST(<node type> *node);
 #define IS_AT_LIST(node) ((node)->prev && (node)->next)
 
+// IS_EMPTY(<node type> *list);
+#define IS_EMPTY(list) ((list) == NULL)
 
 // UNLINK_NODE(<node type> *fst, <node type> *fst);
 #define LINK_NODES(fst, sec) \
