@@ -22,8 +22,19 @@ int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 
 
-// IS_AT_LIST(<node type> *node);
-#define IS_AT_LIST(node) ((node)->prev && (node)->next)
+// IS_AT_LIST(<node type> *list, <node type> *node);
+#define IS_AT_LIST(list, node) ({ \
+    typeof (list) __temp_list = (list); \
+    bool __result = FALSE; \
+    while (__temp_list) { \
+        if (__temp_list == (node)) { \
+            __result = TRUE; \
+            break; \
+        } \
+        __temp_list = __temp_list->next; \
+    } \
+    __result; \
+    })
 
 // IS_EMPTY(<node type> *list);
 #define IS_EMPTY(list) ((list) == NULL)
