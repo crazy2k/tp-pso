@@ -22,21 +22,24 @@ int read_from_circ_buff(char* dst, circular_buf_t *cbuf, uint32_t size, uint32_t
 void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
 
 
+// IS_AT_LIST(<node type> *node);
 #define IS_AT_LIST(node) ((node)->prev && (node)->next)
 
+
+// UNLINK_NODE(<node type> *fst, <node type> *fst);
 #define LINK_NODES(fst, sec) \
     (fst)->next = (sec); \
     (sec)->prev = (fst);
 
-// UNLINK_NODE(<node type> **list, <node type> *node);
-#define UNLINK_NODE(list, node) \
-    if (*(list) != NULL) { \
+// UNLINK_NODE(<node type> **list_ptr, <node type> *node);
+#define UNLINK_NODE(list_ptr, node) \
+    if (*(list_ptr) != NULL) { \
         if ((node)->next == (node)) { \
-            *(list) = NULL; \
+            *(list_ptr) = NULL; \
         } \
         else { \
-            if (*(list) == (node)) \
-                *(list) = (node)->next; \
+            if (*(list_ptr) == (node)) \
+                *(list_ptr) = (node)->next; \
             (node)->next->prev = (node)->prev; \
             (node)->prev->next = (node)->next; \
         } \
@@ -44,38 +47,40 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
         (node)->prev = NULL; \
     }
 
-// APPEND(<node type> **list, <node type> *node);
-#define APPEND(list, node) \
-    if (*(list) == NULL) { \
-        (*(list)) = (node); \
+// APPEND(<node type> **list_ptr, <node type> *node);
+#define APPEND(list_ptr, node) \
+    if (*(list_ptr) == NULL) { \
+        (*(list_ptr)) = (node); \
         (node)->next = (node); \
         (node)->prev = (node); \
     } \
     else { \
-        LINK_NODES((*(list))->prev, (node)); \
-        LINK_NODES((node), (*(list))); \
+        LINK_NODES((*(list_ptr))->prev, (node)); \
+        LINK_NODES((node), (*(list_ptr))); \
     }
 
-// POP(<node type> **list);
-#define POP(list) \
+// POP(<node type> **list_ptr);
+#define POP(list_ptr) \
     ({ \
-        typeof(*(list)) _node = *(list); \
-        UNLINK_NODE((list), _node); \
+        typeof(*(list_ptr)) _node = *(list_ptr); \
+        UNLINK_NODE((list_ptr), _node); \
         _node; \
     })
 
-#define NODES_ARRAY_TO_LIST(list, array, array_size) \
+// NODES_ARRAY_TO_LIST(<node type> **list_ptr, <node type> array[], int size);
+#define NODES_ARRAY_TO_LIST(list_ptr, array, size) \
     ({ \
-        (list) = NULL; \
-        int i; \
-        for (i = 0; i < array_size; i++) \
-            APPEND(&list, &array[i]); \
+        (list_ptr) = NULL; \
+        int __i; \
+        for (__i = 0; __i < (size); __i++) \
+            APPEND(&(list_ptr), &(array)[__i]); \
     })
 
-#define CREATE_FREE_OBJS_LIST(free_objs, objs, max_objs) \
+// CREATE_FREE_OBJS_LIST(<node type> **list_ptr, <node type> array[], int size);
+#define CREATE_FREE_OBJS_LIST(list_ptr, array, size) \
     ({ \
-        memset((objs), 0, sizeof((objs))); \
-        NODES_ARRAY_TO_LIST(free_objs, objs, max_objs); \
+        memset((array), 0, sizeof((array))); \
+        NODES_ARRAY_TO_LIST((list_ptr), (array), (size)); \
     })
 
 
