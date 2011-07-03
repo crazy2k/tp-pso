@@ -80,15 +80,21 @@ int sched_tick() {
     return get_pid(current);
 }
 
+int sched_get_current_pid() {
+    return get_pid(current_task());
+}
+
 static sched_task *next_executable_task(sched_task *task) {
     sched_task *candidate = task->next;
     //Siempre existe un candidate sin bloquear (debido a la presencia de idle)
-    while (candidate->blocked) 
+    while (candidate->blocked)
         candidate = candidate->next;
+
+/*  debug_printf("Proceso candidato #%x seleccionado esta ", get_pid(candidate));
+    debug_printf(candidate->blocked ? "Bloqueado\n" : "Desbloqueado\n");*/
 
     return candidate;
 }
-
 
 static void restart_quantum(sched_task *task) {
     task->rem_quantum = task->quantum;
@@ -100,8 +106,4 @@ static int get_pid(sched_task *task) {
 
 static sched_task *current_task() {
     return task_list;
-}
-
-int sched_get_current_pid() {
-    return get_pid(current_task());
 }
