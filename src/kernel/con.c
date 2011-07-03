@@ -11,6 +11,7 @@
 #define KB_BUF_SIZE 1024
 #define TAB_STR "    "
 #define TAB_SIZE (sizeof(TAB_STR) - 1)
+#define IS_FOCUSED(ccdev) ((ccdev)->focused)
 
 
 // XXX: Deberian ser static?
@@ -78,7 +79,7 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size) {
     con_chardev *ccdev = (con_chardev *)this;
     char *cbuf = (char *)buf;
 
-    void *out_base = (ccdev->focused) ? (void *)VGA_ADDR : ccdev->screen_buf;
+    void *out_base = IS_FOCUSED(ccdev) ? (void *)VGA_ADDR : ccdev->screen_buf;
 
     int i;
     for (i = 0; i < size; i++) {
@@ -208,14 +209,14 @@ static void con_backspace(con_chardev *ccdev) {
 
 
 static void con_delete_cur_char(con_chardev *ccdev) {
-    void *addr = (ccdev->focused ? (void *)VGA_ADDR : ccdev->screen_buf) + 
+    void *addr = (IS_FOCUSED(ccdev) ? (void *)VGA_ADDR : ccdev->screen_buf) + 
         ccdev->screen_buf_offset;
 
     vga_putchar(addr, ' ', 0x0F);
 }
 
 static void con_clear_screen(con_chardev *ccdev) {
-    void *addr = (ccdev->focused) ? (void *)VGA_ADDR : ccdev->screen_buf;
+    void *addr = IS_FOCUSED(ccdev) ? (void *)VGA_ADDR : ccdev->screen_buf;
     void *end = addr + VGA_ROWS*VGA_COLS*VGA_CHAR_SIZE;
 
     for (; addr < end; addr += VGA_CHAR_SIZE)
@@ -224,7 +225,7 @@ static void con_clear_screen(con_chardev *ccdev) {
 }
 
 static void scroll_down(con_chardev *ccdev) {
-    void *screen = (ccdev->focused) ? (void *)VGA_ADDR : ccdev->screen_buf;
+    void *screen = IS_FOCUSED(ccdev) ? (void *)VGA_ADDR : ccdev->screen_buf;
     void *screen_limit = screen + VGA_SCREEN_SIZE;
     memcpy(screen, screen + VGA_ROW_SIZE,
         (screen_limit - screen) - VGA_ROW_SIZE);
