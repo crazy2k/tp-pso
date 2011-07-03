@@ -60,8 +60,11 @@ int sched_exit() {
 
 int sched_block() {
     sched_task *task = current_task();
+    sched_task *next_task = task_list = next_executable_task(task);
+
     task->blocked = TRUE;
-    return get_pid(task->next);
+
+    return get_pid(next_task);
 }
 
 int sched_tick() {
