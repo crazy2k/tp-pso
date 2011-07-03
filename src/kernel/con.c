@@ -140,11 +140,9 @@ void con_focus(con_chardev *con) {
 void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
     switch(b) {
         case KB_KC_SHIFT_ALT_LEFT:
-	        __asm __volatile("xchg %%bx, %%bx" : :);
             con_focus(ccdev->prev);
         break;
         case KB_KC_SHIFT_ALT_RIGHT:
-	        __asm __volatile("xchg %%bx, %%bx" : :);
             con_focus(ccdev->next);
         break;
         default:
