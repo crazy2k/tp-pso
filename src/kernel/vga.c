@@ -2,6 +2,7 @@
 #include <tipos.h>
 #include <stdarg.h>
 #include <vga.h>
+#include <utils.h>
 
 #define VGA_TEMPBUFSIZE 40
 #define VGA_UI_BASE 16
