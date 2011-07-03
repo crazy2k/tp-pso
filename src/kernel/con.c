@@ -19,7 +19,7 @@ sint_32 con_write(chardev *this, const void *buf, uint_32 size);
 uint_32 con_flush(chardev *this);
 
 
-static chardev* con_create(con_chardev *ccdev);
+static void initialize_console(con_chardev *ccdev);
 static void con_backspace(con_chardev *ccdev);
 static void con_delete_cur_char(con_chardev *ccdev);
 static void con_clear_screen(con_chardev *ccdev);
@@ -45,11 +45,11 @@ chardev* con_open(uint32_t number, uint32_t mode) {
     if (number < MAX_CON_CHARDEVS) {
         con = &con_chardevs[number];
         if (!IS_AT_LIST(opened_con_chardevs, con)) 
-            con_create(con);
+            initialize_console(con);
 
     } else if (number == NEW_CONSOLE && !IS_EMPTY(free_con_chardevs)) {
         con = POP(&free_con_chardevs);
-        con_create(con);
+        initialize_console(con);
 
     } else
         return NULL;
@@ -172,7 +172,7 @@ void con_ctl(con_chardev *ccdev, uint32_t oper) {
     
 }
 
-static chardev* con_create(con_chardev *ccdev) {
+static void initialize_console(con_chardev *ccdev) {
     if (ccdev) {
         ccdev->clase = DEVICE_CON_CHARDEV;
         ccdev->refcount = 0;
@@ -199,8 +199,6 @@ static chardev* con_create(con_chardev *ccdev) {
         if (!con_get_current_console())
             con_focus(ccdev);
     }
-
-    return (chardev *)ccdev;
 }
 
 static void con_backspace(con_chardev *ccdev) {
