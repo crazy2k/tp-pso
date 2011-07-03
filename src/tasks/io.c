@@ -3,6 +3,7 @@
 #include <user/utils.h>
 
 #define READ_BUF_SIZE (80 * 25) 
+#define CONV_BUF_SIZE (16) 
 
 static char read_buf[READ_BUF_SIZE];
 
@@ -11,8 +12,11 @@ void write_hex(uint32_t fd, uint32_t num) {
 
 }
 
-void write_decimal(uint32_t fd, uint32_t num) {
-
+void write_decimal(uint32_t fd, int num) {
+    static char buf[CONV_BUF_SIZE];
+    
+    itostr(num, buf);
+    write(fd, buf, strlen(buf));
 }
 
 void write_str(uint32_t fd, char* src) {    
