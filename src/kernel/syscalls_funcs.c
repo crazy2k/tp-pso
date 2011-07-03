@@ -68,10 +68,10 @@ int sys_close(int fd) {
 
 int sys_open(char *path, uint32_t mode) {
     chardev *cdev; 
-    if (!(cdev = loader_add_file(fs_open(path, mode))))
+    if (!(cdev = fs_open(path, mode)))
         return -ENOFILE;
     else 
-        return cdev;
+        return loader_add_file(cdev);
 }
 
 int sys_run(const char *path) {
