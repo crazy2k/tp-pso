@@ -11,7 +11,7 @@
 #define KB_BUF_SIZE 1024
 #define TAB_STR "    "
 #define TAB_SIZE (sizeof(TAB_STR) - 1)
-#define IS_FOCUSED(ccdev) ((ccdev)->focused)
+#define IS_FOCUSED(ccdev) ((ccdev) == current_console)
 
 
 // XXX: Deberian ser static?
@@ -126,15 +126,12 @@ void con_focus(con_chardev *con) {
     if (current_console == con)
         return;
 
-    if (current_console != NULL) {
+    if (current_console != NULL)
         memcpy(current_console->screen_buf, (void *)VGA_ADDR,
             VGA_SCREEN_SIZE);
-        current_console->focused = FALSE;
-    }
 
     memcpy((void *)VGA_ADDR, con->screen_buf, VGA_SCREEN_SIZE);
     current_console = con;
-    con->focused = TRUE;
 //    update_console_cursor(con);
 }
 
@@ -181,7 +178,6 @@ static void initialize_console(con_chardev *ccdev) {
 
         ccdev->screen_buf = mm_mem_kalloc();
         ccdev->screen_buf_offset = 0;
-        ccdev->focused = FALSE;
 
         ccdev->kb_buf = ((circular_buf_t) { 
             .buf = mm_mem_kalloc(),

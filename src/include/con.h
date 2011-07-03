@@ -18,7 +18,6 @@ struct con_chardev {
 
     void *screen_buf;
     uint32_t screen_buf_offset;
-    bool focused;
 
     circular_buf_t kb_buf;
     int waiting_process;
