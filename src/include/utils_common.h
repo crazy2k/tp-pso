@@ -13,6 +13,8 @@ char *strchr(const char *s, int c);
 char *strstr(const char *in, const char *str);
 int strlen(const char* str);
 int strtoi(const char *str);
+void itostr(int n, char *s);
+void reverse(char *s);
 char *strcpy(char *s1, const char *s2);
 char *strcat(char *s1, const char *s2);
 char *strncat(char *s1, const char *s2, size_t n);
