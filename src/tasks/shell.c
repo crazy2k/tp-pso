@@ -30,8 +30,12 @@ int main(void) {
             command = get_word(&rest);
             rest = skip_spaces(rest);
             
-            if (strcmp(command,"echo") == 0) {
+            if (strcmp(command, "echo") == 0) {
                 println(con, rest);
+            } else if (strcmp(command, "getpid") == 0) {
+                uint32_t pid = getpid();
+                write_decimal(con, pid);
+                write(con, "\n", 1);
             } else if (strcmp(command, "help") == 0) {
                 print_help(con);
             } else {
