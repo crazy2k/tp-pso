@@ -237,6 +237,9 @@ void loader_unqueue(int *cola) {
         pcb *queue = &pcbs[*cola];
         pcb *pcb = POP(&queue);
 
+        if (IS_EMPTY(queue))
+            *cola = 1;
+
         sched_unblock(get_pid(pcb));
     }
 }
