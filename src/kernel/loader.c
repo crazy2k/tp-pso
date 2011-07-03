@@ -128,6 +128,8 @@ void loader_init(void) {
     // Cargamos otras tareas
 
     loader_load(&task_shell_pso, 3);
+    loader_load(&task_shell_pso, 3);
+    loader_load(&task_shell_pso, 3);
 
     current_pcb = idle_pcb;
 
