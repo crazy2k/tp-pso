@@ -81,9 +81,9 @@ void kb_process_byte(uint8_t b) {
 
     if (status_key) {
         if (IS_KEY_RELEASE(b))
-            kb_status |= status_key;
-        else 
             kb_status &= ~status_key;
+        else 
+            kb_status |= status_key;
     } else if(!IS_KEY_RELEASE(b)) {
         if (kb_status & KB_STATUS_SHIFT) {
             if (isletter(kc))
