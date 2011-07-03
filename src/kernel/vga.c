@@ -48,19 +48,10 @@ void vga_writechar(uint16_t row, uint16_t col, const char chr, uint8_t attr) {
 
 
 void *vga_putd(void *addr, long int num, uint8_t attr) {
-    if (num < 0) {
-        vga_putchar(addr, '-', attr);
-        num = -num;
-    }
+    static char buf[VGA_TEMPBUFSIZE];
+    itostr(num, buf);
 
-    char chars[VGA_TEMPBUFSIZE] = {'\0'};
-    int i = VGA_TEMPBUFSIZE - 1;
-    do {
-        chars[--i] = (char)(num % 10ul) + '0';
-        num /= 10ul;
-    } while(num != 0);
-
-    return vga_puts(addr, &chars[i], attr);
+    return vga_puts(addr, buf, attr);
 }
 
 
