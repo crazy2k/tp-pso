@@ -95,8 +95,10 @@ sint_32 pipe_read(chardev* this, void* buf, uint_32 size) {
     while (CBUF_EMPTY(pcdev) && !CLOSED(WRITER_END(pcdev)))
         loader_enqueue(&pcdev->waiting_process);
 
-    if (!CLOSED(WRITER_END(pcdev)))
-        loader_unqueue(&WRITER_END(pcdev)->waiting_process);
+    if (!CLOSED(WRITER_END(pcdev))) {
+        while(WRITER_END(pcdev)->waiting_process != -1)
+            loader_unqueue(&WRITER_END(pcdev)->waiting_process);
+    }
 
     return read_from_circ_buff((char *)buf, GET_CBUF(pcdev), size,
         PIPE_BUF_SIZE);
@@ -114,7 +116,8 @@ sint_32 pipe_write(chardev* this, const void* buf, uint_32 size) {
     if (CLOSED(READER_END(pcdev)))
         return 0;
     else {
-        loader_unqueue(&READER_END(pcdev)->waiting_process);
+        while(READER_END(pcdev)->waiting_process != -1)
+            loader_unqueue(&READER_END(pcdev)->waiting_process);
 
         return write_to_circ_buff(GET_CBUF(pcdev), (char *)buf, size,
             PIPE_BUF_SIZE);
