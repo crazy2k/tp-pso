@@ -153,7 +153,7 @@ void con_put_to_kb_buf(con_chardev * ccdev, uint8_t b) {
         break;
         default:
             put_char_to_circ_buff(&ccdev->kb_buf, b, KB_BUF_SIZE);
-            loader_unqueue(&ccdev->waiting_process);
+            loader_unqueue_all(&ccdev->waiting_process);
     }
 }
 
