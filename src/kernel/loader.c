@@ -231,7 +231,8 @@ void loader_enqueue(int *cola) {
 
     APPEND(&queue, get_current_pcb());
 
-    loader_switchto(sched_block());
+    pid pid = sched_block();
+    loader_switchto(pid);
 }
 
 void loader_unqueue(int *cola) {
@@ -247,7 +248,9 @@ void loader_unqueue(int *cola) {
 
 void loader_exit(void) {
     APPEND(&zoombie_tasks, get_current_pcb());
-    loader_switchto(sched_exit());
+
+    pid pid = sched_exit();
+    loader_switchto(pid);
 }
 
 void loader_switchto(pid pd) {
@@ -268,7 +271,6 @@ void loader_switchto(pid pd) {
     kill_zoombies();
 
     restore_eflags(eflags);
-    
 }
 
 int loader_add_file(chardev *cdev) {
