@@ -234,6 +234,11 @@ void loader_enqueue(int *cola) {
     loader_switchto(pid);
 }
 
+void loader_unqueue_all(int *cola) {
+    while (*cola != -1)
+        loader_unqueue(cola);
+}
+
 void loader_unqueue(int *cola) {
     if (*cola != -1) {
         pcb *queue = &pcbs[*cola];

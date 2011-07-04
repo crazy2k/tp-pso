@@ -16,6 +16,7 @@ pid loader_load(pso_file* f, int pl);
 
 void loader_enqueue(int* cola);
 void loader_unqueue(int* cola);
+void loader_unqueue_all(int *cola);
 
 void loader_exit(void);
 
