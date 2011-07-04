@@ -1,5 +1,6 @@
 #include <syscalls.h>
 #include <mm.h>
+#include <pipe.h>
 #include <fs.h>
 #include <loader.h>
 #include <sched.h>
@@ -72,6 +73,17 @@ int sys_open(char *path, uint32_t mode) {
         return -ENOFILE;
     else 
         return loader_add_file(cdev);
+}
+
+
+int sys_pipe(int fds[2]) {
+    chardev* pipes[2];
+    int result = pipe_open(pipes);
+
+    fds[0] = loader_add_file(pipes[0]);
+    fds[1] = loader_add_file(pipes[1]);
+
+    return result; 
 }
 
 int sys_run(const char *path) {

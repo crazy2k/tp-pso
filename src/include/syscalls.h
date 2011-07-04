@@ -14,6 +14,7 @@
 #define SYSCALLS_NUM_OPEN 8
 #define SYSCALLS_NUM_CON_CTL 9
 #define SYSCALLS_NUM_RUN 10
+#define SYSCALLS_NUM_PIPE 11
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -34,6 +35,7 @@
     int sys_seek(int fd, uint32_t size);
     int sys_close(int fd);
     int sys_open(char* path, uint32_t mode);
+    int sys_pipe(int fds[2]);
     int sys_run(const char* path);
 
 
@@ -56,6 +58,7 @@
     int seek(int fd, uint32_t size);
     int close(int fd);
     int open(const char* path, uint32_t mode);
+    int pipe(int fds[2]);
     void con_ctl(uint32_t con, uint32_t oper);
     int run(const char* path);
 

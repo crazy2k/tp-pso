@@ -172,6 +172,10 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_NUM_RUN:
             sys_run((char *)st->ebx);
             break;
+        case SYSCALLS_NUM_PIPE:
+            sys_pipe((int *)st->ebx);
+            break;
+
     }
 }
 
