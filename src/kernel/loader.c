@@ -21,7 +21,6 @@ extern void loader_switch_stack_pointers(void **old_stack_top, void
 extern void initialize_task(pso_file *f);
 
 extern func_main idle_main;
-extern pso_file task_task1_pso;
 extern pso_file task_task1_pso, task_shell_pso;
 
 /*
