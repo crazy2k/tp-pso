@@ -5,26 +5,23 @@
 #include <errors.h>
 
 #define MAX_PIPE_DEVS 32
-#define MAX_PIPE_BUFS (MAX_PIPE_DEVS/2)
 #define PIPE_BUF_SIZE 4096
 
 #define IS_READ_END(pipe) (!!((pipe)->read))
 #define IS_WRITE_END(pipe) (!!((pipe)->write))
 
-#define OTHER_END(pipe) (pipe)
-#define OTHER_END_CLOSED(pipe) CLOSED(OTHER_END(pipe))
+#define READER_END(writer_pipe) \
+    (&(reader_pipe_devs[writer_pipe - writer_pipe_devs]))
+#define WRITER_END(reader_pipe) \
+    (&(writer_pipe_devs[reader_pipe - reader_pipe_devs]))
+#define OTHER_END(pipe) \
+    (IS_READ_END(pipe) ? WRITER_END(pipe) : READER_END(pipe))
 #define CLOSED(pipe) ((pipe)->refcount == 0)
 
-#define GET_CBUF(pipe) (&(pipe)->buf->cbuf)
-
-
-typedef struct str_pipe_buf pipedev_buf_t;
-struct str_pipe_buf {
-    circular_buf_t cbuf;
-
-    pipedev_buf_t *next;
-    pipedev_buf_t *prev;
-};
+#define GET_CBUF(pipe) (&(pipe_bufs[pipe - \
+    (IS_READ_END(pipe) ? reader_pipe_devs : writer_pipe_devs)]))
+#define CBUF_FULL(pipe) (GET_CBUF(pipe)->remaining == PIPE_BUF_SIZE)
+#define CBUF_EMPTY(pipe) (GET_CBUF(pipe)->remaining == 0)
 
 /* pipe_chardev */
 typedef struct str_pipe pipe_chardev;
@@ -36,7 +33,6 @@ struct str_pipe {
 	chardev_write_t* write;
 	chardev_seek_t* seek;
 
-    pipedev_buf_t *buf;
     int waiting_process;
 
     pipe_chardev *next;
@@ -44,32 +40,44 @@ struct str_pipe {
 };
 
 
-static pipe_chardev pipedevs[MAX_PIPE_DEVS];
-static pipedev_buf_t pipedev_bufs[MAX_PIPE_BUFS];
+static pipe_chardev reader_pipe_devs[MAX_PIPE_DEVS];
+static pipe_chardev writer_pipe_devs[MAX_PIPE_DEVS];
+static circular_buf_t pipe_bufs[MAX_PIPE_DEVS];
 
-static pipe_chardev *free_pipedevs = NULL;
-static pipedev_buf_t *free_pipedev_bufs = NULL;
+static pipe_chardev *free_reader_pipe_devs = NULL;
+static pipe_chardev *free_writer_pipe_devs = NULL;
 
 
-static void initialize_pipe_buf(pipedev_buf_t* pbuf);
 static void initialize_pipe(pipe_chardev* pcdev);
 static void initialize_reader_pipe(pipe_chardev* this);
 static void initialize_writer_pipe(pipe_chardev* this);
 
+
+void pipe_init(void) {
+    CREATE_FREE_OBJS_LIST(free_reader_pipe_devs, reader_pipe_devs, MAX_PIPE_DEVS);
+    CREATE_FREE_OBJS_LIST(free_writer_pipe_devs, writer_pipe_devs, MAX_PIPE_DEVS);
+    memset(pipe_bufs, 0, sizeof(pipe_bufs));
+}
+
 sint_32 pipe_open(chardev* pipes[2]) {
-    if (IS_EMPTY(free_pipedevs))
+    if (IS_EMPTY(free_reader_pipe_devs))
     	return -ENOMEM;
 
-    pipe_chardev* reader = POP(&free_pipedevs);
-    pipe_chardev* writer = POP(&free_pipedevs);
+    pipe_chardev* reader = POP(&free_reader_pipe_devs);
+    pipe_chardev* writer = WRITER_END(reader);
+
+    UNLINK_NODE(&free_writer_pipe_devs, writer);
 
     initialize_reader_pipe(reader);
     initialize_writer_pipe(writer);
     
-    pipedev_buf_t *pbuf = POP(&free_pipedev_bufs);
-    initialize_pipe_buf(pbuf);
+    *GET_CBUF(reader) = ((circular_buf_t) {
+        .buf = mm_mem_kalloc(),
+        .offset = 0,
+        .remaining = 0
+    });
 
-    reader->buf = writer->buf = pbuf;
+
     reader->refcount = writer->refcount = 1;
 
     pipes[0] = (chardev *) reader;
@@ -78,28 +86,20 @@ sint_32 pipe_open(chardev* pipes[2]) {
     return 0;
 }
 
-void pipe_init(void) {
-    CREATE_FREE_OBJS_LIST(free_pipedevs, pipedevs, MAX_PIPE_DEVS);
-    CREATE_FREE_OBJS_LIST(free_pipedev_bufs, pipedev_bufs, MAX_PIPE_BUFS);
-}
-
 sint_32 pipe_read(chardev* this, void* buf, uint_32 size) {
     if (this->clase != DEVICE_PIPE_CHARDEV)
         return -1;
 
     pipe_chardev *pcdev = (pipe_chardev *)this;
 
-    while (GET_CBUF(pcdev)->remaining == 0 && !OTHER_END_CLOSED(pcdev))
+    while (CBUF_EMPTY(pcdev) && !CLOSED(WRITER_END(pcdev)))
         loader_enqueue(&pcdev->waiting_process);
 
-    if (OTHER_END_CLOSED(pcdev))
-        return 0;
-    else {
-        loader_unqueue(&OTHER_END(pcdev)->waiting_process);
+    if (!CLOSED(WRITER_END(pcdev)))
+        loader_unqueue(&WRITER_END(pcdev)->waiting_process);
 
-        return read_from_circ_buff((char *)buf, GET_CBUF(pcdev), size,
-            PIPE_BUF_SIZE);
-    }
+    return read_from_circ_buff((char *)buf, GET_CBUF(pcdev), size,
+        PIPE_BUF_SIZE);
 }
 
 sint_32 pipe_write(chardev* this, const void* buf, uint_32 size) {
@@ -108,13 +108,13 @@ sint_32 pipe_write(chardev* this, const void* buf, uint_32 size) {
 
     pipe_chardev *pcdev = (pipe_chardev *)this;
 
-    while (GET_CBUF(pcdev)->remaining == PIPE_BUF_SIZE && !OTHER_END_CLOSED(pcdev))
+    while (CBUF_FULL(pcdev) && !CLOSED(READER_END(pcdev)))
         loader_enqueue(&pcdev->waiting_process);
 
-    if (OTHER_END_CLOSED(pcdev))
+    if (CLOSED(READER_END(pcdev)))
         return 0;
     else {
-        loader_unqueue(&OTHER_END(pcdev)->waiting_process);
+        loader_unqueue(&READER_END(pcdev)->waiting_process);
 
         return write_to_circ_buff(GET_CBUF(pcdev), (char *)buf, size,
             PIPE_BUF_SIZE);
@@ -130,8 +130,12 @@ uint_32 pipe_flush(chardev* this) {
     pcdev->refcount--;
 
     if (pcdev->refcount == 0) {
-        if (OTHER_END_CLOSED(pcdev)) {
+        if (CLOSED(OTHER_END(pcdev))) {
             mm_mem_free(GET_CBUF(pcdev)->buf);
+            APPEND(&free_reader_pipe_devs, 
+                IS_READ_END(pcdev) ? pcdev : READER_END(pcdev));
+            APPEND(&free_writer_pipe_devs, 
+                IS_WRITE_END(pcdev) ? pcdev : WRITER_END(pcdev));
         }
         else {
             while (OTHER_END(pcdev)->waiting_process != -1)
@@ -140,14 +144,6 @@ uint_32 pipe_flush(chardev* this) {
     }
 
 	return 0;
-}
-
-static void initialize_pipe_buf(pipedev_buf_t* pbuf) {
-    pbuf->cbuf = ((circular_buf_t) { 
-        .buf = mm_mem_kalloc(),
-        .offset = 0,
-        .remaining = 0
-    });
 }
 
 static void initialize_pipe(pipe_chardev* pcdev) {
