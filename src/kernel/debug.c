@@ -1,4 +1,5 @@
 #include <debug.h>
+#include <utils.h>
 #include <isr.h>
 #include <idt.h>
 #include <vga.h>
@@ -180,6 +181,14 @@ static void debug_prints(const char *msg) {
 #define DEBUG_UI_LOG2BASE 4
 #define DEBUG_UI_REPLENGTH (sizeof(uint32_t)*8/DEBUG_UI_LOG2BASE)
 
+static void debug_printd(int num) {
+    char str[DEBUG_UI_REPLENGTH];
+
+    itostr(num, str);
+
+    debug_prints(str);
+}
+
 static void debug_printx(uint32_t n) {
     char chars[DEBUG_UI_BASE],
          str[DEBUG_UI_REPLENGTH + 1],
@@ -215,6 +224,8 @@ void debug_printf(const char* format, ...) {
             c = *format++;
             if (c == 'x')
                 debug_printx((uint32_t)va_arg(vargs, int));
+            else if (c == 'd')
+                debug_printd((int)va_arg(vargs, int));
         }
     }
 
