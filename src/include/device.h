@@ -6,6 +6,7 @@
 #define DEVICE_CON_CHARDEV      1
 #define DEVICE_SERIAL_CHARDEV   2
 #define DEVICE_HDD_BLOCKDEV     3
+#define DEVICE_PIPE_CHARDEV     5
 
 /* Devices */
 typedef struct str_dev device;
