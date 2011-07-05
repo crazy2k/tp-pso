@@ -33,7 +33,8 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
     *st);
 static void primary_hdd_isr(uint32_t index, uint32_t error_code, task_state_t
     *st);
-
+static void page_fault_isr(uint32_t index, uint32_t error_code, 
+    task_state_t *st);
 
 void idt_init(void) {
     // Configuramos los handlers en la IDT
@@ -53,6 +54,8 @@ void idt_init(void) {
     register_isr(IDT_INDEX_COM13, serial_isr);
     register_isr(IDT_INDEX_SYSC, syscall_caller);
     register_isr(IDT_INDEX_HDD_PRIMARY, primary_hdd_isr);
+    register_isr(IDT_INDEX_PF, page_fault_isr);
+
 
     // Cargamos la IDT
     lidt(&idtr);
@@ -198,3 +201,8 @@ static void primary_hdd_isr(uint32_t index, uint32_t error_code,
 
     hdd_recv_primary();
 }
+
+static void page_fault_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
+    loader_exit();
+}
+
