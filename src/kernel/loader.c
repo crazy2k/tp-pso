@@ -253,7 +253,14 @@ void loader_unqueue(int *cola) {
 }
 
 void loader_exit(void) {
-    APPEND(&zoombie_tasks, get_current_pcb());
+    pcb* task = get_current_pcb();
+    APPEND(&zoombie_tasks, task);
+
+    int i = 0;
+    for (i = 0; i <= task->last_fd; i++) {
+        if (task->fds[i])
+            sys_close(i);
+    }
 
     pid pid = sched_exit();
     loader_switchto(pid);
