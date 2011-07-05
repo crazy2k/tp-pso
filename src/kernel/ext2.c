@@ -5,6 +5,8 @@
 #include <mm.h>
 #include <debug.h>
 
+#define MAX_EXT2_FILE_CHARDEVS 20
+
 #define EXT2_SUPERBLOCK_OFFSET      1024
 #define EXT2_SUPERBLOCK_SIZE        1024
 #define EXT2_SUPERBLOCK_MAGIC       0xEF53
@@ -133,6 +135,9 @@ enum
 static uint8_t file_data_buf[PAGE_SIZE*4];
 static uint8_t inode_buf[256];
 
+static ext2_file_chardev ext2_file_chardevs[MAX_EXT2_FILE_CHARDEVS];
+static ext2_file_chardev *free_ext2_file_chardevs;
+
 
 static void initialize_part_info(ext2 *part_info);
 static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode_buf);
@@ -142,9 +147,12 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
 static uint32_t get_indirect_data(ext2 *part_info, uint32_t bno, int level, uint32_t remaining, void *buf);
 static int indirect_block_size(ext2 *part_info, int level);
 static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset);
+static void initialize_ext2_file_chardev(ext2_file_chardev *fp);
 
 
 void ext2_init() {
+    CREATE_FREE_OBJS_LIST(free_ext2_file_chardevs, ext2_file_chardevs,
+        MAX_EXT2_FILE_CHARDEVS);
 }
 
 void ext2_create(ext2 *part_info, blockdev *part) {
@@ -190,10 +198,71 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (!(part_info->initialized))
         initialize_part_info(part_info);
 
-    /* TODO: Abrir archivo en char device */
     uint32_t i = path2inode(part_info, 2, filename + 6);
-    debug_printf("El inodo ganador es.... %x\n", i);
-    breakpoint();
+    debug_printf("** el inodo ganador ES: %x", i);
+
+    ext2_inode inode;
+    get_inode(part_info, i, &inode);
+
+    ext2_file_chardev *fp = POP(&free_ext2_file_chardevs);
+    initialize_ext2_file_chardev(fp);
+
+    get_data(part_info, &inode, fp->buf);
+
+    return (chardev *)fp;
+}
+
+static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
+    if (this->clase != DEVICE_EXT2_FILE_CHARDEV)
+        return -1;
+
+    ext2_file_chardev *fp = (ext2_file_chardev *)this;
+
+    uint32_t remainder = fp->buf_size - fp->buf_offset;
+    void *fp_buf = (void *)fp->buf;
+    uint32_t n = min(size, remainder);
+    memcpy(buf, fp_buf + fp->buf_offset, n);
+
+    debug_printf("Leyo %x bytes en el buffer %x\n", n, (uint32_t)buf);
+
+    return n;
+}
+
+static uint_32 ext2_file_flush(chardev *this) {
+    if (this->clase != DEVICE_EXT2_FILE_CHARDEV)
+        return -1;
+
+    ext2_file_chardev *fp = (ext2_file_chardev *)this;
+
+    mm_mem_free(fp->buf);
+    APPEND(&free_ext2_file_chardevs, fp);
+
+    return 0;
+}
+
+static sint_32 ext2_file_seek(chardev *this, uint32_t pos) {
+    if (this->clase != DEVICE_EXT2_FILE_CHARDEV)
+        return -1;
+
+    ext2_file_chardev *fp = (ext2_file_chardev *)this;
+
+    if (pos >= fp->buf_size)
+        return -1;
+
+    fp->buf_offset = pos;
+    return 0;
+}
+
+static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
+    fp->clase = DEVICE_EXT2_FILE_CHARDEV;
+    fp->refcount = 0;
+    fp->read = ext2_file_read;
+    fp->flush = ext2_file_flush;
+    fp->seek = ext2_file_seek;
+
+    fp->buf = mm_mem_kalloc();
+    fp->buf_offset = 0;
+    fp->buf_size = PAGE_SIZE;
 }
 
 static void initialize_part_info(ext2 *part_info) {
@@ -288,7 +357,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
 }
 
 /* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
- * son 12KB)
+ * son 12KB). El soporte para bloques indirectos no esta probado.
  */
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     // Chequeamos si el archivo es mas grande que el buffer que tenemos
@@ -313,6 +382,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             buf_pos, block_size);
     }
     
+    /*
     // Leemos los datos desde bloques indirectos, si los hay
     for (i = 1; (i < 4) && (remaining > 0); 
         i++, buf_pos += indirect_block_size(part_info, i)) {
@@ -321,6 +391,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], 
             i, remaining, buf_pos);
     }
+    */
 
     return 0;
 }

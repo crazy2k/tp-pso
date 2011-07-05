@@ -111,10 +111,14 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     sint_32 read_chars = 0;
 
+    debug_printf("** hdd_block_read: start\n");
+
     while (read_chars < size)
         read_chars += hdd_block_read_sectors(hbdev, 
             pos + (read_chars/hbdev->size), 
             buf + read_chars, size - read_chars);
+
+    debug_printf("** hdd_block_read: read: %x\n", read_chars);
 
     return size;
 }
@@ -142,8 +146,17 @@ sint_32 hdd_block_read_sectors(hdd_blockdev *hbdev, uint32_t pos, void *buf,
 
     outb(base + PORT_COMMAND, COMMAND_READ_SECTORS);
 
-    while (hbdev->buf.remaining == 0)
+    debug_printf("hdd_block_read_sectors: request\n");
+
+    debug_printf("** hdd_block_read_sectors: t = %x\n",
+        (uint32_t)hbdev - (uint32_t)hdd_blockdevs);
+
+    while (hbdev->buf.remaining == 0) {
+        debug_printf("hdd_block_read_sectors: loop\n");
         loader_enqueue(&hbdev->waiting_process);
+    }
+
+    debug_printf("hdd_block_read_sectors: awake\n");
 
     return read_from_circ_buff((char *)buf, &hbdev->buf, size, BUF_SIZE);
 }
@@ -163,6 +176,7 @@ static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t
     hbdev->write = hdd_block_write;
     hbdev->size = sector_size;
     hbdev->type = type;
+    hbdev->waiting_process = -1;
     hbdev->buf = ((circular_buf_t) {
         .buf = mm_mem_kalloc(),
         .offset = 0,
@@ -179,6 +193,8 @@ void hdd_recv_primary() {
     else
         t = PRIMARY_MASTER;
 
+    debug_printf("** hdd_recv_primary: t = %x\n", t);
+
     hdd_recv(&hdd_blockdevs[t]);
 }
 
@@ -193,6 +209,8 @@ static void hdd_recv(hdd_blockdev *hbdev) {
         put_char_to_circ_buff(&hbdev->buf, (uint8_t)w, BUF_SIZE);
         put_char_to_circ_buff(&hbdev->buf, (uint8_t)(w >> 8), BUF_SIZE);
     }
+
+    debug_printf("hdd_recv: unqueue\n");
 
     loader_unqueue(&hbdev->waiting_process);
 }
