@@ -192,7 +192,9 @@ pid loader_load(pso_file* f, int pl) {
 
 void kill_zoombies() {
     while(zoombie_tasks) {
-        mm_dir_free(POP(&zoombie_tasks)->pd);
+        pcb *zombie = POP(&zoombie_tasks);
+        mm_dir_free(zombie->pd);
+        mm_mem_free(zombie->kernel_stack);
     }
 }
 
