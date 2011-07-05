@@ -382,6 +382,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             buf_pos, block_size);
     }
     
+    /*
     // Leemos los datos desde bloques indirectos, si los hay
     for (i = 1; (i < 4) && (remaining > 0); 
         i++, buf_pos += indirect_block_size(part_info, i)) {
@@ -390,6 +391,7 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
             inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], 
             i, remaining, buf_pos);
     }
+    */
 
     return 0;
 }
