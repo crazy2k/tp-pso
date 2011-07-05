@@ -119,7 +119,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
     return size;
 }
 /* Lee una cantidad de sectores especificada en sectors, si estos no caben en el 
- * buffer sólo lee hasta llenar el buffer del distositivo.
+ * buffer sólo lee hasta llenar el buffer del dispositivo.
  */
 sint_32 hdd_block_read_sectors(hdd_blockdev *hbdev, uint32_t pos, void *buf,
     uint32_t size) {
