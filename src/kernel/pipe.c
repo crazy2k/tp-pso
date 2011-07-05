@@ -40,9 +40,9 @@ struct str_pipe {
 };
 
 
-static pipe_chardev reader_pipe_devs[MAX_PIPE_DEVS];
-static pipe_chardev writer_pipe_devs[MAX_PIPE_DEVS];
-static circular_buf_t pipe_bufs[MAX_PIPE_DEVS];
+static pipe_chardev reader_pipe_devs[MAX_PIPE_DEVS] = { {0} };
+static pipe_chardev writer_pipe_devs[MAX_PIPE_DEVS] = { {0} };
+static circular_buf_t pipe_bufs[MAX_PIPE_DEVS] = { {0} };
 
 static pipe_chardev *free_reader_pipe_devs = NULL;
 static pipe_chardev *free_writer_pipe_devs = NULL;
@@ -56,7 +56,6 @@ static void initialize_writer_pipe(pipe_chardev* this);
 void pipe_init(void) {
     CREATE_FREE_OBJS_LIST(free_reader_pipe_devs, reader_pipe_devs, MAX_PIPE_DEVS);
     CREATE_FREE_OBJS_LIST(free_writer_pipe_devs, writer_pipe_devs, MAX_PIPE_DEVS);
-    memset(pipe_bufs, 0, sizeof(pipe_bufs));
 }
 
 sint_32 pipe_open(chardev* pipes[2]) {
