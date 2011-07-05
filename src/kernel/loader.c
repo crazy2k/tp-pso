@@ -10,6 +10,7 @@
 #include <hdd.h>
 #include <vga.h>
 #include <fs.h>
+#include <debug.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000
@@ -231,8 +232,11 @@ void loader_enqueue(int *cola) {
         queue = &pcbs[*cola];
 
     APPEND(&queue, get_current_pcb());
+    debug_printf("loader_enqueue: enqueue pid: %x\n",
+        get_pid(get_current_pcb()));
 
     pid pid = sched_block();
+    debug_printf("loader_enqueue: switch to: %x\n", pid);
     loader_switchto(pid);
 }
 
@@ -247,6 +251,8 @@ void loader_unqueue(int *cola) {
         pcb *pcb = POP(&queue);
 
         *cola = IS_EMPTY(queue) ? -1 : get_pid(queue);
+
+        debug_printf("loader_unqueue: unqueue pid: %x\n", get_pid(pcb));
 
         sched_unblock(get_pid(pcb));
     }
