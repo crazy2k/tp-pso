@@ -106,18 +106,21 @@ sint_32 pipe_write(chardev* this, const void* buf, uint_32 size) {
         return -1;
 
     pipe_chardev *pcdev = (pipe_chardev *)this;
+    int result = 0;
 
-    while (CBUF_FULL(pcdev) && !CLOSED(READER_END(pcdev)))
-        loader_enqueue(&pcdev->waiting_process);
+    while (size > result) {
+        while (CBUF_FULL(pcdev) && !CLOSED(READER_END(pcdev)))
+            loader_enqueue(&pcdev->waiting_process);
 
-    if (CLOSED(READER_END(pcdev)))
-        return 0;
-    else {
+        if (CLOSED(READER_END(pcdev)))
+            return 0;
+
         loader_unqueue_all(&READER_END(pcdev)->waiting_process);
 
-        return write_to_circ_buff(GET_CBUF(pcdev), (char *)buf, size,
-            PIPE_BUF_SIZE);
+        result += write_to_circ_buff(GET_CBUF(pcdev), (char *)buf,
+            min(size - result, PIPE_BUF_SIZE), PIPE_BUF_SIZE);
     }
+    return result;
 }
 
 uint_32 pipe_flush(chardev* this) {
