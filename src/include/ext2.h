@@ -70,6 +70,24 @@ typedef struct {
 } __attribute__((__packed__)) ext2;
 
 
+typedef struct ext2_file_chardev ext2_file_chardev;
+struct ext2_file_chardev {
+    uint32_t clase;
+    uint32_t refcount;
+    chardev_flush_t *flush;
+    chardev_read_t *read;
+    chardev_write_t *write;
+    chardev_seek_t *seek;
+
+    void *buf;
+    uint32_t buf_offset;
+    uint32_t buf_size;
+
+    ext2_file_chardev *next;
+    ext2_file_chardev *prev;
+}__attribute__((__packed__));
+
+
 void ext2_init();
 void ext2_create(ext2 *part_info, blockdev *part);
 chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags);
