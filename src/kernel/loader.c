@@ -158,6 +158,7 @@ pid loader_load(pso_file* f, int pl) {
         pcb->kernel_stack_pointer = pcb->kernel_stack_limit;
 
         pcb->last_fd = 0;
+        memset(pcb->fds, 0,sizeof(pcb->fds));
 
         // Escribimos el estado inicial
         pcb->kernel_stack_pointer -= sizeof(task_state_t);
