@@ -1,5 +1,11 @@
 #include <utils_common.h>
 
+
+#define HEX_BASE 16
+#define HEX_LOG2BASE 4
+#define HEX_REPLENGTH (sizeof(uint32_t)*8/HEX_LOG2BASE)
+
+
 void *memcpy(void *dest, const void *src, size_t n) {
     char *bdest = (char *) dest;
     char *bsrc = (char *) src;
@@ -145,7 +151,22 @@ int strtoi(const char *str) {
     return neg ? -num : num;
 }
 
-void itohex(int n, char *s) {
+void itohex(int n, char *str) {
+    char chars[HEX_BASE],
+         base = '0';
+
+    int i;
+    for (i = 0; i < HEX_BASE; i++) {
+        if (i == 10)
+            base = 'A';
+
+        chars[i] = base + (i % 10);
+    }
+
+    for (i = HEX_REPLENGTH - 1; i >= 0; i--, n /= HEX_BASE)
+        str[i] = chars[n % HEX_BASE];
+
+    str[HEX_REPLENGTH] = '\0';
 }
 
 void itostr(int n, char *s) {

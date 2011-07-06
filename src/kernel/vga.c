@@ -57,23 +57,9 @@ void *vga_putd(void *addr, long int num, uint8_t attr) {
 
 
 void *vga_putx(void *addr, uint32_t n, uint8_t attr) {
-    char chars[VGA_UI_BASE],
-         str[VGA_UI_REPLENGTH + 1],
-         base = '0';
+    char str[VGA_UI_REPLENGTH + 1];
 
-    int i;
-
-    for (i = 0; i < VGA_UI_BASE; i++) {
-        if (i == 10)
-            base = 'A';
-
-        chars[i] = base + (i % 10);
-    }
-
-    for (i = VGA_UI_REPLENGTH - 1; i >= 0; i--, n /= VGA_UI_BASE)
-        str[i] = chars[n % VGA_UI_BASE];
-
-    str[VGA_UI_REPLENGTH] = '\0';
+    itohex(n, str);
 
     addr = vga_puts(addr, "0x", attr);
     return vga_puts(addr, str, attr);
