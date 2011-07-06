@@ -6,6 +6,8 @@ void write_hex(uint32_t fd, uint32_t num);
 void write_decimal(uint32_t fd, int num);
 void write_str(uint32_t fd, char* src);
 
+
+void printf(uint32_t fd, char* format, ...);
 void println(uint32_t fd, char* src);
 
 int scanln(uint32_t fd, char* dest, int size);

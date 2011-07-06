@@ -190,22 +190,9 @@ static void debug_printd(int num) {
 }
 
 static void debug_printx(uint32_t n) {
-    char chars[DEBUG_UI_BASE],
-         str[DEBUG_UI_REPLENGTH + 1],
-         base = '0';
+    char str[DEBUG_UI_REPLENGTH + 1];
 
-    int i;
-    for (i = 0; i < DEBUG_UI_BASE; i++) {
-        if (i == 10)
-            base = 'A';
-
-        chars[i] = base + (i % 10);
-    }
-
-    for (i = DEBUG_UI_REPLENGTH - 1; i >= 0; i--, n /= DEBUG_UI_BASE)
-        str[i] = chars[n % DEBUG_UI_BASE];
-
-    str[DEBUG_UI_REPLENGTH] = '\0';
+    itohex(n, str);
 
     debug_prints("0x");
     debug_prints(str);
