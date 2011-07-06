@@ -151,7 +151,7 @@ int strtoi(const char *str) {
     return neg ? -num : num;
 }
 
-void itohex(int n, char *str) {
+void itohex(uint32_t n, char *str) {
     char chars[HEX_BASE],
          base = '0';
 
