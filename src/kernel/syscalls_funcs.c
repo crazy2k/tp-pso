@@ -16,7 +16,7 @@ uint32_t sys_getpid() {
 }
 
 void *sys_palloc() {
-    return mm_mem_alloc();
+    return mm_request_mem_alloc();
 }
 
 int sys_read(int fd, void *buf, uint32_t size) {

@@ -13,7 +13,13 @@
 #include <kb.h>
 #include <serial.h>
 #include <hdd.h>
+#include <mm.h>
 
+#define PF_ISR_P 0x1
+#define PF_ISR_WR 0x2
+#define PF_ISR_US 0x4
+#define PF_ISR_RSVD 0x8
+#define PF_ISR_ID 0xC
 
 typedef void (*isr_t)(uint32_t index, uint32_t error_code, task_state_t *st);
 
@@ -203,6 +209,15 @@ static void primary_hdd_isr(uint32_t index, uint32_t error_code,
 }
 
 static void page_fault_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
-    loader_exit();
+    void* page = (void *) rcr2();
+
+    if (!(error_code & PF_ISR_P) && mm_is_requested_page(page)) {
+        if (mm_load_requested_page(page) == NULL)
+            loader_exit();
+    } else {
+        debug_printf("Page Fault ejecutando el proceso %d para la pagina %x",
+            sched_get_current_pid(), page);
+        debug_kernelpanic(st, index, error_code);
+    }
 }
 

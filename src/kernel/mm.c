@@ -1,7 +1,10 @@
 #include <mm.h>
+#include <errors.h>
+#include <debug.h>
 #include <utils.h>
 #include <i386.h>
 
+#define PTE_REQUESTED_PAGE 0xF0F0F000
 
 typedef struct page_t page_t;
 
@@ -10,7 +13,7 @@ struct page_t {
     int count;
     page_t *next;
     page_t *prev;
-} __attribute__((__packed__)) ;
+} __attribute__((__packed__));
 
 
 
@@ -33,6 +36,8 @@ static void kernel_pages_list_setup(void);
 static uint32_t*  initialize_pd(uint32_t pd[]);
 static void activate_pagination(void);
 static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop);
+
+static void* set_page_as_requested(void *vaddr);
 
 static bool valid_physical_page(void*);
 static void add_page_to_list(page_t* head, page_t* new);
@@ -113,6 +118,22 @@ void mm_dir_free(mm_page* mm_page) {
     return_kernel_page(PHADDR_TO_PAGE(pd));
 }
 
+void* mm_request_mem_alloc() {
+    uint32_t *pd = current_pd();
+    void *vaddr = seek_unused_vaddr(pd);
+
+    return set_page_as_requested(vaddr);
+}
+
+void* mm_load_requested_page(void* vaddr) {
+    return new_user_page(current_pd(), vaddr);
+}
+
+bool mm_is_requested_page(void* vaddr) {
+    uint32_t *pte = get_pte(current_pd(), vaddr);
+
+    return *pte & PTE_REQUESTED_PAGE;
+}
 
 extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
 
@@ -256,6 +277,13 @@ static void map_kernel_pages(uint32_t pd[], void *vstart, void *vstop) {
     }
 }
 
+static uint32_t* get_pte_table_alloc(uint32_t pd[], void* vaddr) {
+    if (!(pd[PDI(vaddr)] & PDE_P))
+        new_page_table(pd, vaddr);
+
+    return get_pte(pd, vaddr);
+}
+
 static uint32_t* get_pte(uint32_t pd[], void* vaddr) {
     uint32_t pde = pd[PDI(vaddr)];
 
@@ -277,6 +305,20 @@ static void *new_page_table(uint32_t pd[], void* vaddr) {
     return page_va;
 }
 
+static void* set_page_as_requested(void *vaddr) {
+    uint32_t *pte = get_pte_table_alloc(current_pd(), vaddr);
+
+    // Si la direccion ya fue mapeada retornar NULL
+    if (*pte & PDE_P)
+        custom_kpanic_msg("La direccion virtual que se intentaba asignar"
+            " ya estaba mapeada en el directorio");
+
+
+    *pte = PTE_REQUESTED_PAGE;
+
+    return vaddr;
+}
+
 // Mapea una pagina fisica nueva para la direccion virtual pasada por parametro
 void* new_user_page(uint32_t pd[], void* vaddr) {
     // Si no hay mas memoria retornar NULL
@@ -285,14 +327,10 @@ void* new_user_page(uint32_t pd[], void* vaddr) {
 
     vaddr = ALIGN_TO_PAGE_START(vaddr);
 
-    // Si la tabla de paginas no estaba presente mapearla
-    if (!(pd[PDI(vaddr)] & PDE_P))
-        new_page_table(pd, vaddr);
-
     page_t *page = take_free_page(&free_user_pages);
-    uint32_t *pte = get_pte(pd, vaddr);
+    uint32_t *pte = get_pte_table_alloc(pd, vaddr);
 
-    // Si la direccion ya fúe mapeada retornar NULL
+    // Si la direccion ya fue mapeada retornar NULL
     if (*pte & PDE_P) {
         custom_kpanic_msg("La direccion virtual que se intentaba asignar"
             " ya estaba mapeada en el directorio");
