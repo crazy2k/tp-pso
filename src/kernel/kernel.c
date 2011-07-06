@@ -13,6 +13,7 @@
 #include <hdd.h>
 #include <fs.h>
 #include <ext2.h>
+#include <pipe.h>
 
 extern void* _end;
 /* Entry-point del modo protegido luego de cargar los registros de
@@ -29,6 +30,7 @@ void kernel_init(void) {
     hdd_init();
     ext2_init();
     fs_init();
+    pipe_init();
 
     loader_init();
 }
