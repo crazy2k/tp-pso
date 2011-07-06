@@ -44,11 +44,18 @@ static void reserve_pages(page_t**, void*, void*);
 static page_t* take_free_page(page_t** page_list_ptr);
 
 static uint32_t* get_pte(uint32_t pd[], void* vaddr);
+static uint32_t* get_pte_table_alloc(uint32_t pd[], void* vaddr);
 static void *new_page_table(uint32_t pd[], void* vaddr);
 
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
 
+
+void mm_init(void) {
+    free_pages_list_setup();
+    initialize_pd(kernel_pd);
+    activate_pagination();
+}
 
 void* mm_mem_alloc() {
     uint32_t *pd = current_pd();
@@ -111,12 +118,6 @@ extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD
 
 uint32_t *current_pd(void) {
     return (uint32_t *)(PD_MASK & rcr3());
-}
-
-void mm_init(void) {
-    free_pages_list_setup();
-    initialize_pd(kernel_pd);
-    activate_pagination();
 }
 
 static void free_pages_list_setup(void) {
