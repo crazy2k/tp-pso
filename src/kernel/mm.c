@@ -317,7 +317,7 @@ static void* seek_unused_vaddr(uint32_t pd[]) {
     void *vaddr;
     for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
         uint32_t *pte = get_pte(kernel_pd, vaddr);
-        if ((*pte & PTE_P) == 0)
+        if (!pte || (*pte & PTE_P) == 0)
             return (void*)PTE_PAGE_BASE(*pte);
     }
 
