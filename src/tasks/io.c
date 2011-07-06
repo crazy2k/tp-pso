@@ -1,6 +1,7 @@
 #include <user/syscalls.h>
 #include <user/io.h>
 #include <user/utils.h>
+#include <stdarg.h>
 
 #define READ_BUF_SIZE (80 * 25) 
 #define CONV_BUF_SIZE (16) 
@@ -26,6 +27,26 @@ void write_str(uint32_t fd, char* src) {
 void println(uint32_t fd, char* src) {
     write_str(fd, src);
     write(fd, "\n", 1);
+}
+
+void printf(uint32_t fd, char* format, ...) {
+    va_list vargs;
+    va_start(vargs, format);
+
+    char c;
+    while ((c = *format++) != '\0') {
+        if (c != '%')
+            write(fd, &c, 1);
+        else {
+            c = *format++;
+            if (c == 'x')
+                write_hex(fd, (uint32_t)va_arg(vargs, int));
+            else if (c == 'd')
+                write_decimal(fd, (int)va_arg(vargs, int));
+        }
+    }
+
+    va_end(vargs);
 }
 
 int scanln(uint32_t fd, char* dest, int size) {
