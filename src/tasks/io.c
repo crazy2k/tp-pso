@@ -10,7 +10,11 @@ static char read_buf[READ_BUF_SIZE];
 
 
 void write_hex(uint32_t fd, uint32_t num) {
-
+    static char buf[CONV_BUF_SIZE];
+    
+    itohex(num, buf);
+    write_str(fd, "0x");
+    write(fd, buf, strlen(buf));
 }
 
 void write_decimal(uint32_t fd, int num) {
