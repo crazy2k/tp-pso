@@ -145,6 +145,9 @@ int strtoi(const char *str) {
     return neg ? -num : num;
 }
 
+void itohex(int n, char *s) {
+}
+
 void itostr(int n, char *s) {
     int i, sign;
 
