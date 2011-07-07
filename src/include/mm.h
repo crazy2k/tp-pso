@@ -82,8 +82,9 @@ typedef struct str_mm_page {
 
 
 #define PTE_ASSIGNED_PAGE PTE_AVL(0)
-#define PTE_SHARED_PAGE PTE_AVL(1)
-#define PTE_COW_PAGE PTE_AVL(2)
+#define PTE_REQUESTED_PAGE PTE_AVL(1)
+#define PTE_SHARED_PAGE PTE_AVL(2)
+#define PTE_COW_PAGE PTE_AVL(3)
 
 
 #define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))

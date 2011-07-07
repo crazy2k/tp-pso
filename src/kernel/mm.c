@@ -4,7 +4,9 @@
 #include <utils.h>
 #include <i386.h>
 
-#define PTE_REQUESTED_PAGE 0xF0F0F000
+#define IS_REQUESTED_PAGE(pte) (((pte) & PTE_REQUESTED_PAGE) && !((pte) & PTE_P))
+#define IS_SHARED_PAGE(pte) (((pte) & PTE_SHARED_PAGE) && ((pte) & PTE_P))
+#define IS_COW_PAGE(pte) (((pte) & PTE_COW_PAGE) && ((pte) & PTE_P) && !((pte) & PDE_RW))
 
 typedef struct page_t page_t;
 
@@ -134,7 +136,7 @@ void* mm_load_requested_page(void* vaddr) {
 bool mm_is_requested_page(void* vaddr) {
     uint32_t *pte = get_pte(current_pd(), vaddr);
 
-    return (*pte & PTE_REQUESTED_PAGE) && !(*pte & PTE_P);
+    return IS_REQUESTED_PAGE(*pte);
 }
 
 uint32_t *mm_clone_pd(uint32_t pd[]) {
@@ -149,10 +151,10 @@ uint32_t *mm_clone_pd(uint32_t pd[]) {
         if (pd[PDI(vaddr)] & PDE_P) {
             for (src = vaddr, i = 0; i < PT_ENTRIES; src += PAGE_SIZE, i++) {
                 uint32_t *src_pte = get_pte(kernel_pd, src);
-                if (src != avl_addr && ((*src_pte & PTE_P) || mm_is_requested_page(src))) {
+                if (src != avl_addr && ((*src_pte & PTE_P) || IS_REQUESTED_PAGE(*src_pte))) {
                     uint32_t *new_pte = get_pte_table_alloc(new_pd, src);
 
-                    if ((*src_pte & PTE_SHARED_PAGE) || mm_is_requested_page(src))
+                    if (IS_SHARED_PAGE(*src_pte) || IS_REQUESTED_PAGE(*src_pte))
                         *new_pte = *src_pte;
                     else
                         *new_pte = clone_pte(pd, src, avl_addr);
