@@ -367,12 +367,16 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     uint32_t remaining = inode->size;
+    if (remaining % block_size)
+        remaining += block_size - (remaining % block_size);
 
     void *buf_pos;
     int i;
     for (i = 0, buf_pos = buf;
         (i < EXT2_INODE_DIRECT_COUNT) && (remaining > 0);
         i++, buf_pos += block_size, remaining -= block_size) {
+
+        debug_printf("** ext2: get_data: remaining: %x\n", remaining);
 
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
