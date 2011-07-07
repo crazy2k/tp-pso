@@ -15,6 +15,7 @@
 #define SYSCALLS_NUM_CON_CTL 9
 #define SYSCALLS_NUM_RUN 10
 #define SYSCALLS_NUM_PIPE 11
+#define SYSCALLS_NUM_FORK 12
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -37,6 +38,7 @@
     int sys_open(char* path, uint32_t mode);
     int sys_pipe(int fds[2]);
     int sys_run(const char* path);
+    int sys_fork();
 
 
 #else
@@ -61,6 +63,7 @@
     int pipe(int fds[2]);
     void con_ctl(uint32_t con, uint32_t oper);
     int run(const char* path);
+    int fork();
 
 
 #endif

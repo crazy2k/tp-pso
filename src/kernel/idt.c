@@ -184,7 +184,9 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_NUM_PIPE:
             st->eax = sys_pipe((int *)st->ebx);
             break;
-
+        case SYSCALLS_NUM_FORK:
+            st->eax = sys_fork();
+            break;
     }
 }
 

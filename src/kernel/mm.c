@@ -18,7 +18,7 @@ struct page_t {
 
 
 /* Maybe Shared Resource (Aunque cada proceso tiene su propia pd y sus propias tablas)*/
-uint32_t kernel_pd[1024] __attribute__((aligned(PAGE_SIZE))) = {0};
+uint32_t kernel_pd[PD_ENTRIES] __attribute__((aligned(PAGE_SIZE))) = {0};
 
 
 /* Shared Resource */
@@ -51,6 +51,8 @@ static page_t* take_free_page(page_t** page_list_ptr);
 static uint32_t* get_pte(uint32_t pd[], void* vaddr);
 static uint32_t* get_pte_table_alloc(uint32_t pd[], void* vaddr);
 static void *new_page_table(uint32_t pd[], void* vaddr);
+
+static uint32_t clone_pte(uint32_t pd[], void* from, void* avl_addr);
 
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
@@ -103,11 +105,11 @@ void mm_dir_free(mm_page* mm_page) {
     for (i = 0; i < 4; i++)
         return_kernel_page(PHADDR_TO_PAGE((PAGE_4MB_SIZE * i)));
 
-    for (i = 4; i < 1024; i++) {
+    for (i = 4; i < PD_ENTRIES; i++) {
         if (pd[i] & PDE_P) {
             vaddr = (void*)(PAGE_4MB_SIZE * i);
             return_kernel_page(PHADDR_TO_PAGE(vaddr));
-            for (j = 0; j < 1024; vaddr += PAGE_SIZE) {
+            for (j = 0; j < PT_ENTRIES; vaddr += PAGE_SIZE) {
                 uint32_t *pte = get_pte(pd, vaddr);
                 if (*pte & PTE_P)
                     free_user_page(pd, vaddr);
@@ -135,7 +137,34 @@ bool mm_is_requested_page(void* vaddr) {
     return (*pte & PTE_REQUESTED_PAGE) && !(*pte & PTE_P);
 }
 
-extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
+uint32_t *mm_clone_pd(uint32_t pd[]) {
+    int i;
+
+    uint32_t *new_pd = (uint32_t*) mm_dir_new();
+    
+    void *avl_addr = seek_unused_vaddr(pd);
+    void *vaddr, *src;
+
+    for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_4MB_SIZE) {
+        if (pd[PDI(vaddr)] & PDE_P) {
+            for (src = vaddr, i = 0; i < PT_ENTRIES; src += PAGE_SIZE, i++) {
+                uint32_t *src_pte = get_pte(kernel_pd, src);
+                if (src != avl_addr && ((*src_pte & PTE_P) || mm_is_requested_page(src))) {
+                    uint32_t *new_pte = get_pte_table_alloc(new_pd, src);
+
+                    if ((*src_pte & PTE_SHARED_PAGE) || mm_is_requested_page(src))
+                        *new_pte = *src_pte;
+                    else
+                        *new_pte = clone_pte(pd, src, avl_addr);
+                }
+            }
+        }
+    }
+
+    return new_pd;
+}
+
+extern void* _end; // Puntero al fin del codigo del kernel.bin (definido por LD).
 
 uint32_t *current_pd(void) {
     return (uint32_t *)(PD_MASK & rcr3());
@@ -339,6 +368,17 @@ void* new_user_page(uint32_t pd[], void* vaddr) {
     *pte = PTE_PAGE_BASE(PAGE_TO_PHADDR(page)) | PDE_P | PDE_PWT | PDE_US | PDE_RW;
 
     return vaddr;
+}
+
+static uint32_t clone_pte(uint32_t pd[], void* from, void* avl_addr) {
+    avl_addr = new_user_page(pd, avl_addr);
+    memcpy(avl_addr, from, PAGE_SIZE);
+
+    int result = *get_pte(pd, avl_addr);
+
+    *get_pte(pd, avl_addr) = 0;
+
+    return result;
 }
 
 // Retorna la pagina fisica correspondiente a la direccion virtual a la lista

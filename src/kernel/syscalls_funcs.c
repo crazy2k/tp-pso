@@ -86,9 +86,15 @@ int sys_pipe(int fds[2]) {
     return result; 
 }
 
+int sys_fork() {
+    return loader_fork();
+}
+
 int sys_run(const char *path) {
     /* TODO: Buscar binario en el FS*/
     /* TODO: Ejecutar una instancia del proceso */
 
     return NULL;
 }
+
+

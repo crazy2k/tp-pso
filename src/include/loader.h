@@ -22,6 +22,8 @@ void loader_exit(void);
 
 void loader_switchto(pid pd);
 
+int loader_fork();
+
 int loader_add_file(chardev *cdev);
 int loader_remove_file(uint32_t fd);
 chardev *loader_get_file(uint32_t fd);

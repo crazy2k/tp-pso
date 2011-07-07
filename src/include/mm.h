@@ -89,6 +89,8 @@ typedef struct str_mm_page {
 #define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
 #define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
 
+#define PD_ENTRIES 1024
+#define PT_ENTRIES PD_ENTRIES
 
 #define PAGE_SIZE 0x1000ul
 #define PAGE_4MB_SIZE 0x400000ul
@@ -126,6 +128,7 @@ bool mm_is_requested_page(void* vaddr);
 /* Manejador de directorios de página */
 mm_page* mm_dir_new(void);
 void mm_dir_free(mm_page* d);
+uint32_t *mm_clone_pd(uint32_t pd[]);
 
 void* new_user_page(uint32_t pd[], void* vaddr);
 
