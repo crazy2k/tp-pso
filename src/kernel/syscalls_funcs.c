@@ -91,10 +91,12 @@ int sys_fork() {
 }
 
 int sys_run(const char *path) {
-    /* TODO: Buscar binario en el FS*/
-    /* TODO: Ejecutar una instancia del proceso */
+    chardev *cdev = fs_open(path, FS_OPEN_RDONLY);
 
-    return NULL;
+    pso_file *pso_file = mm_mem_kalloc();
+    cdev->read(cdev, pso_file, PAGE_SIZE);
+
+    return loader_load(pso_file, 3);
 }
 
 

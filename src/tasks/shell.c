@@ -36,6 +36,8 @@ int main(void) {
                 uint32_t pid = getpid();
                 write_decimal(con, pid);
                 write(con, "\n", 1);
+            } else if (strcmp(command, "exit") == 0) {
+                exit();
             } else if (strcmp(command, "help") == 0) {
                 print_help(con);
             } else {

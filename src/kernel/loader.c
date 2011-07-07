@@ -181,8 +181,6 @@ pid loader_load(pso_file* f, int pl) {
         pcb->kernel_stack_pointer -= 4;
         *((void **)pcb->kernel_stack_pointer) = NULL;
 
-        current_pcb = pcb;
-
         sched_load(get_pid(pcb));
 
         return get_pid(pcb);
@@ -198,6 +196,7 @@ void kill_zoombies() {
         pcb *zombie = POP(&zoombie_tasks);
         mm_dir_free(zombie->pd);
         mm_mem_free(zombie->kernel_stack);
+        APPEND(&free_pcbs, zombie);
     }
 }
 
