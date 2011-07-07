@@ -195,6 +195,7 @@ void kill_zoombies() {
         pcb *zombie = POP(&zoombie_tasks);
         mm_dir_free(zombie->pd);
         mm_mem_free(zombie->kernel_stack);
+        APPEND(&free_pcbs, zombie);
     }
 }
 
