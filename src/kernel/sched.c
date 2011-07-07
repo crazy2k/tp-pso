@@ -52,10 +52,12 @@ void sched_unblock(pid pd) {
 int sched_exit() {
     sched_task *task = current_task();
 
+    uint32_t next_pid = get_pid(next_executable_task(task));
+
     UNLINK_NODE(&task_list, task);
     APPEND(&free_tasks, task);
 
-    return get_pid(next_executable_task(task));
+    return next_pid;
 }
 
 int sched_block() {
