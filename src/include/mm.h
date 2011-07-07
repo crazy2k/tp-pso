@@ -69,6 +69,7 @@ typedef struct str_mm_page {
 // page_t Table Entry
 
 #define PTE_PAGE_BASE(dir) ((uint32_t)(dir) & __12_31_BITS__)
+#define PTE_AVL(bits) ((uint32_t)(bits) << 9)
 #define PTE_G (((uint32_t) 1) << 8)
 #define PTE_PAT (((uint32_t) 1) << 7)
 #define PTE_D (((uint32_t) 1) << 6)
@@ -78,6 +79,11 @@ typedef struct str_mm_page {
 #define PTE_US PDE_US
 #define PTE_RW PDE_RW
 #define PTE_P PDE_P
+
+
+#define PTE_ASSIGNED_PAGE PTE_AVL(0)
+#define PTE_SHARED_PAGE PTE_AVL(1)
+#define PTE_COW_PAGE PTE_AVL(2)
 
 
 #define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
