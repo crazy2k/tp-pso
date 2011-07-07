@@ -132,7 +132,7 @@ void* mm_load_requested_page(void* vaddr) {
 bool mm_is_requested_page(void* vaddr) {
     uint32_t *pte = get_pte(current_pd(), vaddr);
 
-    return *pte & PTE_REQUESTED_PAGE;
+    return (*pte & PTE_REQUESTED_PAGE) && !(*pte & PTE_P);
 }
 
 extern void* _end; // Puntero al fin del c'odigo del kernel.bin (definido por LD).
