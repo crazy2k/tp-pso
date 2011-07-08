@@ -16,6 +16,7 @@
 #define SYSCALLS_NUM_RUN 10
 #define SYSCALLS_NUM_PIPE 11
 #define SYSCALLS_NUM_FORK 12
+#define SYSCALLS_NUM_SHARE_PAGE 13
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -40,6 +41,7 @@
     int sys_pipe(int fds[2]);
     int sys_run(const char* path);
     int sys_fork(task_state_t* st);
+    int sys_share_page(void *page);
 
 
 #else
@@ -65,6 +67,7 @@
     void con_ctl(uint32_t con, uint32_t oper);
     int run(const char* path);
     int fork();
+    int share_page(void *page);
 
 
 #endif

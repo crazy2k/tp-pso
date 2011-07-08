@@ -187,6 +187,9 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_NUM_FORK:
             st->eax = sys_fork(st);
             break;
+        case SYSCALLS_NUM_SHARE_PAGE:
+            st->eax = sys_share_page((void *)st->ebx);
+            break;
     }
 }
 

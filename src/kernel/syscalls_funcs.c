@@ -90,6 +90,10 @@ int sys_fork(task_state_t* st) {
     return loader_fork(st);
 }
 
+int sys_share_page(void *page) {
+    return mm_share_page(page);
+}
+
 int sys_run(const char *path) {
     chardev *cdev = fs_open(path, FS_OPEN_RDONLY);
 

@@ -166,6 +166,24 @@ uint32_t *mm_clone_pd(uint32_t pd[]) {
     return new_pd;
 }
 
+int mm_share_page(void* vaddr) {
+    vaddr = ALIGN_TO_PAGE_START(vaddr);
+    uint32_t *pte = get_pte(current_pd(), vaddr);
+
+    if (IS_REQUESTED_PAGE(*pte))
+        if (mm_load_requested_page(vaddr) == NULL)
+            return -ENOMEM;
+
+    if (pte == NULL || !(*pte & PTE_P))
+        return -EINVALID;
+    else if (!(*pte & PTE_US))
+        return -ENOPERM;
+    else {
+        *pte |= PTE_SHARED_PAGE;
+        return 0;
+    }
+}
+
 extern void* _end; // Puntero al fin del codigo del kernel.bin (definido por LD).
 
 uint32_t *current_pd(void) {
