@@ -27,6 +27,7 @@
 
 #ifdef __KERNEL__
 // Sólo se compila en modo "kernel"
+    #include "isr.h"
 
     void sys_exit();
     uint32_t sys_getpid();
@@ -38,7 +39,7 @@
     int sys_open(char* path, uint32_t mode);
     int sys_pipe(int fds[2]);
     int sys_run(const char* path);
-    int sys_fork();
+    int sys_fork(task_state_t* st);
 
 
 #else

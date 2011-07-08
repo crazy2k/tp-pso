@@ -86,8 +86,8 @@ int sys_pipe(int fds[2]) {
     return result; 
 }
 
-int sys_fork() {
-    return loader_fork();
+int sys_fork(task_state_t* st) {
+    return loader_fork(st);
 }
 
 int sys_run(const char *path) {
