@@ -177,31 +177,29 @@ void con_ctl(con_chardev *ccdev, uint32_t oper) {
 }
 
 static void initialize_console(con_chardev *ccdev) {
-    if (ccdev) {
-        ccdev->clase = DEVICE_CON_CHARDEV;
-        ccdev->refcount = 0;
-        ccdev->flush = con_flush;
-        ccdev->read = con_read;
-        ccdev->write = con_write;
+    ccdev->clase = DEVICE_CON_CHARDEV;
+    ccdev->refcount = 0;
+    ccdev->flush = con_flush;
+    ccdev->read = con_read;
+    ccdev->write = con_write;
 
-        ccdev->screen_buf = mm_mem_kalloc();
-        ccdev->screen_buf_offset = 0;
+    ccdev->screen_buf = mm_mem_kalloc();
+    ccdev->screen_buf_offset = 0;
 
-        ccdev->kb_buf = ((circular_buf_t) { 
-            .buf = mm_mem_kalloc(),
-            .offset = 0,
-            .remaining = 0
-        });
+    ccdev->kb_buf = ((circular_buf_t) { 
+        .buf = mm_mem_kalloc(),
+        .offset = 0,
+        .remaining = 0
+    });
 
-        ccdev->waiting_process = -1 ;
+    ccdev->waiting_process = -1 ;
 
-        ccdev->current_attr = 0x0F;
+    ccdev->current_attr = 0x0F;
 
-        APPEND(&opened_con_chardevs, ccdev);
+    APPEND(&opened_con_chardevs, ccdev);
 
-        if (!con_get_current_console())
-            con_focus(ccdev);
-    }
+    if (!con_get_current_console())
+        con_focus(ccdev);
 }
 
 static void con_backspace(con_chardev *ccdev) {
