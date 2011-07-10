@@ -102,16 +102,21 @@ mm_page* mm_dir_new(void) {
 
 void mm_dir_free(mm_page* mm_page) {
 	uint32_t i, j, *pd = (uint32_t*)mm_page;
-    void *vaddr;
+    void *phaddr, *vaddr;
 
-    for (i = 0; i < 4; i++)
-        return_kernel_page(PHADDR_TO_PAGE((PAGE_4MB_SIZE * i)));
+    for (i = 0; i < 4; i++) { 
+        phaddr = (void*) PDE_PT_BASE(pd[i]);
+        return_kernel_page(PHADDR_TO_PAGE(phaddr));
+    }
 
     for (i = 4; i < PD_ENTRIES; i++) {
         if (pd[i] & PDE_P) {
+            phaddr = (void*) PDE_PT_BASE(pd[i]);
+            return_kernel_page(PHADDR_TO_PAGE(phaddr));
+
             vaddr = (void*)(PAGE_4MB_SIZE * i);
             return_kernel_page(PHADDR_TO_PAGE(vaddr));
-            for (j = 0; j < PT_ENTRIES; vaddr += PAGE_SIZE) {
+            for (j = 0; j < 1024; vaddr += PAGE_SIZE) {
                 uint32_t *pte = get_pte(pd, vaddr);
                 if (*pte & PTE_P)
                     free_user_page(pd, vaddr);
