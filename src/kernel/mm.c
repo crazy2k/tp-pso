@@ -104,16 +104,8 @@ void mm_dir_free(mm_page* mm_page) {
 	uint32_t i, j, *pd = (uint32_t*)mm_page;
     void *phaddr, *vaddr;
 
-    for (i = 0; i < 4; i++) { 
-        phaddr = (void*) PDE_PT_BASE(pd[i]);
-        return_kernel_page(PHADDR_TO_PAGE(phaddr));
-    }
-
     for (i = 4; i < PD_ENTRIES; i++) {
         if (pd[i] & PDE_P) {
-            phaddr = (void*) PDE_PT_BASE(pd[i]);
-            return_kernel_page(PHADDR_TO_PAGE(phaddr));
-
             vaddr = (void*)(PAGE_4MB_SIZE * i);
             return_kernel_page(PHADDR_TO_PAGE(vaddr));
             for (j = 0; j < 1024; vaddr += PAGE_SIZE) {
@@ -124,6 +116,13 @@ void mm_dir_free(mm_page* mm_page) {
             }
         }
     }
+
+    for (i = 0; i < PD_ENTRIES; i++) { 
+        phaddr = (void*) PDE_PT_BASE(pd[i]);
+        if (pd[i] & PDE_P)
+            return_kernel_page(PHADDR_TO_PAGE(phaddr));
+    }
+
     return_kernel_page(PHADDR_TO_PAGE(pd));
 }
 
