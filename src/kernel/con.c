@@ -55,7 +55,6 @@ chardev* con_open(uint32_t number, uint32_t mode) {
     } else
         return NULL;
 
-    con->refcount++;
     return (chardev*) con;
 }
 
@@ -113,18 +112,14 @@ uint_32 con_flush(chardev *this) {
 
     con_chardev *ccdev = (con_chardev *)this;
 
-    ccdev->refcount--;
-    
-    if (ccdev->refcount == 0) {
-        if (IS_FOCUSED(ccdev))
-            con_focus(ccdev->next != ccdev ? ccdev->next : NULL);
+    if (IS_FOCUSED(ccdev))
+        con_focus(ccdev->next != ccdev ? ccdev->next : NULL);
 
-        mm_mem_free(ccdev->screen_buf);
-        mm_mem_free(ccdev->kb_buf.buf);
+    mm_mem_free(ccdev->screen_buf);
+    mm_mem_free(ccdev->kb_buf.buf);
 
-        UNLINK_NODE(&opened_con_chardevs, ccdev);
-        APPEND(&free_con_chardevs, ccdev);
-    }
+    UNLINK_NODE(&opened_con_chardevs, ccdev);
+    APPEND(&free_con_chardevs, ccdev);
 
     return 0;
 }

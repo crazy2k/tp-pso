@@ -71,8 +71,10 @@ int sys_open(char *path, uint32_t mode) {
     chardev *cdev; 
     if (!(cdev = fs_open(path, mode)))
         return -ENOFILE;
-    else 
+    else {
+        cdev->refcount++;
         return loader_add_file(cdev);
+    }
 }
 
 

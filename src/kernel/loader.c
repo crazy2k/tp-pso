@@ -302,7 +302,6 @@ int loader_add_file(chardev *cdev) {
 
     pcb->last_fd++;
     pcb->fds[pcb->last_fd] = cdev;
-    cdev->refcount++;
 
     return pcb->last_fd;
 }
