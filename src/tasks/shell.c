@@ -2,6 +2,7 @@
 #include <user/utils.h>
 #include <user/io.h>
 #include <fs.h>
+#include <errors.h>
 
 #define SHELL_BUF_SIZE 160
 #define PROMTP "shell> "
@@ -41,7 +42,7 @@ int main(void) {
             } else if (strcmp(command, "help") == 0) {
                 print_help(con);
             } else {
-                if (run(command) == -1)
+                if (run(command) > 0)
                     println(con, "Comando desconocido");
             }
         }
