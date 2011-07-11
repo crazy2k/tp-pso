@@ -127,16 +127,11 @@ void loader_init(void) {
 
     // Cargamos otras tareas
 
-    loader_load(&task_shell_pso, 3);
-    loader_load(&task_shell_pso, 3);
-    loader_load(&task_shell_pso, 3);
-
     current_pcb = idle_pcb;
-
 
     sti();
 
-//    fs_open("/disk/pablo/a/esgroso", FS_OPEN_RDONLY);
+    sys_run("/disk/shell.pso");
 
     idle_main();
 }
@@ -269,10 +264,14 @@ void loader_exit(void) {
     }
 
     pid pid = sched_exit();
+    debug_printf("** loader_exit: sched_exit\n");
     loader_switchto(pid);
 }
 
 void loader_switchto(pid pd) {
+    debug_printf("loader_switchto: pid %x\n", pd);
+    debug_printf("loader_switchto: get_pid(get_current_pcb()) %x\n",
+        get_pid(get_current_pcb()));
     if (get_pid(get_current_pcb()) == pd)
         return;
 
