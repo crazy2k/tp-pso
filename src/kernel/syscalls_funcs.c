@@ -100,7 +100,7 @@ int sys_share_page(void *page) {
 int sys_run(const char *path) {
     chardev *cdev;
     if (!(cdev = fs_open(path, FS_OPEN_RDONLY)))
-        return -1;
+        return -ENOFILE;
 
     pso_file *pso_file = mm_mem_kalloc();
     cdev->read(cdev, pso_file, PAGE_SIZE);

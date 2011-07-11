@@ -2,9 +2,17 @@
 #include <user/utils.h>
 #include <user/io.h>
 #include <fs.h>
+#include <errors.h>
 
 #define SHELL_BUF_SIZE 160
 #define PROMTP "shell> "
+
+#define CMD_ECHO    "echo"
+#define CMD_GETPID  "getpid"
+#define CMD_EXIT    "exit"
+#define CMD_HELP    "help"
+
+char *shell_commands[] = { CMD_ECHO, CMD_GETPID, CMD_EXIT, CMD_HELP };
 
 char shell_buf[SHELL_BUF_SIZE] = { 0 };
 
@@ -30,18 +38,18 @@ int main(void) {
             command = get_word(&rest);
             rest = skip_spaces(rest);
             
-            if (strcmp(command, "echo") == 0) {
+            if (strcmp(command, CMD_ECHO) == 0) {
                 println(con, rest);
-            } else if (strcmp(command, "getpid") == 0) {
+            } else if (strcmp(command, CMD_GETPID) == 0) {
                 uint32_t pid = getpid();
                 write_decimal(con, pid);
                 write(con, "\n", 1);
-            } else if (strcmp(command, "exit") == 0) {
+            } else if (strcmp(command, CMD_EXIT) == 0) {
                 exit();
-            } else if (strcmp(command, "help") == 0) {
+            } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
             } else {
-                if (run(command) == -1)
+                if (run(command) < 0)
                     println(con, "Comando desconocido");
             }
         }
@@ -78,5 +86,9 @@ static char *get_word(char** str) {
 }
 
 static void print_help(int fd) {
-    println(fd, "Help!!");
+    println(fd, "Comandos disponibles:");
+
+    int i;
+    for (i = 0; i < sizeof(shell_commands)/sizeof(char *); i++)
+        printf(fd, "\t%s\n", shell_commands[i]);
 }

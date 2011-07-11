@@ -47,6 +47,8 @@ void printf(uint32_t fd, char* format, ...) {
                 write_hex(fd, (uint32_t)va_arg(vargs, int));
             else if (c == 'd')
                 write_decimal(fd, (int)va_arg(vargs, int));
+            else if (c == 's')
+                write_str(fd, (char *)va_arg(vargs, char *));
         }
     }
 

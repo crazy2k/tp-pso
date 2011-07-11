@@ -108,6 +108,7 @@ $(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE)
 	for T in $(TASKS); do mcopy -obi $@ $$T ::`basename $$T`; done;
 
 $(IMG_TESTHDD): $(TASKS)
+	rm -f $@
 	bximage -q -hd -mode=flat -size=$(IMG_TESTHDD_SIZE) $@
 	mke2fs -F -q $@
 	for T in $(TASKS); do \
