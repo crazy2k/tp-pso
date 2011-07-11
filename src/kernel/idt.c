@@ -170,7 +170,7 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
             con_ctl((con_chardev *) loader_get_file(st->ebx), st->ecx);
             break;
         case SYSCALLS_NUM_RUN:
-            sys_run((char *)st->ebx);
+            st->eax = sys_run((char *)st->ebx);
             break;
     }
 }

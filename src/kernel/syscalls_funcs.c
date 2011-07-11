@@ -78,7 +78,9 @@ int sys_open(char *path, uint32_t mode) {
 }
 
 int sys_run(const char *path) {
-    chardev *cdev = fs_open(path, FS_OPEN_RDONLY);
+    chardev *cdev;
+    if (!(cdev = fs_open(path, FS_OPEN_RDONLY)))
+        return -1;
 
     pso_file *pso_file = mm_mem_kalloc();
     cdev->read(cdev, pso_file, PAGE_SIZE);

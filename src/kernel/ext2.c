@@ -199,7 +199,8 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
         initialize_part_info(part_info);
 
     uint32_t i = path2inode(part_info, 2, filename + 6);
-    debug_printf("** el inodo ganador ES: %x", i);
+    if (i == 0)
+        return NULL;
 
     ext2_inode inode;
     get_inode(part_info, i, &inode);
