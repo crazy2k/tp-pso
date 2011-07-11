@@ -45,10 +45,12 @@ BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 DISK_LABEL="KERNEL  PSO"
 IMG_BASE=$(DIROUT)base.img
 IMG_FLOPPY=$(DIROUT)floppy.img
+IMG_TESTHDD=$(DIROUT)testhdd.img
+IMG_TESTHDD_SIZE=10
 
 .PHONY: all clean
 
-all: $(IMG_FLOPPY) $(DUMP_KERN) $(SYM_KERN)
+all: $(IMG_FLOPPY) $(IMG_TESTHDD) $(DUMP_KERN) $(SYM_KERN)
 
 # Bootloader - disk
 ### TODO ###
@@ -105,9 +107,18 @@ $(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE)
 	mcopy -obi $@ $(BIN_KERN) ::kernel.bin
 	for T in $(TASKS); do mcopy -obi $@ $$T ::`basename $$T`; done;
 
+$(IMG_TESTHDD): $(TASKS)
+	bximage -q -hd -mode=flat -size=$(IMG_TESTHDD_SIZE) $@
+	mke2fs -F -q $@
+	for T in $(TASKS); do \
+		debugfs -w -R "write $$T `basename $$T`" $@ ; \
+	done
+
 # Otros
 clean:
-	rm -f $(BIN_KERN) $(IMG_FLOPPY) $(IMG_BASE) $(OBJS_KERN) $(DUMP_KERN) $(SYM_KERN) $(OBJS_TASKS) $(TASKS) $(TASKS:.pso=.elf) $(BIN_LIB)
+	rm -f $(BIN_KERN) $(IMG_FLOPPY) $(IMG_BASE) $(OBJS_KERN) $(DUMP_KERN) \
+		$(SYM_KERN) $(OBJS_TASKS) $(TASKS) $(TASKS:.pso=.elf) $(BIN_LIB) \
+		$(IMG_TESTHDD)
 	#rm -f deps
 
 # Dependencias

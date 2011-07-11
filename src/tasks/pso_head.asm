@@ -1,6 +1,8 @@
 ; PSO head
 ; Define un header del formato de archivo PSO
 
+extern exit
+
 extern main
 extern _end ; Esto es una cosa que define el ld (o alguien) que apunta al final del espacio de memoria
 extern __pso_end_disk ; Esto se define en pso_tail
@@ -18,6 +20,8 @@ _start:
 	push DWORD 0 ; argv
 	push DWORD 0 ; env
 	call main
-	; exit(eax)
-	; Completar aqu'i la forma en la que llame a la syscall loader_exit(eax)
+    add esp, 4*3
+
+    call exit
+
 	jmp $
