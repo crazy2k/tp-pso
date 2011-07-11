@@ -5,6 +5,7 @@
 #include <sched.h>
 #include <errors.h>
 #include <vga.h>
+#include <debug.h>
 
 void sys_exit() {
     loader_exit();
