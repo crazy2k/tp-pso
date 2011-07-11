@@ -55,7 +55,6 @@ chardev* con_open(uint32_t number, uint32_t mode) {
     } else
         return NULL;
 
-    con->refcount++;
     return (chardev*) con;
 }
 
