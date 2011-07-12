@@ -6,6 +6,7 @@
 #include <tipos.h>
 #include <device.h>
 #include <utils.h>
+#include <sem.h>
 
 enum type {
     PRIMARY_MASTER,
@@ -22,6 +23,8 @@ struct hdd_blockdev {
 	blockdev_read_t *read;
 	blockdev_write_t *write;
 	uint_32 size;
+
+    sem_t sem;
 
     enum type type;
 
