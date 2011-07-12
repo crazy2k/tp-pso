@@ -133,6 +133,9 @@ void loader_init(void) {
 
     // Comienzo de la ejecucion de la tarea idle
     sys_run("/disk/shell.pso");
+    sys_run("/disk/shell.pso");
+    sys_run("/disk/shell.pso");
+    sys_run("/disk/shell.pso");
     idle_main();
 }
 
