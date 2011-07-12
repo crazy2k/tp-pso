@@ -15,6 +15,9 @@ este documento, son:
 * **scheduling de procesos utilizando round-robin** con quantum fijo
 * **task-switching por software**
 * atención de **llamadas al sistema**
+* controladores de consola, puerto serie, disco rígido ATA
+* sistema de archivos virtual (primitivo) y soporte para lectura de
+  ext2
 
 En este documento se describen estas y otras características del sistema.
 
