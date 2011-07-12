@@ -5,20 +5,24 @@
 #include <errors.h>
 
 #define SHELL_BUF_SIZE 160
+#define CAT_BUF_SIZE SHELL_BUF_SIZE
 #define PROMTP "shell> "
 
 #define CMD_ECHO    "echo"
 #define CMD_GETPID  "getpid"
 #define CMD_EXIT    "exit"
 #define CMD_HELP    "help"
+#define CMD_CAT     "cat"
 
-char *shell_commands[] = { CMD_ECHO, CMD_GETPID, CMD_EXIT, CMD_HELP };
+char *shell_commands[] = { CMD_ECHO, CMD_GETPID, CMD_EXIT, CMD_HELP, CMD_CAT };
 
 char shell_buf[SHELL_BUF_SIZE] = { 0 };
+char cat_buf[CAT_BUF_SIZE] = { 0 };
 
 static char *skip_spaces(char* str);
 static char *get_word(char** str);
 static void print_help(int fd);
+static void cat(int console, char* file_name);
 
 
 int main(void) {
@@ -46,6 +50,8 @@ int main(void) {
                 write(con, "\n", 1);
             } else if (strcmp(command, CMD_EXIT) == 0) {
                 exit();
+            } else if (strcmp(command, CMD_CAT) == 0) {
+                cat(con, rest);
             } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
             } else {
@@ -91,4 +97,17 @@ static void print_help(int fd) {
     int i;
     for (i = 0; i < sizeof(shell_commands)/sizeof(char *); i++)
         printf(fd, "\t%s\n", shell_commands[i]);
+}
+
+static void cat(int console, char* file_name) {
+    int fd = open(file_name, FS_OPEN_RDONLY);
+    int chars;
+
+    do {
+        chars = read(fd, cat_buf, CAT_BUF_SIZE);
+
+        write(console, cat_buf, chars);
+    } while (chars == CAT_BUF_SIZE);
+
+    close(fd);
 }

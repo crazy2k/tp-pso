@@ -15,6 +15,9 @@ este documento, son:
 * **scheduling de procesos utilizando round-robin** con quantum fijo
 * **task-switching por software**
 * atención de **llamadas al sistema**
+* controladores de consola, puerto serie, disco rígido ATA
+* sistema de archivos virtual (primitivo) y soporte para lectura de
+  ext2
 
 En este documento se describen estas y otras características del sistema.
 
@@ -52,15 +55,16 @@ Esta es una síntesis de la estructura de directorios del proyecto:
 ================ ==========================================================
 Directorio       Contenido
 ================ ==========================================================
-**raíz**         representa la base de la estructura de directorios. Además
+**/**            representa la base de la estructura de directorios. Además
                  de contener al resto de los directorios, posee archivos de
                  alcance global en el proyecto.
 **src/**         posee todos los archivos y directorios referidos al
                  proyecto menos la documentación
 **src/bin/**     es el directorio en el que se hallará la imagen del kernel
-                 y el archivo correspondiente al disco floppy una vez se
-                 realice la compilación del código. Además, posee el código
-                 binario correspondiente a los BIOS de bochs.
+                 y los archivos correspondientes al disco floppy y disco
+                 rígido una vez se realice la compilación del código.
+                 Además, posee el código binario correspondiente a los BIOS
+                 de bochs.
 **src/boot/**    alberga el código fuente del bootloader.
 **src/include/** posee los encabezados del kernel.
 **src/kernel/**  contiene el código fuente del kernel y además alberga los
@@ -109,25 +113,31 @@ tarea. Entre estas cosas, se encuentra el quantum asociado a la tarea, el
 quantum que le queda por consumir y un flag que indica si la tarea se
 encuentra bloqueada.
 
-Por otro lado, el módulo ``load`` define una estructura ``pcb`` para cada
+Por otro lado, el módulo ``loader`` define una estructura ``pcb`` para cada
 tarea. La definición de esta estructura se encuentra en ``kernel/loader.c``::
 
     struct pcb {
         // Direccion virtual y fisica del directorio de paginas en cualquier
         // espacio de direcciones
         void *pd;
+
         // Datos sobre el stack de kernel de la tarea
         void *kernel_stack;
         void *kernel_stack_limit;
         void *kernel_stack_pointer;
+
+        // File descriptors
+        chardev *fds[MAX_FD];
+        uint32_t last_fd;
 
         pcb *next;
         pcb *prev;
     };
 
 Esta estructura contiene datos sobre el stack de kernel de la tarea (su
-dirección virtual, el valor del puntero del stack) y la dirección del
-directorio de páginas de la tarea.
+dirección virtual, el valor del puntero del stack), la dirección del
+directorio de páginas de la tarea y el arreglo de archivos abiertos por
+la tarea.
 
 
 El *scheduler*
@@ -152,10 +162,10 @@ en condiciones de ser ejecutada. Cuando una tarea finaliza su ejecución
 (por ejemplo, al invocar ella misma a la llamada al sistema ``exit()``)
 esta es quitada de la lista y los recursos que utilizaba son liberados.
 
-El scheduler exporta una función para cada tipo de evetno:
+El scheduler exporta una función para cada tipo de evento:
 
 * ``sched_load()`` para la carga de la tarea,
-* ``sched_block()`` y ``sched_ublock()`` para los eventos de bloqueo y
+* ``sched_block()`` y ``sched_unblock()`` para los eventos de bloqueo y
   desbloqueo de la tarea,
 * ``sched_tick()`` para la ocurrencia de un tick del timer,
 * ``sched_exit()`` para la terminación de una tarea.
@@ -193,7 +203,7 @@ Cambios de contexto
 
 El kernel realiza los cambios de contexto de las tareas por *software*.
 Como consecuencia, hay una única TSS que se utiliza al mínimo: Sólo
-se utilizan el campo correspondiente al descriptor de segmento del
+se utilizan el campo correspondiente al selector de segmento del
 stack en modo kernel (``SS0``) y el correspondiente al *stack pointer*
 en modo kernel (``ESP0``). Estos campos de la TSS son utilizados por el
 hardware para cargar los registros ``SS`` y ``ESP0`` respectivamente al
@@ -214,8 +224,7 @@ usuario. Sin embargo, si la interrupción sí derivará en un cambio de
 contexto, se realiza la llamada a ``loader_switchto`` que procede del
 siguiente modo:
 
-* guarda el registro ``EFLAGS`` (*flags* del procesador) y desactiva las
-  interrupciones,
+* guarda el registro ``EFLAGS`` (*flags* del procesador)
 * se carga el espacio de direcciones de la nueva tarea,
 * se actualizan los valores de ``SS0`` y ``ESP0`` en la TSS del sistema
 * se almacena el *stack pointer* de modo kernel actual en el ``pcb``

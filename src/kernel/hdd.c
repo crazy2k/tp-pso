@@ -4,6 +4,7 @@
 #include <loader.h>
 #include <mm.h>
 #include <vga.h>
+#include <debug.h>
 
 
 #define MAX_HDD_BLOCKDEVS 4
@@ -113,10 +114,12 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     debug_printf("** hdd_block_read: start\n");
 
-    while (read_chars < size)
-        read_chars += hdd_block_read_sectors(hbdev, 
-            pos + (read_chars/hbdev->size), 
-            buf + read_chars, size - read_chars);
+    sem_wait(&hbdev->sem);
+        while (read_chars < size)
+            read_chars += hdd_block_read_sectors(hbdev,
+                pos + (read_chars/hbdev->size),
+                buf + read_chars, size - read_chars);
+    sem_signaln(&hbdev->sem);
 
     debug_printf("** hdd_block_read: read: %x\n", read_chars);
 
@@ -182,6 +185,7 @@ static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t
         .offset = 0,
         .remaining = 0
     });
+    hbdev->sem = SEM_NEW(1);
 }
 
 void hdd_recv_primary() {

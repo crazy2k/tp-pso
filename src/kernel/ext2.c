@@ -224,6 +224,8 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
     uint32_t n = min(size, remainder);
     memcpy(buf, fp_buf + fp->buf_offset, n);
 
+    fp->buf_offset += n;
+
     debug_printf("Leyo %x bytes en el buffer %x\n", n, (uint32_t)buf);
 
     return n;
