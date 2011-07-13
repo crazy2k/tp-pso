@@ -1,4 +1,5 @@
 #include <mm.h>
+#include <cow.h>
 #include <errors.h>
 #include <debug.h>
 #include <utils.h>
@@ -167,10 +168,11 @@ uint32_t *mm_clone_pd(uint32_t pd[]) {
                 if (src != avl_addr && ((*src_pte & PTE_P) || IS_REQUESTED_PAGE(*src_pte))) {
                     uint32_t *new_pte = get_pte_table_alloc(new_pd, src);
 
-                    if (IS_SHARED_PAGE(*src_pte) || IS_REQUESTED_PAGE(*src_pte))
+                    if (IS_ASSIGNED_PAGE(*src_pte) || IS_COW_PAGE(*src_pte))
+                        *new_pte = cow_make_cow_pte(src_pte);
+                    else // PTE_REQUESTED_PAGE || PTE_SHARED_PAGE 
                         *new_pte = *src_pte;
-                    else
-                        *new_pte = clone_pte(pd, src, avl_addr);
+
                 }
             }
         }
