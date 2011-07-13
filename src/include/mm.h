@@ -80,6 +80,7 @@ typedef struct str_mm_page {
 #define PTE_RW PDE_RW
 #define PTE_P PDE_P
 
+#define PTE_AVL_BITS PTE_AVL(0x7)
 
 #define PTE_ASSIGNED_PAGE PTE_AVL(0)
 #define PTE_REQUESTED_PAGE PTE_AVL(1)

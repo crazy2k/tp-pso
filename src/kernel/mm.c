@@ -4,9 +4,14 @@
 #include <utils.h>
 #include <i386.h>
 
-#define IS_REQUESTED_PAGE(pte) (((pte) & PTE_REQUESTED_PAGE) && !((pte) & PTE_P))
-#define IS_SHARED_PAGE(pte) (((pte) & PTE_SHARED_PAGE) && ((pte) & PTE_P))
-#define IS_COW_PAGE(pte) (((pte) & PTE_COW_PAGE) && ((pte) & PTE_P) && !((pte) & PDE_RW))
+#define IS_ASSIGNED_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_ASSIGNED_PAGE) \
+    && ((pte) & PTE_P))
+#define IS_REQUESTED_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_REQUESTED_PAGE) \
+    && !((pte) & PTE_P))
+#define IS_SHARED_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_SHARED_PAGE) \
+    && ((pte) & PTE_P))
+#define IS_COW_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_COW_PAGE) \
+    && ((pte) & PTE_P) && !((pte) & PDE_RW))
 
 typedef struct page_t page_t;
 
