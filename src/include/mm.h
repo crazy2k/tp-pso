@@ -127,6 +127,7 @@ void mm_mem_free(void* page);
 void* mm_request_mem_alloc();
 void* mm_load_requested_page(void* vaddr);
 bool mm_is_requested_page(void* vaddr);
+bool mm_is_cow_page(void* vaddr);
 
 int mm_share_page(void* vaddr);
 

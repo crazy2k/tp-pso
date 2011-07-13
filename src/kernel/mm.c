@@ -147,6 +147,12 @@ void* mm_load_requested_page(void* vaddr) {
     return new_user_page(current_pd(), vaddr);
 }
 
+bool mm_is_cow_page(void* vaddr) {
+    uint32_t *pte = get_pte(current_pd(), vaddr);
+
+    return IS_COW_PAGE(*pte);
+}
+
 bool mm_is_requested_page(void* vaddr) {
     uint32_t *pte = get_pte(current_pd(), vaddr);
 
