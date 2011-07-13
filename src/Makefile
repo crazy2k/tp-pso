@@ -25,7 +25,7 @@ BIN_BOOT=$(DIRBOOT)floppyboot.bin
 # Kernel
 OBJS_KERN=kernel/kinit.o kernel/a20.o kernel/kernel.o kernel/gdt.o kernel/idt.o \
   kernel/isr.o kernel/pic.o kernel/vga.o kernel/sched.o \
-  kernel/mm.o kernel/debug.o kernel/loader.o kernel/tasks.o \
+  kernel/mm.o kernel/debug.o kernel/loader.o \
   kernel/syscalls.o kernel/sem.o kernel/utils.o kernel/loader_helpers.o \
   kernel/syscalls_funcs.o kernel/con.o kernel/device.o kernel/kb.o \
   kernel/serial.o kernel/hdd.o kernel/fs.o kernel/utils_common.o kernel/ext2.o
@@ -56,9 +56,6 @@ all: $(IMG_FLOPPY) $(IMG_TESTHDD) $(DUMP_KERN) $(SYM_KERN)
 
 # Kernel
 kernel/%.o: kernel/%.asm
-	nasm $(NASMFLAGS) -felf32 -I $(DIRKERN) -o $@ $<
-
-kernel/tasks.o: kernel/tasks.asm $(TASKS) $(TASKS_ELF)
 	nasm $(NASMFLAGS) -felf32 -I $(DIRKERN) -o $@ $<
 
 tasks/pso_head.o: tasks/pso_head.asm
@@ -99,7 +96,7 @@ $(IMG_BASE):
 	@dd if=/dev/zero of=$@ bs=512 count=2880 2>/dev/null
 	$(MKFS) -F 12 -f 2 -n $(DISK_LABEL) $@
 
-$(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE)
+$(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE) $(TASKS)
 	[ -f $(IMG_FLOPPY) ] || dd if=$(IMG_BASE) of=$@ bs=512 count=2880 2>/dev/null
 	dd if=$< of=$@ bs=1 count=3 conv=notrunc 2>/dev/null
 	dd if=$< of=$@ bs=1 count=450 seek=62 skip=62 conv=notrunc 2>/dev/null
