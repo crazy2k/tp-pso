@@ -4,7 +4,10 @@
 #include <tipos.h>
 
 
-uint32_t cow_make_cow_pte(uint32_t pte);
-uint32_t cow_void_cow_pte(uint32_t pte);
+void cow_init(void);
+
+uint32_t cow_delete_page_ref(uint32_t pte);
+uint32_t cow_add_page_ref(uint32_t pte);
+uint32_t cow_create_page_ref(uint32_t pte);
 
 #endif
