@@ -65,6 +65,7 @@ static uint32_t clone_pte(uint32_t pd[], void* from, void* avl_addr);
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
 
+uint32_t make_cow_pte(uint32_t src_pte);
 
 void mm_init(void) {
     free_pages_list_setup();
@@ -147,6 +148,22 @@ void* mm_load_requested_page(void* vaddr) {
     return new_user_page(current_pd(), vaddr);
 }
 
+int mm_load_cow_page(void* vaddr) {
+    uint32_t *pd = current_pd();
+    void *avl_addr = seek_unused_vaddr(pd);
+
+    uint32_t *pte = get_pte(pd, vaddr);
+    if (*pte && IS_COW_PAGE(*pte)) {
+        if (cow_delete_page_ref(*pte) > 0)
+            *pte = clone_pte(pd, pte, avl_addr);
+        else 
+            *pte = (*pte | PTE_RW) & ~PTE_AVL_BITS;
+
+        return 0;
+    } else
+        return -1;
+}
+
 bool mm_is_cow_page(void* vaddr) {
     uint32_t *pte = get_pte(current_pd(), vaddr);
 
@@ -163,19 +180,17 @@ uint32_t *mm_clone_pd(uint32_t pd[]) {
     int i;
 
     uint32_t *new_pd = (uint32_t*) mm_dir_new();
-    
-    void *avl_addr = seek_unused_vaddr(pd);
     void *vaddr, *src;
 
     for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_4MB_SIZE) {
         if (pd[PDI(vaddr)] & PDE_P) {
             for (src = vaddr, i = 0; i < PT_ENTRIES; src += PAGE_SIZE, i++) {
                 uint32_t *src_pte = get_pte(kernel_pd, src);
-                if (src != avl_addr && ((*src_pte & PTE_P) || IS_REQUESTED_PAGE(*src_pte))) {
+                if ((*src_pte & PTE_P) || IS_REQUESTED_PAGE(*src_pte)) {
                     uint32_t *new_pte = get_pte_table_alloc(new_pd, src);
 
                     if (IS_ASSIGNED_PAGE(*src_pte) || IS_COW_PAGE(*src_pte))
-                        *new_pte = cow_make_cow_pte(src_pte);
+                        *new_pte = make_cow_pte(*src_pte);
                     else // PTE_REQUESTED_PAGE || PTE_SHARED_PAGE 
                         *new_pte = *src_pte;
 
@@ -206,6 +221,17 @@ int mm_share_page(void* vaddr) {
 }
 
 extern void* _end; // Puntero al fin del codigo del kernel.bin (definido por LD).
+
+uint32_t make_cow_pte(uint32_t src_pte) {
+    if (IS_COW_PAGE(src_pte)) {
+        cow_create_page_ref(src_pte);
+        return src_pte;
+    } else {
+        cow_add_page_ref(src_pte);
+        return ((src_pte & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW;
+    }
+}
+
 
 uint32_t *current_pd(void) {
     return (uint32_t *)(PD_MASK & rcr3());

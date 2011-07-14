@@ -219,6 +219,9 @@ static void page_fault_isr(uint32_t index, uint32_t error_code, task_state_t *st
     if (!(error_code & PF_ISR_P) && mm_is_requested_page(page)) {
         if (mm_load_requested_page(page) == NULL)
             loader_exit();
+    } else if (!(error_code & PF_ISR_WR) && mm_is_cow_page(page)) {
+        if (mm_load_cow_page(page) < 0)
+            loader_exit();
     } else {
         debug_printf("Page Fault ejecutando el proceso %d para la pagina %x",
             sched_get_current_pid(), page);
