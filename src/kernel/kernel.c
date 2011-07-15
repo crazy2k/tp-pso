@@ -2,7 +2,6 @@
 #include <idt.h>
 #include <vga.h>
 #include <mm.h>
-#include <cow.h>
 #include <sched.h>
 #include <gdt.h>
 #include <debug.h>
@@ -24,7 +23,6 @@ void kernel_init(void) {
     idt_init();
     serial_init();
     debug_init();
-    cow_init();
     mm_init();
     sched_init();
     con_init();

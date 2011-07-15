@@ -1,5 +1,4 @@
 #include <mm.h>
-#include <cow.h>
 #include <errors.h>
 #include <debug.h>
 #include <utils.h>
@@ -64,8 +63,6 @@ static uint32_t clone_pte(uint32_t pd[], void* from, void* avl_addr);
 
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
-
-uint32_t make_cow_pte(uint32_t src_pte);
 
 void mm_init(void) {
     free_pages_list_setup();
@@ -154,9 +151,11 @@ int mm_load_cow_page(void* vaddr) {
 
     uint32_t *pte = get_pte(pd, vaddr);
     if (*pte && IS_COW_PAGE(*pte)) {
-        if (cow_delete_page_ref(*pte) > 0)
+        page_t *mapped_page = PHADDR_TO_PAGE(PTE_PAGE_BASE(*pte));
+        if (mapped_page->count > 1) {
             *pte = clone_pte(pd, pte, avl_addr);
-        else 
+            return_page(&free_user_pages, mapped_page);
+        } else 
             *pte = (*pte | PTE_RW) & ~PTE_AVL_BITS;
 
         return 0;
@@ -189,10 +188,13 @@ uint32_t *mm_clone_pd(uint32_t pd[]) {
                 if ((*src_pte & PTE_P) || IS_REQUESTED_PAGE(*src_pte)) {
                     uint32_t *new_pte = get_pte_table_alloc(new_pd, src);
 
-                    if (IS_ASSIGNED_PAGE(*src_pte) || IS_COW_PAGE(*src_pte))
-                        *new_pte = make_cow_pte(*src_pte);
-                    else // PTE_REQUESTED_PAGE || PTE_SHARED_PAGE 
+                    if (IS_REQUESTED_PAGE(*src_pte))
                         *new_pte = *src_pte;
+                    else { // PTE_ASSIGNED_PAGE || PTE_COW_PAGE || PTE_SHARED_PAGE
+                        *new_pte = IS_ASSIGNED_PAGE(*src_pte) ? 
+                            ((*src_pte & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW : *src_pte;
+                        reserve_page(&free_user_pages, PHADDR_TO_PAGE(PTE_PAGE_BASE(*src_pte)));
+                    }
 
                 }
             }
@@ -221,17 +223,6 @@ int mm_share_page(void* vaddr) {
 }
 
 extern void* _end; // Puntero al fin del codigo del kernel.bin (definido por LD).
-
-uint32_t make_cow_pte(uint32_t src_pte) {
-    if (IS_COW_PAGE(src_pte)) {
-        cow_create_page_ref(src_pte);
-        return src_pte;
-    } else {
-        cow_add_page_ref(src_pte);
-        return ((src_pte & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW;
-    }
-}
-
 
 uint32_t *current_pd(void) {
     return (uint32_t *)(PD_MASK & rcr3());
