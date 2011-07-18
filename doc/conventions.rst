@@ -6,6 +6,10 @@ Convenciones para el código de este trabajo
 Las siguientes son las convenciones que deben seguirse al escribir código para
 este trabajo.
 
+.. note::
+    Tener en cuenta que el código se encuentra en transición y estas
+    convenciones aún no se respetan a rajatabla.
+
 Encabezados y código
 --------------------
 
