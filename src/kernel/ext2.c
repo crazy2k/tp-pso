@@ -362,7 +362,8 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
 /* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
  * son 12KB).
  */
-static int get_data_for_file(ext2 *part_info, ext2_inode *inode, uint32_t first_bno, void *buf, uint32_t buf_size) {
+static int get_data_for_file(ext2 *part_info, ext2_inode *inode,
+    uint32_t first_bno, void *buf, uint32_t buf_size) {
     // Chequeamos si el archivo es mas grande que el buffer que tenemos
     if (inode->size > sizeof(file_data_buf))
         return -1;
