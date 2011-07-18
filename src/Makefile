@@ -40,6 +40,9 @@ OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o 
 
 BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
+# Archivos de texto
+TEXTFILES=kernel/sem.c
+
 # Imagenes
 DISK_LABEL="KERNEL  PSO"
 IMG_BASE=$(DIROUT)base.img
@@ -109,6 +112,9 @@ $(IMG_TESTHDD): $(TASKS)
 	mke2fs -F -q $@
 	for T in $(TASKS); do \
 		debugfs -w -R "write $$T `basename $$T`" $@ ; \
+	done
+	for F in $(TEXTFILES); do \
+		debugfs -w -R "write $$F `basename $$F`" $@ ; \
 	done
 
 # Otros
