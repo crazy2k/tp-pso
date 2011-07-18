@@ -47,33 +47,6 @@
 #define GET_BLOCK_SIZE(part_info) \
     (1024 << (part_info)->superblock->log2_block_size)
 
-/*
-FIRSTINODE = 11,
-VALIDFS = 0x0001,
-ERRORFS = 0x0002,
-
-NAMELEN = 255,
-
-// permissions in Inode.mode
-IEXEC = 00100,
-IWRITE = 0200,
-IREAD = 0400,
-ISVTX = 01000,
-ISGID = 02000,
-ISUID = 04000,
-
-#define DIRLEN(namlen)  (((namlen)+8+3)&~3)
-
-*/
-
-
-/*
-enum
-{
-    GroupSize = 32
-};
-*/
-
 
 /*
  * Inode
@@ -123,13 +96,6 @@ typedef struct {
     };
     uint8_t name[];
 } __attribute__((__packed__)) ext2_direntry;
-*/
-
-/*
-enum
-{
-    MinDirentSize = 4+2+1+1
-};
 */
 
 //TODO: Add lock
