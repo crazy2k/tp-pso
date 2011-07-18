@@ -132,6 +132,7 @@ enum
 };
 */
 
+//TODO: Add lock
 static uint8_t file_data_buf[PAGE_SIZE*4];
 static uint8_t inode_buf[256];
 
@@ -143,9 +144,13 @@ static void initialize_part_info(ext2 *part_info);
 static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode_buf);
 static uint32_t path2inode(ext2 *part_info, uint32_t dir_no,
     const char *relpath);
+
+static int get_data_for_file(ext2 *part_info, ext2_inode *inode, uint32_t first_bno, void *buf, uint32_t buf_size);
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
 static uint32_t get_indirect_data(ext2 *part_info, uint32_t bno, int level, uint32_t remaining, void *buf);
+
 static int indirect_block_size(ext2 *part_info, int level);
+
 static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset);
 static void initialize_ext2_file_chardev(ext2_file_chardev *fp);
 
@@ -198,17 +203,19 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (!(part_info->initialized))
         initialize_part_info(part_info);
 
-    uint32_t i = path2inode(part_info, 2, filename + 6);
-    if (i == 0)
+    uint32_t no = path2inode(part_info, 2, filename + 6);
+    if (no == 0)
         return NULL;
 
     ext2_inode inode;
-    get_inode(part_info, i, &inode);
+    get_inode(part_info, no, &inode);
 
     ext2_file_chardev *fp = POP(&free_ext2_file_chardevs);
     initialize_ext2_file_chardev(fp);
 
-    get_data(part_info, &inode, fp->buf);
+    fp->file_size = inode.size;
+    fp->file_no = no;
+    fp->file_part_info = part_info;
 
     return (chardev *)fp;
 }
@@ -219,16 +226,34 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
 
     ext2_file_chardev *fp = (ext2_file_chardev *)this;
 
-    uint32_t remainder = fp->buf_size - fp->buf_offset;
-    void *fp_buf = (void *)fp->buf;
-    uint32_t n = min(size, remainder);
-    memcpy(buf, fp_buf + fp->buf_offset, n);
+    int n = min(size, fp->file_size - fp->file_offset);
+    int result = n;
 
-    fp->buf_offset += n;
+    ext2_inode inode;
+    get_inode(fp->file_part_info, fp->file_no, &inode);
+
+    while (n > 0) {
+        uint32_t section_first_bno = fp->file_offset/(GET_BLOCK_SIZE(fp->file_part_info));
+
+        if (fp->buf_file_bno != section_first_bno) {
+            get_data_for_file(fp->file_part_info, &inode, section_first_bno, 
+                fp->buf, fp->buf_size);
+            fp->buf_file_bno = section_first_bno;
+        }
+
+        uint32_t buf_offset = fp->file_offset % fp->buf_size;
+        uint32_t read = min(n, fp->buf_size - buf_offset);
+
+        memcpy(buf, fp->buf + buf_offset, read);
+
+        buf += read;
+        n -= read;
+        fp->file_offset += read;
+    }
 
     debug_printf("Leyo %x bytes en el buffer %x\n", n, (uint32_t)buf);
 
-    return n;
+    return result;
 }
 
 static uint_32 ext2_file_flush(chardev *this) {
@@ -252,7 +277,7 @@ static sint_32 ext2_file_seek(chardev *this, uint32_t pos) {
     if (pos >= fp->buf_size)
         return -1;
 
-    fp->buf_offset = pos;
+    fp->file_offset = pos;
     return 0;
 }
 
@@ -264,12 +289,17 @@ static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
     fp->seek = ext2_file_seek;
 
     fp->buf = mm_mem_kalloc();
-    fp->buf_offset = 0;
+    fp->buf_file_bno = 0xFFFFFFFF;
     fp->buf_size = PAGE_SIZE;
+
+    fp->file_part_info = NULL;
+    fp->file_no = 0;
+    fp->file_size = 0;
+    fp->file_offset = 0;
 }
 
 static void initialize_part_info(ext2 *part_info) {
-    // XXX: Aca asumo que el superblock entra en una pagina
+    // El superblock ocupa 1024 bytes, por lo que entra en una pagina
     part_info->superblock = mm_mem_kalloc();
     read_from_bdev(part_info->part, 
         OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET),
@@ -359,24 +389,27 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     return next_path ? path2inode(part_info, next_inode, next_path + 1) : next_inode;
 }
 
+static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
+    return get_data_for_file(part_info, inode, 0, buf, inode->size);
+}
+
 /* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
  * son 12KB).
- * XXX: El soporte para bloques indirectos no esta probado.
  */
-static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
+static int get_data_for_file(ext2 *part_info, ext2_inode *inode, uint32_t first_bno, void *buf, uint32_t buf_size) {
     // Chequeamos si el archivo es mas grande que el buffer que tenemos
     if (inode->size > sizeof(file_data_buf))
         return -1;
 
-    uint32_t block_size = GET_BLOCK_SIZE(part_info);
+    uint32_t /*blocks_read = 0,*/ block_size = GET_BLOCK_SIZE(part_info);
 
-    uint32_t remaining = inode->size;
-    if (remaining % block_size)
+    uint32_t remaining = min(inode->size, buf_size);
+    if (remaining % block_size > 0)
         remaining += block_size - (remaining % block_size);
 
     void *buf_pos;
     int i;
-    for (i = 0, buf_pos = buf;
+    for (i = first_bno, buf_pos = buf;
         (i < EXT2_INODE_DIRECT_COUNT) && (remaining > 0);
         i++, buf_pos += block_size, remaining -= block_size) {
 

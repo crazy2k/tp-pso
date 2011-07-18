@@ -4,7 +4,8 @@
 
 int main(void) {
 
-    __asm__ __volatile__("xchg %bx, %bx");
+    int con = open("/console0", FS_OPEN_RDWR);
+    println(con, "task1 estuvo aqui");
 
     return 0;
 }

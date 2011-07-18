@@ -7,6 +7,11 @@
 #include <vga.h>
 #include <debug.h>
 
+#define RUN_BUF_LEN (PAGE_SIZE * 4)
+
+//TODO: Add lock
+static char run_buf[RUN_BUF_LEN];
+
 void sys_exit() {
     loader_exit();
 }
@@ -82,8 +87,8 @@ int sys_run(const char *path) {
     if (!(cdev = fs_open(path, FS_OPEN_RDONLY)))
         return -ENOFILE;
 
-    pso_file *pso_file = mm_mem_kalloc();
-    cdev->read(cdev, pso_file, PAGE_SIZE);
+    pso_file *file = (pso_file *) run_buf;
+    cdev->read(cdev, file, RUN_BUF_LEN);
 
-    return loader_load(pso_file, 3);
+    return loader_load(file, 3);
 }
