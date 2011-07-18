@@ -299,7 +299,7 @@ static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
 }
 
 static void initialize_part_info(ext2 *part_info) {
-    // XXX: Aca asumo que el superblock entra en una pagina
+    // El superblock ocupa 1024 bytes, por lo que entra en una pagina
     part_info->superblock = mm_mem_kalloc();
     read_from_bdev(part_info->part, 
         OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET),
