@@ -88,7 +88,7 @@ int sys_run(const char *path) {
         return -ENOFILE;
 
     pso_file *file = (pso_file *) run_buf;
-    cdev->read(cdev, file, PAGE_SIZE);
+    cdev->read(cdev, file, RUN_BUF_LEN);
 
     return loader_load(file, 3);
 }
