@@ -80,8 +80,13 @@ struct ext2_file_chardev {
     chardev_seek_t *seek;
 
     void *buf;
-    uint32_t buf_offset;
     uint32_t buf_size;
+    uint32_t buf_file_bno;
+
+    ext2 *file_part_info;
+    uint32_t file_no;
+    uint32_t file_size;
+    uint32_t file_offset;
 
     ext2_file_chardev *next;
     ext2_file_chardev *prev;

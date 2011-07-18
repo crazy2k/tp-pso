@@ -42,8 +42,8 @@ void fs_init(void) {
 }
 
 chardev *fs_open(const char *filename, uint32_t flags) {
-    // Chequeamos si el archivo se abre minimamente para lectura o escritura
-	if ((flags & FS_OPEN_RDWR) == 0)
+    // Chequeamos si el archivo esta presente y se abre minimamente para lectura o escritura
+	if (filename && (flags & FS_OPEN_RDWR) == 0)
         return NULL;
 
 	if (!strcmp(filename, "/serial0")) return serial_open(0);

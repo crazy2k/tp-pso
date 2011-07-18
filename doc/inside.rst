@@ -3,7 +3,7 @@
 El sistema por dentro
 =====================
 
-El sistema operativo de este proyecto consta de un kernel monolítico muy
+El sistema operativo de este proyecto consta de un *kernel* monolítico muy
 sencillo. Algunas de las características del kernel, al momento de escribir
 este documento, son:
 
@@ -12,11 +12,11 @@ este documento, son:
   diferentes para las tareas
 * manejador de interrupciones que permite el **registro de
   handlers en tiempo de ejecución**
-* **scheduling de procesos utilizando round-robin** con quantum fijo
+* **scheduling de procesos utilizando round-robin** con *quantum* fijo
 * **task-switching por software**
 * atención de **llamadas al sistema**
-* controladores de consola, puerto serie, disco rígido ATA
-* sistema de archivos virtual (primitivo) y soporte para lectura de
+* **controladores** de consolas, puerto serie y disco rígido ATA
+* **sistema de archivos virtual** (primitivo) y soporte para lectura de
   ext2
 
 En este documento se describen estas y otras características del sistema.
@@ -55,7 +55,7 @@ Esta es una síntesis de la estructura de directorios del proyecto:
 ================ ==========================================================
 Directorio       Contenido
 ================ ==========================================================
-**/**            representa la base de la estructura de directorios. Además
+**raíz           representa la base de la estructura de directorios. Además
                  de contener al resto de los directorios, posee archivos de
                  alcance global en el proyecto.
 **src/**         posee todos los archivos y directorios referidos al
@@ -85,7 +85,7 @@ importante de cualquier sistema operativo. Este sistema no es la excepción.
 
 El manejo de las tareas se encuentra repartido en los módulos ``sched``
 (``src/kernel/sched.c``) y ``loader`` (``src/kernel/loader.c``). El primero se
-ocupa estrictamente del algoritmo de scheduling, mientras que el segundo se
+ocupa estrictamente del algoritmo de *scheduling*, mientras que el segundo se
 encarga de la creación efectiva de los procesos, de los cambios de contexto,
 entre otras cosas.
 
@@ -95,8 +95,9 @@ entre otras cosas.
 El descriptor de proceso
 ~~~~~~~~~~~~~~~~~~~~~~~~
 
-Cada tarea es representada en el scheduler (``sched``) por una estructura
-``sched_task`` cuya definición puede hallarse en ``kernel/sched.c``::
+Cada tarea es representada en el *scheduler* (``sched``) por una
+estructura ``sched_task`` cuya definición puede hallarse en
+``kernel/sched.c``::
 
     struct sched_task {
         bool blocked;
@@ -110,7 +111,7 @@ Cada tarea es representada en el scheduler (``sched``) por una estructura
 
 Esta estructura contiene todo lo que el scheduler precisa saber sobre la
 tarea. Entre estas cosas, se encuentra el quantum asociado a la tarea, el
-quantum que le queda por consumir y un flag que indica si la tarea se
+quantum que le queda por consumir y un *flag* que indica si la tarea se
 encuentra bloqueada.
 
 Por otro lado, el módulo ``loader`` define una estructura ``pcb`` para cada
@@ -134,17 +135,16 @@ tarea. La definición de esta estructura se encuentra en ``kernel/loader.c``::
         pcb *prev;
     };
 
-Esta estructura contiene datos sobre el stack de kernel de la tarea (su
+Esta estructura contiene datos sobre el *stack* de kernel de la tarea (su
 dirección virtual, el valor del puntero del stack), la dirección del
 directorio de páginas de la tarea y el arreglo de archivos abiertos por
 la tarea.
-
 
 El *scheduler*
 ~~~~~~~~~~~~~~
 
 El algoritmo de *scheduling* utilizado es extremadamente sencillo:
-*round-robin* con *quantums* fijos. A cada tarea se le asigna,
+*round-robin* con quantums fijos. A cada tarea se le asigna,
 inicialmente, un número fijo de unidades de tiempo para su ejecución.
 Cada unidad de tiempo equivale a una interrupción del *timer*.
 
@@ -156,7 +156,7 @@ una única tarea en ejecución.
 
 La administración se realiza mediante una lista doblemente enlazada
 circular de procesos. La cabeza de esta lista es siempre el proceso
-actualmente en ejecución. Cuando se acaba el *quantum* de una tarea, la
+actualmente en ejecución. Cuando se acaba el quantum de una tarea, la
 cabeza pasa a ser la siguiente tarea en la lista que se encuentre
 en condiciones de ser ejecutada. Cuando una tarea finaliza su ejecución
 (por ejemplo, al invocar ella misma a la llamada al sistema ``exit()``)
@@ -167,36 +167,38 @@ El scheduler exporta una función para cada tipo de evento:
 * ``sched_load()`` para la carga de la tarea,
 * ``sched_block()`` y ``sched_unblock()`` para los eventos de bloqueo y
   desbloqueo de la tarea,
-* ``sched_tick()`` para la ocurrencia de un tick del timer,
+* ``sched_tick()`` para la ocurrencia de un *tick* del timer,
 * ``sched_exit()`` para la terminación de una tarea.
 
 Creación de tareas
 ~~~~~~~~~~~~~~~~~~
 
-La primer tarea que ingresa al sistema es la tarea "idle". Esta tarea
-se ejecuta en el anillo de kernel y su sola función es quedarse a la espera de
-una interrupción sin consumir recursos del procesador. El código de esta tarea
-se encuentre en el archivo ``kernel/loader_helpers.asm``, bajo la etiqueta
-``idle_main``.
+Una de las primeras tareas que ingresa al sistema es la tarea "idle".
+Esta tarea se ejecuta en el anillo de kernel y su sola función es
+quedarse a la espera de una interrupción sin consumir recursos del
+procesador. El código de esta tarea se encuentre en el archivo
+``kernel/loader_helpers.asm``, bajo la etiqueta ``idle_main``.
 
-El ``loader`` (cuyo código se encuentra en ``kernel/loader.c``) se ocupa de
-iniciar la creación de las tareas. Para que el kernel comience la carga de una
-tarea, se utiliza la función ``loader_load()``. Esta función se encarga de
-inicializar un ``pcb`` para la tarea, creándole su directorio de páginas
-inicial y reservando memoria para su stack de modo kernel. Además, prepara en
-dicho stack un estado inicial para la tarea y escribe en él la dirección de la
-función ``initialize_task`` que será el primer código que ejecutará la tarea.
-Como paso final, se realiza la llamada a ``sched_load()`` para avisar al
-scheduler de la llegada de la tarea.
+El ``loader`` (cuyo código se encuentra en ``kernel/loader.c``) se
+ocupa de iniciar la creación de las tareas. Para que el kernel comience
+la carga de una tarea, se utiliza la función ``loader_load()``. Esta
+función se encarga de inicializar un ``pcb`` para la tarea, creándole
+su directorio de páginas inicial y reservando memoria para su stack de
+modo kernel. Además, prepara en dicho stack un estado inicial para la
+tarea y escribe en él la dirección de la función ``initialize_task``
+que será el primer código que ejecutará la tarea. Como paso final, se
+realiza la llamada a ``sched_load()`` para avisar al scheduler de la
+llegada de la tarea.
 
-Hasta este punto, se reserva espacio para el descriptor del proceso en los
-módulos ``sched`` y ``loader``, para el stack de kernel de la tarea, para su
-directorio de páginas, pero la reserva y mapeo del stack de usuario y del
-código y los datos de la tarea en su espacio de direcciones virtual,
-utilizando la información en el ejecutable correspondiente, se realiza recién
-cuando a esta le toca ejecutarse por primera vez. La función
-``initialize_task`` es justamente la encargada de realizar esto. El código de
-dicha función se encuentra en ``kernel/loader_helpers.asm``.
+Hasta este punto, se reserva espacio para el descriptor del proceso en
+los módulos ``sched`` y ``loader``, para el stack de kernel de la
+tarea, para su directorio de páginas, pero la reserva y mapeo del stack
+de usuario y del código y los datos de la tarea en su espacio de
+direcciones virtual, utilizando la información en el ejecutable
+correspondiente, se realiza recién cuando a esta le toca ejecutarse por
+primera vez. La función ``initialize_task`` es justamente la encargada
+de realizar esto. El código de dicha función se encuentra en
+``kernel/loader_helpers.asm``.
 
 Cambios de contexto
 ~~~~~~~~~~~~~~~~~~~
@@ -211,11 +213,11 @@ ocurrir un cambio de nivel al nivel 0.
 
 Los contextos de las tareas son resguardados en sus correspondientes
 stacks de kernel. Al ocurrir una interrupción mientras se está
-ejecutando una tarea, el *handler* de la interrupción toma el control. Si se
-precisa un cambio de contexto o si el kernel precisará el estado actual de la
-tarea para algo [2]_, el handler almacena el contexto de la tarea en el stack de
-modo kernel y luego llama a la rutina de atención correspondiente (ver la
-sección `Manejo de interrupciones`_).
+ejecutando una tarea, el *handler* de la interrupción toma el control.
+Si se precisa un cambio de contexto o si el kernel precisará el estado
+actual de la tarea para algo [2]_, el handler almacena el contexto de
+la tarea en el stack de modo kernel y luego llama a la rutina de
+atención correspondiente (ver la sección `Manejo de interrupciones`_).
 
 Si la interrupción no deriva en un cambio de contexto, al terminar de
 manejarla, simplemente se procede de manera inversa, cargando el estado
@@ -294,6 +296,16 @@ Número  Nombre          Función
                         los recursos utilizados por este
 2       ``getpid()``    devuelve el identificador de proceso de la
                         tarea
+3       ``palloc()``    reserva una página de memoria para la tarea
+4       ``read()``      lee de un archivo abierto
+5       ``write()``     escribe en un archivo abierto
+6       ``seek()``      traslada el puntero del archivo a una posición
+                        dada
+7       ``close()``     cierra el archivo y libera los recursos
+                        que ya no se precisen
+8       ``open()``      abre un archivo para lectura y/o escritura
+9       ``con_ctl()``   envía comandos de control a una consola
+10      ``run()``       pone un programa en ejecución
 ======= =============== ===============================================
 
 La memoria
@@ -353,3 +365,91 @@ Cada tarea cuenta con un espacio de direcciones virtual propio, pero todas
 ellas tienen al código y los datos del kernel mapeados en las direcciones
 bajas (*lower half*) mientras que el código y los datos de usuario se
 encuentran en direcciones más altas.
+
+*Devices*
+---------
+
+El *device* es una abstracción que permite manipular dispositivos de
+*hardware* y estructuras lógicas con facilidad y mediante una interfaz
+común.
+
+Cada tipo de device está representado por una estructura específica.
+Sin embargo, todas estas estructuras "derivan de" una estructura en
+particular. En este contexto, una estructura deriva de otra si todos
+los campos de esta última están incluidos al principio (y en el mismo
+orden) en la primera. La estructura más general de device, definida en
+``include/device.h``, es::
+
+    struct device {
+        uint32_t clase;
+        uint32_t refcount;
+        dev_flush_t *flush;
+    };
+
+La ``clase`` define de qué tipo de device se trata y, consecuentemente,
+cuál es la estructura asociada. ``refcount`` indica el número de
+referencias, es decir, la cantidad de usuarios del device. Por último,
+``flush`` es una función que se llama cuando el device dejará de ser
+utilizado y se encarga de liberar los recursos utilizados por el mismo.
+
+Las principales estructuras que derivan de ``device`` son ``chardev`` y
+``blockdev``. La primera estructura representa un device que puede
+accederse comúnmente como una tira de bytes. La segunda representa uno
+que puede accederse de a porciones definidas (bloques).
+
+Las consolas
+~~~~~~~~~~~~
+
+El módulo ``con`` implementa el anillo de consolas. Las consolas son
+esencialmente *buffers* de memoria destinados a ser representados en
+la pantalla como texto. En todo momento hay una consola que se
+encuentra "en foco", es decir, visible en la pantalla.
+
+Cada consola está representada por una estructura ``con_chardev``,
+definida en ``include/con.h``::
+
+    struct con_chardev {
+        uint32_t clase;
+        uint32_t refcount;
+        chardev_flush_t* flush;
+        chardev_read_t* read;
+        chardev_write_t* write;
+        chardev_seek_t* seek;
+
+        void *screen_buf;
+        uint32_t screen_buf_offset;
+
+        circular_buf_t kb_buf;
+        int waiting_process;
+
+        uint8_t current_attr;
+
+        con_chardev *next;
+        con_chardev *prev;
+    }
+
+Esta estructura alberga la dirección virtual del buffer de la consola y
+la posición actual en este buffer en ``screen_buf`` y
+``screen_buf_offset`` respectivamente. Al realizarse una escritura
+sobre el device, llamando a su funcion ``write``, se almacenan los
+datos en el buffer y se avanza el puntero en ``screen_buf_offset`` de
+manera acorde. Cuando se llega al final del buffer, se produce un
+desplazamiento de los datos que consiste en mover todo el contenido del
+buffer 80 caracteres (una línea) hacia atrás y limpiar los últimos 80
+caracteres del buffer.
+
+Si se llama a la función ``read`` de la consola, la tarea actual queda
+a la espera de que se oprima una tecla en el teclado. Cuando esto
+ocurre, la rutina de atención de la interrupción del teclado avisa al
+módulo ``kb`` del evento, el cual se encarga de enviarle al módulo
+``con`` el caracter recibido. La función ``con_put_to_kb_buf``
+finalmente se encarga de almacenar el caracter en el buffer ``kb_buf``
+de la consola en foco y de despertar a la tarea en espera. Al
+despertarse la tarea, la función ``read`` ya puede leer del buffer de
+teclado los caracteres recibidos y guardarlos donde se le indicó (por
+ejemplo, un buffer de usuario).
+
+El puerto serie
+~~~~~~~~~~~~~~~
+
+El kernel incluye 
