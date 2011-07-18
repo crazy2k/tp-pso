@@ -217,12 +217,14 @@ void debug_printf(const char* format, ...) {
                 debug_printx((uint32_t)va_arg(vargs, int));
             else if (c == 'd')
                 debug_printd((int)va_arg(vargs, int));
+            else if (c == 's')
+                debug_prints((char *)va_arg(vargs, char *));
         }
     }
 
     va_end(vargs);
 }
-                
+
 
 void debug_init(void) {
     // __asm__ __volatile__("mov $0x12345678, %eax; int $0x80");
