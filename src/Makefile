@@ -55,7 +55,6 @@ IMG_TESTHDD_SIZE=10
 all: $(IMG_FLOPPY) $(IMG_TESTHDD) $(DUMP_KERN) $(SYM_KERN)
 
 # Bootloader - disk
-### TODO ###
 
 # Kernel
 kernel/%.o: kernel/%.asm
