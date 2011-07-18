@@ -45,9 +45,7 @@ int main(void) {
             if (strcmp(command, CMD_ECHO) == 0) {
                 println(con, rest);
             } else if (strcmp(command, CMD_GETPID) == 0) {
-                uint32_t pid = getpid();
-                write_decimal(con, pid);
-                write(con, "\n", 1);
+                printf(con, "%d\n", getpid());
             } else if (strcmp(command, CMD_EXIT) == 0) {
                 exit();
             } else if (strcmp(command, CMD_CAT) == 0) {
