@@ -22,7 +22,8 @@ char cat_buf[CAT_BUF_SIZE] = { 0 };
 static char *skip_spaces(char* str);
 static char *get_word(char** str);
 static void print_help(int fd);
-static void cat(int console, char* file_name);
+static void cat_file(int console, char* file_name);
+static void cat(int console, char* files);
 
 
 int main(void) {
@@ -97,15 +98,29 @@ static void print_help(int fd) {
         printf(fd, "\t%s\n", shell_commands[i]);
 }
 
-static void cat(int console, char* file_name) {
+static void cat(int console, char* files) {
+    char *file_name;
+
+    while(strlen(files) && (file_name = get_word(&files))) {
+        cat_file(console, file_name);
+
+        files = skip_spaces(files);
+    }
+
+    write_str(console, "\n");
+}
+
+static void cat_file(int console, char* file_name) {
     int fd = open(file_name, FS_OPEN_RDONLY);
     int chars;
 
-    do {
-        chars = read(fd, cat_buf, CAT_BUF_SIZE);
+    if (fd >= 0) {
+        do {
+            chars = read(fd, cat_buf, CAT_BUF_SIZE);
 
-        write(console, cat_buf, chars);
-    } while (chars == CAT_BUF_SIZE);
-
-    close(fd);
+            write(console, cat_buf, chars);
+        } while (chars == CAT_BUF_SIZE);
+        close(fd);
+    } else
+        printf(console, "No existe el archivo %s", file_name);
 }
