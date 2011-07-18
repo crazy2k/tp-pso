@@ -556,7 +556,7 @@ El único sistema de archivos implementado para el disco rígido es ext2,
 en su primera versión. Se lo implementó de manera rudimentaria, con
 soporte para lectura y sin tener en cuenta permisos.
 
-La implementación actual lee el archivo entero y lo almacena en un
-buffer al momento de la apertura. Está en construcción una
-implementación que permite la lectura y almacenamiento de los datos del
-archivo de a bloques y bajo demanda.
+La primera implementación leía el archivo entero y lo almacenaba en un
+buffer al momento de la apertura. La versión actual permite la lectura
+y almacenamiento de los datos del archivo de a secciones y bajo
+demanda.
