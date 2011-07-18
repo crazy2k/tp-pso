@@ -53,7 +53,7 @@
             
   <div class="section" id="el-sistema-por-dentro">
 <h1>El sistema por dentro<a class="headerlink" href="#el-sistema-por-dentro" title="Permalink to this headline">¶</a></h1>
-<p>El sistema operativo de este proyecto consta de un kernel monolítico muy
+<p>El sistema operativo de este proyecto consta de un <em>kernel</em> monolítico muy
 sencillo. Algunas de las características del kernel, al momento de escribir
 este documento, son:</p>
 <ul class="simple">
@@ -62,9 +62,12 @@ este documento, son:</p>
 diferentes para las tareas</li>
 <li>manejador de interrupciones que permite el <strong>registro de
 handlers en tiempo de ejecución</strong></li>
-<li><strong>scheduling de procesos utilizando round-robin</strong> con quantum fijo</li>
+<li><strong>scheduling de procesos utilizando round-robin</strong> con <em>quantum</em> fijo</li>
 <li><strong>task-switching por software</strong></li>
 <li>atención de <strong>llamadas al sistema</strong></li>
+<li><strong>controladores</strong> de consolas, puerto serie y disco rígido ATA</li>
+<li><strong>sistema de archivos virtual</strong> (primitivo) y soporte para lectura de
+ext2</li>
 </ul>
 <p>En este documento se describen estas y otras características del sistema.</p>
 <div class="section" id="la-estructura-de-directorios">
@@ -105,7 +108,7 @@ directorios que facilita su búsqueda.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td><strong>raíz</strong></td>
+<tr><td><a href="#id1"><span class="problematic" id="id2">**</span></a>raíz</td>
 <td>representa la base de la estructura de directorios. Además
 de contener al resto de los directorios, posee archivos de
 alcance global en el proyecto.</td>
@@ -116,9 +119,10 @@ proyecto menos la documentación</td>
 </tr>
 <tr><td><strong>src/bin/</strong></td>
 <td>es el directorio en el que se hallará la imagen del kernel
-y el archivo correspondiente al disco floppy una vez se
-realice la compilación del código. Además, posee el código
-binario correspondiente a los BIOS de bochs.</td>
+y los archivos correspondientes al disco floppy y disco
+rígido una vez se realice la compilación del código.
+Además, posee el código binario correspondiente a los BIOS
+de bochs.</td>
 </tr>
 <tr><td><strong>src/boot/</strong></td>
 <td>alberga el código fuente del bootloader.</td>
@@ -144,24 +148,25 @@ utilidades para construirla.</td>
 </div>
 <div class="section" id="manejo-de-procesos">
 <h2>Manejo de procesos<a class="headerlink" href="#manejo-de-procesos" title="Permalink to this headline">¶</a></h2>
-<p>La ejecución y el manejo de tareas (o procesos <a class="footnote-reference" href="#id2" id="id1">[1]</a>) es una parte
+<p>La ejecución y el manejo de tareas (o procesos <a class="footnote-reference" href="#id4" id="id3">[1]</a>) es una parte
 importante de cualquier sistema operativo. Este sistema no es la excepción.</p>
 <p>El manejo de las tareas se encuentra repartido en los módulos <tt class="docutils literal"><span class="pre">sched</span></tt>
 (<tt class="docutils literal"><span class="pre">src/kernel/sched.c</span></tt>) y <tt class="docutils literal"><span class="pre">loader</span></tt> (<tt class="docutils literal"><span class="pre">src/kernel/loader.c</span></tt>). El primero se
-ocupa estrictamente del algoritmo de scheduling, mientras que el segundo se
+ocupa estrictamente del algoritmo de <em>scheduling</em>, mientras que el segundo se
 encarga de la creación efectiva de los procesos, de los cambios de contexto,
 entre otras cosas.</p>
-<table class="docutils footnote" frame="void" id="id2" rules="none">
+<table class="docutils footnote" frame="void" id="id4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Usamos los términos &#8220;tarea&#8221; y &#8220;proceso&#8221; de manera
+<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td>Usamos los términos &#8220;tarea&#8221; y &#8220;proceso&#8221; de manera
 intercambiable.</td></tr>
 </tbody>
 </table>
 <div class="section" id="el-descriptor-de-proceso">
 <h3>El descriptor de proceso<a class="headerlink" href="#el-descriptor-de-proceso" title="Permalink to this headline">¶</a></h3>
-<p>Cada tarea es representada en el scheduler (<tt class="docutils literal"><span class="pre">sched</span></tt>) por una estructura
-<tt class="docutils literal"><span class="pre">sched_task</span></tt> cuya definición puede hallarse en <tt class="docutils literal"><span class="pre">kernel/sched.c</span></tt>:</p>
+<p>Cada tarea es representada en el <em>scheduler</em> (<tt class="docutils literal"><span class="pre">sched</span></tt>) por una
+estructura <tt class="docutils literal"><span class="pre">sched_task</span></tt> cuya definición puede hallarse en
+<tt class="docutils literal"><span class="pre">kernel/sched.c</span></tt>:</p>
 <div class="highlight-python"><pre>struct sched_task {
     bool blocked;
     uint32_t quantum;
@@ -173,31 +178,37 @@ intercambiable.</td></tr>
 </div>
 <p>Esta estructura contiene todo lo que el scheduler precisa saber sobre la
 tarea. Entre estas cosas, se encuentra el quantum asociado a la tarea, el
-quantum que le queda por consumir y un flag que indica si la tarea se
+quantum que le queda por consumir y un <em>flag</em> que indica si la tarea se
 encuentra bloqueada.</p>
-<p>Por otro lado, el módulo <tt class="docutils literal"><span class="pre">load</span></tt> define una estructura <tt class="docutils literal"><span class="pre">pcb</span></tt> para cada
+<p>Por otro lado, el módulo <tt class="docutils literal"><span class="pre">loader</span></tt> define una estructura <tt class="docutils literal"><span class="pre">pcb</span></tt> para cada
 tarea. La definición de esta estructura se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader.c</span></tt>:</p>
 <div class="highlight-python"><pre>struct pcb {
     // Direccion virtual y fisica del directorio de paginas en cualquier
     // espacio de direcciones
     void *pd;
+
     // Datos sobre el stack de kernel de la tarea
     void *kernel_stack;
     void *kernel_stack_limit;
     void *kernel_stack_pointer;
 
+    // File descriptors
+    chardev *fds[MAX_FD];
+    uint32_t last_fd;
+
     pcb *next;
     pcb *prev;
 };</pre>
 </div>
-<p>Esta estructura contiene datos sobre el stack de kernel de la tarea (su
-dirección virtual, el valor del puntero del stack) y la dirección del
-directorio de páginas de la tarea.</p>
+<p>Esta estructura contiene datos sobre el <em>stack</em> de kernel de la tarea (su
+dirección virtual, el valor del puntero del stack), la dirección del
+directorio de páginas de la tarea y el arreglo de archivos abiertos por
+la tarea.</p>
 </div>
 <div class="section" id="el-scheduler">
 <h3>El <em>scheduler</em><a class="headerlink" href="#el-scheduler" title="Permalink to this headline">¶</a></h3>
 <p>El algoritmo de <em>scheduling</em> utilizado es extremadamente sencillo:
-<em>round-robin</em> con <em>quantums</em> fijos. A cada tarea se le asigna,
+<em>round-robin</em> con quantums fijos. A cada tarea se le asigna,
 inicialmente, un número fijo de unidades de tiempo para su ejecución.
 Cada unidad de tiempo equivale a una interrupción del <em>timer</em>.</p>
 <p>Las tareas pueden estar bloqueadas (<tt class="docutils literal"><span class="pre">blocked</span> <span class="pre">=</span> <span class="pre">TRUE</span></tt>) o disponibles
@@ -207,61 +218,63 @@ kernel sólo maneja un único procesador, en todo momento hay a lo sumo
 una única tarea en ejecución.</p>
 <p>La administración se realiza mediante una lista doblemente enlazada
 circular de procesos. La cabeza de esta lista es siempre el proceso
-actualmente en ejecución. Cuando se acaba el <em>quantum</em> de una tarea, la
+actualmente en ejecución. Cuando se acaba el quantum de una tarea, la
 cabeza pasa a ser la siguiente tarea en la lista que se encuentre
 en condiciones de ser ejecutada. Cuando una tarea finaliza su ejecución
 (por ejemplo, al invocar ella misma a la llamada al sistema <tt class="docutils literal"><span class="pre">exit()</span></tt>)
 esta es quitada de la lista y los recursos que utilizaba son liberados.</p>
-<p>El scheduler exporta una función para cada tipo de evetno:</p>
+<p>El scheduler exporta una función para cada tipo de evento:</p>
 <ul class="simple">
 <li><tt class="docutils literal"><span class="pre">sched_load()</span></tt> para la carga de la tarea,</li>
-<li><tt class="docutils literal"><span class="pre">sched_block()</span></tt> y <tt class="docutils literal"><span class="pre">sched_ublock()</span></tt> para los eventos de bloqueo y
+<li><tt class="docutils literal"><span class="pre">sched_block()</span></tt> y <tt class="docutils literal"><span class="pre">sched_unblock()</span></tt> para los eventos de bloqueo y
 desbloqueo de la tarea,</li>
-<li><tt class="docutils literal"><span class="pre">sched_tick()</span></tt> para la ocurrencia de un tick del timer,</li>
+<li><tt class="docutils literal"><span class="pre">sched_tick()</span></tt> para la ocurrencia de un <em>tick</em> del timer,</li>
 <li><tt class="docutils literal"><span class="pre">sched_exit()</span></tt> para la terminación de una tarea.</li>
 </ul>
 </div>
 <div class="section" id="creacion-de-tareas">
 <h3>Creación de tareas<a class="headerlink" href="#creacion-de-tareas" title="Permalink to this headline">¶</a></h3>
-<p>La primer tarea que ingresa al sistema es la tarea &#8220;idle&#8221;. Esta tarea
-se ejecuta en el anillo de kernel y su sola función es quedarse a la espera de
-una interrupción sin consumir recursos del procesador. El código de esta tarea
-se encuentre en el archivo <tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>, bajo la etiqueta
-<tt class="docutils literal"><span class="pre">idle_main</span></tt>.</p>
-<p>El <tt class="docutils literal"><span class="pre">loader</span></tt> (cuyo código se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader.c</span></tt>) se ocupa de
-iniciar la creación de las tareas. Para que el kernel comience la carga de una
-tarea, se utiliza la función <tt class="docutils literal"><span class="pre">loader_load()</span></tt>. Esta función se encarga de
-inicializar un <tt class="docutils literal"><span class="pre">pcb</span></tt> para la tarea, creándole su directorio de páginas
-inicial y reservando memoria para su stack de modo kernel. Además, prepara en
-dicho stack un estado inicial para la tarea y escribe en él la dirección de la
-función <tt class="docutils literal"><span class="pre">initialize_task</span></tt> que será el primer código que ejecutará la tarea.
-Como paso final, se realiza la llamada a <tt class="docutils literal"><span class="pre">sched_load()</span></tt> para avisar al
-scheduler de la llegada de la tarea.</p>
-<p>Hasta este punto, se reserva espacio para el descriptor del proceso en los
-módulos <tt class="docutils literal"><span class="pre">sched</span></tt> y <tt class="docutils literal"><span class="pre">loader</span></tt>, para el stack de kernel de la tarea, para su
-directorio de páginas, pero la reserva y mapeo del stack de usuario y del
-código y los datos de la tarea en su espacio de direcciones virtual,
-utilizando la información en el ejecutable correspondiente, se realiza recién
-cuando a esta le toca ejecutarse por primera vez. La función
-<tt class="docutils literal"><span class="pre">initialize_task</span></tt> es justamente la encargada de realizar esto. El código de
-dicha función se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>.</p>
+<p>Una de las primeras tareas que ingresa al sistema es la tarea &#8220;idle&#8221;.
+Esta tarea se ejecuta en el anillo de kernel y su sola función es
+quedarse a la espera de una interrupción sin consumir recursos del
+procesador. El código de esta tarea se encuentre en el archivo
+<tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>, bajo la etiqueta <tt class="docutils literal"><span class="pre">idle_main</span></tt>.</p>
+<p>El <tt class="docutils literal"><span class="pre">loader</span></tt> (cuyo código se encuentra en <tt class="docutils literal"><span class="pre">kernel/loader.c</span></tt>) se
+ocupa de iniciar la creación de las tareas. Para que el kernel comience
+la carga de una tarea, se utiliza la función <tt class="docutils literal"><span class="pre">loader_load()</span></tt>. Esta
+función se encarga de inicializar un <tt class="docutils literal"><span class="pre">pcb</span></tt> para la tarea, creándole
+su directorio de páginas inicial y reservando memoria para su stack de
+modo kernel. Además, prepara en dicho stack un estado inicial para la
+tarea y escribe en él la dirección de la función <tt class="docutils literal"><span class="pre">initialize_task</span></tt>
+que será el primer código que ejecutará la tarea. Como paso final, se
+realiza la llamada a <tt class="docutils literal"><span class="pre">sched_load()</span></tt> para avisar al scheduler de la
+llegada de la tarea.</p>
+<p>Hasta este punto, se reserva espacio para el descriptor del proceso en
+los módulos <tt class="docutils literal"><span class="pre">sched</span></tt> y <tt class="docutils literal"><span class="pre">loader</span></tt>, para el stack de kernel de la
+tarea, para su directorio de páginas, pero la reserva y mapeo del stack
+de usuario y del código y los datos de la tarea en su espacio de
+direcciones virtual, utilizando la información en el ejecutable
+correspondiente, se realiza recién cuando a esta le toca ejecutarse por
+primera vez. La función <tt class="docutils literal"><span class="pre">initialize_task</span></tt> es justamente la encargada
+de realizar esto. El código de dicha función se encuentra en
+<tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>.</p>
 </div>
 <div class="section" id="cambios-de-contexto">
 <h3>Cambios de contexto<a class="headerlink" href="#cambios-de-contexto" title="Permalink to this headline">¶</a></h3>
 <p>El kernel realiza los cambios de contexto de las tareas por <em>software</em>.
 Como consecuencia, hay una única TSS que se utiliza al mínimo: Sólo
-se utilizan el campo correspondiente al descriptor de segmento del
+se utilizan el campo correspondiente al selector de segmento del
 stack en modo kernel (<tt class="docutils literal"><span class="pre">SS0</span></tt>) y el correspondiente al <em>stack pointer</em>
 en modo kernel (<tt class="docutils literal"><span class="pre">ESP0</span></tt>). Estos campos de la TSS son utilizados por el
-hardware para cargar los registros <tt class="docutils literal"><span class="pre">SS</span></tt> y <tt class="docutils literal"><span class="pre">ESP0</span></tt> respectivamente al
-ocurrir un cambio de nivel al nivel 0.</p>
+<em>hardware</em> para cargar los registros <tt class="docutils literal"><span class="pre">SS</span></tt> y <tt class="docutils literal"><span class="pre">ESP0</span></tt> respectivamente
+al ocurrir un cambio de nivel al nivel 0.</p>
 <p>Los contextos de las tareas son resguardados en sus correspondientes
 stacks de kernel. Al ocurrir una interrupción mientras se está
-ejecutando una tarea, el <em>handler</em> de la interrupción toma el control. Si se
-precisa un cambio de contexto o si el kernel precisará el estado actual de la
-tarea para algo <a class="footnote-reference" href="#id4" id="id3">[2]</a>, el handler almacena el contexto de la tarea en el stack de
-modo kernel y luego llama a la rutina de atención correspondiente (ver la
-sección <a class="reference external" href="#manejo-de-interrupciones">Manejo de interrupciones</a>).</p>
+ejecutando una tarea, el <em>handler</em> de la interrupción toma el control.
+Si se precisa un cambio de contexto o si el kernel precisará el estado
+actual de la tarea para algo <a class="footnote-reference" href="#id6" id="id5">[2]</a>, el handler almacena el contexto de
+la tarea en el stack de modo kernel y luego llama a la rutina de
+atención correspondiente (ver la sección <a class="reference external" href="#manejo-de-interrupciones">Manejo de interrupciones</a>).</p>
 <p>Si la interrupción no deriva en un cambio de contexto, al terminar de
 manejarla, simplemente se procede de manera inversa, cargando el estado
 de la tarea desde el stack de kernel y volviendo a ejecutar en modo
@@ -269,8 +282,7 @@ usuario. Sin embargo, si la interrupción sí derivará en un cambio de
 contexto, se realiza la llamada a <tt class="docutils literal"><span class="pre">loader_switchto</span></tt> que procede del
 siguiente modo:</p>
 <ul class="simple">
-<li>guarda el registro <tt class="docutils literal"><span class="pre">EFLAGS</span></tt> (<em>flags</em> del procesador) y desactiva las
-interrupciones,</li>
+<li>guarda el registro <tt class="docutils literal"><span class="pre">EFLAGS</span></tt> (<em>flags</em> del procesador)</li>
 <li>se carga el espacio de direcciones de la nueva tarea,</li>
 <li>se actualizan los valores de <tt class="docutils literal"><span class="pre">SS0</span></tt> y <tt class="docutils literal"><span class="pre">ESP0</span></tt> en la TSS del sistema</li>
 <li>se almacena el <em>stack pointer</em> de modo kernel actual en el <tt class="docutils literal"><span class="pre">pcb</span></tt>
@@ -288,10 +300,10 @@ tarea nueva, su stack fue armado cuidadosamente de manera que al retornar de
 la función se ejecute el código del label <tt class="docutils literal"><span class="pre">initialize_task</span></tt>. Esta porción de
 código es la encargada de reservar memoria y realizar los mapeos que ya se
 nombraron antes en <a class="reference external" href="#creacion-de-tareas">Creación de tareas</a>.</p>
-<table class="docutils footnote" frame="void" id="id4" rules="none">
+<table class="docutils footnote" frame="void" id="id6" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>En el estado actual del código, <em>siempre</em> se resguarda el estado de la
+<tr><td class="label"><a class="fn-backref" href="#id5">[2]</a></td><td>En el estado actual del código, <em>siempre</em> se resguarda el estado de la
 tarea independientemente de si el kernel lo precisará o no.</td></tr>
 </tbody>
 </table>
@@ -354,6 +366,40 @@ los recursos utilizados por este</td>
 <td>devuelve el identificador de proceso de la
 tarea</td>
 </tr>
+<tr><td>3</td>
+<td><tt class="docutils literal"><span class="pre">palloc()</span></tt></td>
+<td>reserva una página de memoria para la tarea</td>
+</tr>
+<tr><td>4</td>
+<td><tt class="docutils literal"><span class="pre">read()</span></tt></td>
+<td>lee de un archivo abierto</td>
+</tr>
+<tr><td>5</td>
+<td><tt class="docutils literal"><span class="pre">write()</span></tt></td>
+<td>escribe en un archivo abierto</td>
+</tr>
+<tr><td>6</td>
+<td><tt class="docutils literal"><span class="pre">seek()</span></tt></td>
+<td>traslada el puntero del archivo a una posición
+dada</td>
+</tr>
+<tr><td>7</td>
+<td><tt class="docutils literal"><span class="pre">close()</span></tt></td>
+<td>cierra el archivo y libera los recursos
+que ya no se precisen</td>
+</tr>
+<tr><td>8</td>
+<td><tt class="docutils literal"><span class="pre">open()</span></tt></td>
+<td>abre un archivo para lectura y/o escritura</td>
+</tr>
+<tr><td>9</td>
+<td><tt class="docutils literal"><span class="pre">con_ctl()</span></tt></td>
+<td>envía comandos de control a una consola</td>
+</tr>
+<tr><td>10</td>
+<td><tt class="docutils literal"><span class="pre">run()</span></tt></td>
+<td>pone un programa en ejecución</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -409,6 +455,183 @@ bajas (<em>lower half</em>) mientras que el código y los datos de usuario se
 encuentran en direcciones más altas.</p>
 </div>
 </div>
+<div class="section" id="devices">
+<h2><em>Devices</em><a class="headerlink" href="#devices" title="Permalink to this headline">¶</a></h2>
+<p>El <em>device</em> es una abstracción que permite manipular dispositivos de
+<em>hardware</em> y estructuras lógicas con facilidad y mediante una interfaz
+común.</p>
+<p>Cada tipo de device está representado por una estructura específica.
+Sin embargo, todas estas estructuras &#8220;derivan de&#8221; una estructura en
+particular. En este contexto, una estructura deriva de otra si todos
+los campos de esta última están incluidos al principio (y en el mismo
+orden) en la primera. La estructura más general de device, definida en
+<tt class="docutils literal"><span class="pre">include/device.h</span></tt>, es:</p>
+<div class="highlight-python"><pre>struct device {
+    uint32_t clase;
+    uint32_t refcount;
+    dev_flush_t *flush;
+};</pre>
+</div>
+<p>La <tt class="docutils literal"><span class="pre">clase</span></tt> define de qué tipo de device se trata y, consecuentemente,
+cuál es la estructura asociada. <tt class="docutils literal"><span class="pre">refcount</span></tt> indica el número de
+referencias, es decir, la cantidad de usuarios del device. Por último,
+<tt class="docutils literal"><span class="pre">flush</span></tt> es una función que se llama cuando el device dejará de ser
+utilizado y se encarga de liberar los recursos utilizados por el mismo.</p>
+<p>Las principales estructuras que derivan de <tt class="docutils literal"><span class="pre">device</span></tt> son <tt class="docutils literal"><span class="pre">chardev</span></tt> y
+<tt class="docutils literal"><span class="pre">blockdev</span></tt>. La primera estructura representa un device que puede
+accederse comúnmente como una tira de bytes. La segunda representa uno
+que puede acceders2e de a porciones definidas (bloques):</p>
+<div class="highlight-python"><pre>struct chardev {
+    uint32_t clase;
+    uint32_t refcount;
+    chardev_flush_t *flush;
+    chardev_read_t *read;
+    chardev_write_t *write;
+    chardev_seek_t *seek;
+};
+
+struct blockdev {
+    uint32_t clase;
+    uint32_t refcount;
+    blockdev_flush_t *flush;
+    blockdev_read_t *read;
+    blockdev_write_t *write;
+    uint32_t size;
+};</pre>
+</div>
+<p>Ambas respetan los campos de la estructura <tt class="docutils literal"><span class="pre">device</span></tt> por &#8220;derivar&#8221; de
+ella. La diferencia entre las funciones de lectura y escritura de los
+<tt class="docutils literal"><span class="pre">chardev</span></tt> y los <tt class="docutils literal"><span class="pre">blockdev</span></tt> es, básicamente, que para los primeros
+se asume que existe una posición actual, fijada con <tt class="docutils literal"><span class="pre">seek</span></tt>, (o que no
+es relevante especificar una posición) a partir de la cual leer,
+mientras que para los segundos la posición debe especificarse y
+normalmente indica un número de bloque.</p>
+<div class="section" id="las-consolas">
+<h3>Las consolas<a class="headerlink" href="#las-consolas" title="Permalink to this headline">¶</a></h3>
+<p>El módulo <tt class="docutils literal"><span class="pre">con</span></tt> implementa el anillo de consolas. Las consolas son
+esencialmente <em>buffers</em> de memoria destinados a ser representados en
+la pantalla como texto. En todo momento hay una consola que se
+encuentra &#8220;en foco&#8221;, es decir, visible en la pantalla.</p>
+<p>Cada consola está representada por una estructura <tt class="docutils literal"><span class="pre">con_chardev</span></tt>,
+definida en <tt class="docutils literal"><span class="pre">include/con.h</span></tt>:</p>
+<div class="highlight-python"><pre>struct con_chardev {
+    uint32_t clase;
+    uint32_t refcount;
+    chardev_flush_t* flush;
+    chardev_read_t* read;
+    chardev_write_t* write;
+    chardev_seek_t* seek;
+
+    void *screen_buf;
+    uint32_t screen_buf_offset;
+
+    circular_buf_t kb_buf;
+    int waiting_process;
+
+    uint8_t current_attr;
+
+    con_chardev *next;
+    con_chardev *prev;
+}</pre>
+</div>
+<p>Esta estructura alberga la dirección virtual del buffer de la consola y
+la posición actual en este buffer en <tt class="docutils literal"><span class="pre">screen_buf</span></tt> y
+<tt class="docutils literal"><span class="pre">screen_buf_offset</span></tt> respectivamente. Al realizarse una escritura
+sobre el device, llamando a su funcion <tt class="docutils literal"><span class="pre">write</span></tt>, se almacenan los
+datos en el buffer y se avanza el puntero en <tt class="docutils literal"><span class="pre">screen_buf_offset</span></tt> de
+manera acorde. Cuando se llega al final del buffer, se produce un
+desplazamiento de los datos que consiste en mover todo el contenido del
+buffer 80 caracteres (una línea) hacia atrás y limpiar los últimos 80
+caracteres del buffer.</p>
+<p>Si se llama a la función <tt class="docutils literal"><span class="pre">read</span></tt> de la consola, la tarea en ejecución
+queda a la espera de que se oprima una tecla en el teclado. Cuando esto
+ocurre, la rutina de atención de la interrupción del teclado avisa al
+módulo <tt class="docutils literal"><span class="pre">kb</span></tt> del evento, el cual se encarga de enviarle al módulo
+<tt class="docutils literal"><span class="pre">con</span></tt> el caracter recibido. La función <tt class="docutils literal"><span class="pre">con_put_to_kb_buf</span></tt>
+finalmente se encarga de almacenar el caracter en el buffer <tt class="docutils literal"><span class="pre">kb_buf</span></tt>
+de la consola en foco y de despertar a la tarea en espera. Al
+despertarse la tarea, la función <tt class="docutils literal"><span class="pre">read</span></tt> ya puede leer del buffer de
+teclado los caracteres recibidos y guardarlos donde se le indicó (por
+ejemplo, un buffer de usuario).</p>
+</div>
+<div class="section" id="el-puerto-serie">
+<h3>El puerto serie<a class="headerlink" href="#el-puerto-serie" title="Permalink to this headline">¶</a></h3>
+<p>El kernel incluye un controlador para UART (<em>Universal Asynchronous
+Receiver/Transmitter</em>), que permite leer de y escribir al conocido
+&#8220;puerto serie&#8221;. Para representar al dispositivo se utiliza la estructura
+<tt class="docutils literal"><span class="pre">serial_chardev</span></tt>, definida en <tt class="docutils literal"><span class="pre">include/serial.h</span></tt>.</p>
+<p>El funcionamiento para el caso de la lectura es similar al caso de la
+consola. La tarea queda bloqueada a la espera de la llegada de un byte.
+Cuando este llega, se almacena en el buffer del dispositivo y se
+despierta a la tarea para que esta pueda tomar el dato. Para el caso de
+la escritura, simplemente se envían al dispositivo uno a uno los bytes
+a transmitir, esperando entre cada envío que el dispositivo se
+encuentre listo.</p>
+</div>
+<div class="section" id="disco-rigido-ata-ide">
+<h3>Disco rígido ATA IDE<a class="headerlink" href="#disco-rigido-ata-ide" title="Permalink to this headline">¶</a></h3>
+<p>El módulo <tt class="docutils literal"><span class="pre">hdd</span></tt> se encarga del manejo de los discos ATA IDE. El modo
+de acceso a los discos es el de entrada/salida programada. De momento
+sólo se ha implementado la funcionalidad de lectura de disco, sin tener
+en cuenta los permisos de usuario.</p>
+<p>La estructura <tt class="docutils literal"><span class="pre">hdd_blockdev</span></tt> representa al disco rígido. Respetando
+los prototipos de las funciones de los <tt class="docutils literal"><span class="pre">blockdev</span></tt>, la función de
+lectura recibe, además de un buffer con su respectivo tamaño, la
+posición del bloque a leer, expresada como una dirección LBA (Logical
+Block Addressing) de 28 bits. La operatoria es similar a los demás
+dispositivos: Se envía el pedido de sectores al disco y se bloquea la
+tarea a la espera de recibir los datos en un buffer. El buffer es
+llenado (y la tarea desbloqueada) cuando la rutina de atención de la
+interrupción del disco se encarga de obtener los datos.</p>
+</div>
+</div>
+<div class="section" id="el-sistema-de-archivos-virtual">
+<h2>El sistema de archivos virtual<a class="headerlink" href="#el-sistema-de-archivos-virtual" title="Permalink to this headline">¶</a></h2>
+<p>El nombre &#8220;sistema de archivos virtual&#8221; quizás le queda algo grande a
+la rústica implementación que llevamos a cabo, en el módulo <tt class="docutils literal"><span class="pre">fs</span></tt> para
+tener un manejo mínimo de los archivos en el <em>filesystem</em> físico y de
+los dispositivos de hardware.</p>
+<p>La llamada al sistema <tt class="docutils literal"><span class="pre">open()</span></tt> permite la apertura de un archivo para
+su posterior lectura o escritura. La implementación de esta llamada es
+la siguiente:</p>
+<div class="highlight-python"><pre>int sys_open(char *path, uint32_t mode) {
+    chardev *cdev;
+    if (!(cdev = fs_open(path, mode)))
+        return -ENOFILE;
+    else {
+        cdev-&gt;refcount++;
+        return loader_add_file(cdev);
+    }
+}</pre>
+</div>
+<p>Simplemente, la llamada recibe una ruta y un modo de apertura. Ambos
+datos se pasan a la función <tt class="docutils literal"><span class="pre">fs_open()</span></tt>, que se encarga de encontrar
+un <tt class="docutils literal"><span class="pre">chardev</span></tt> correspondiente a esa ruta, si lo hay, o devolver
+<tt class="docutils literal"><span class="pre">NULL</span></tt>. Una vez que se obtuvo el <tt class="docutils literal"><span class="pre">chardev</span></tt> correspondiente a la
+ruta, la función <tt class="docutils literal"><span class="pre">loader_add_file()</span></tt> agrega el <tt class="docutils literal"><span class="pre">chardev</span></tt> a la lista
+de dispositivos abiertos por la tarea y devuelve un nuevo <em>file
+descriptor</em>.</p>
+<p>Para encontrar el <tt class="docutils literal"><span class="pre">chardev</span></tt>, <tt class="docutils literal"><span class="pre">fs_open()</span></tt> simplemente respeta
+algunas reglas:</p>
+<ul class="simple">
+<li><tt class="docutils literal"><span class="pre">/serial0</span></tt> y <tt class="docutils literal"><span class="pre">/serial1</span></tt> representan los <tt class="docutils literal"><span class="pre">chardev</span></tt>
+correspondientes a los &#8220;puertos serie&#8221;;</li>
+<li><tt class="docutils literal"><span class="pre">/console</span></tt> representa una nueva consola, y <tt class="docutils literal"><span class="pre">/console&lt;i&gt;</span></tt> siendo
+<tt class="docutils literal"><span class="pre">&lt;i&gt;</span></tt> un entero no negativo representa la consola número <tt class="docutils literal"><span class="pre">&lt;i&gt;</span></tt>;</li>
+<li>por último, <tt class="docutils literal"><span class="pre">/disk/&lt;ruta&gt;</span></tt> representa el archivo en la ruta
+<tt class="docutils literal"><span class="pre">&lt;ruta&gt;</span></tt> en el filesystem existente en el disco rígido.</li>
+</ul>
+<div class="section" id="sistema-de-archivos-ext2">
+<h3>Sistema de archivos ext2<a class="headerlink" href="#sistema-de-archivos-ext2" title="Permalink to this headline">¶</a></h3>
+<p>El único sistema de archivos implementado para el disco rígido es ext2,
+en su primera versión. Se lo implementó de manera rudimentaria, con
+soporte para lectura y sin tener en cuenta permisos.</p>
+<p>La primera implementación leía el archivo entero y lo almacenaba en un
+buffer al momento de la apertura. La versión actual permite la lectura
+y almacenamiento de los datos del archivo de a secciones y bajo
+demanda.</p>
+</div>
+</div>
 </div>
 
 
@@ -433,6 +656,16 @@ encuentran en direcciones más altas.</p>
 <li><a class="reference internal" href="#la-memoria">La memoria</a><ul>
 <li><a class="reference internal" href="#gestion-de-la-memoria">Gestión de la memoria</a></li>
 <li><a class="reference internal" href="#direccionamiento">Direccionamiento</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#devices"><em>Devices</em></a><ul>
+<li><a class="reference internal" href="#las-consolas">Las consolas</a></li>
+<li><a class="reference internal" href="#el-puerto-serie">El puerto serie</a></li>
+<li><a class="reference internal" href="#disco-rigido-ata-ide">Disco rígido ATA IDE</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#el-sistema-de-archivos-virtual">El sistema de archivos virtual</a><ul>
+<li><a class="reference internal" href="#sistema-de-archivos-ext2">Sistema de archivos ext2</a></li>
 </ul>
 </li>
 </ul>
