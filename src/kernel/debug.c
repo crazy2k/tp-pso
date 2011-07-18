@@ -8,6 +8,8 @@
 #include <i386.h>
 #include <stdarg.h>
 
+#define DEBUG_MODE 0
+
 const char* exp_name[] = {
 	"Divide Error",
 	"Debug Interrupt",
@@ -200,6 +202,8 @@ static void debug_printx(uint32_t n) {
 
 
 void debug_printf(const char* format, ...) {
+    if (!DEBUG_MODE)
+        return;
     va_list vargs;
     va_start(vargs, format);
 
