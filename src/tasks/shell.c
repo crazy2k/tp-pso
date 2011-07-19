@@ -53,7 +53,7 @@ int main(void) {
                 cat(con, rest);
             } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
-            } else {
+            } else if (strlen(command)) {
                 if (run(command) < 0)
                     println(con, "Comando desconocido");
             }
