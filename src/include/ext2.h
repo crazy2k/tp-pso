@@ -81,7 +81,7 @@ struct ext2_file_chardev {
 
     void *buf;
     uint32_t buf_size;
-    uint32_t buf_file_bno;
+    uint32_t buf_section;
 
     ext2 *file_part_info;
     uint32_t file_no;
