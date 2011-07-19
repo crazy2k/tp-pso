@@ -41,7 +41,7 @@ OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o 
 BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
 # Archivos de texto
-TEXTFILES=kernel/sem.c
+TEXTFILES=kernel/sem.c tasks/shell.c kernel/hdd.c
 
 # Imagenes
 DISK_LABEL="KERNEL  PSO"
@@ -105,7 +105,7 @@ $(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE) $(TASKS)
 	mcopy -obi $@ $(BIN_KERN) ::kernel.bin
 	for T in $(TASKS); do mcopy -obi $@ $$T ::`basename $$T`; done;
 
-$(IMG_TESTHDD): $(TASKS)
+$(IMG_TESTHDD): $(TASKS) $(TEXTFILES)
 	rm -f $@
 	bximage -q -hd -mode=flat -size=$(IMG_TESTHDD_SIZE) $@
 	mke2fs -F -q $@

@@ -48,6 +48,9 @@
     (1024 << (part_info)->superblock->log2_block_size)
 
 
+#define GET_BLOCKS_PER_SECTION(fp) \
+    ((fp)->buf_size/GET_BLOCK_SIZE((fp)->file_part_info))
+
 /*
  * Inode
  */
@@ -201,10 +204,10 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
     while (n > 0) {
         uint32_t section_first_bno = fp->file_offset/(GET_BLOCK_SIZE(fp->file_part_info));
 
-        if (fp->buf_file_bno != section_first_bno) {
+        if (fp->buf_section != (section_first_bno/GET_BLOCKS_PER_SECTION(fp))) {
             get_data_for_file(fp->file_part_info, &inode, section_first_bno, 
                 fp->buf, fp->buf_size);
-            fp->buf_file_bno = section_first_bno;
+            fp->buf_section = section_first_bno/GET_BLOCKS_PER_SECTION(fp);
         }
 
         uint32_t buf_offset = fp->file_offset % fp->buf_size;
@@ -217,7 +220,7 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
         fp->file_offset += read;
     }
 
-    debug_printf("Leyo %x bytes en el buffer %x\n", n, (uint32_t)buf);
+    debug_printf("Leyo %d bytes en el buffer %x\n", result, (uint32_t)buf);
 
     return result;
 }
@@ -255,8 +258,8 @@ static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
     fp->seek = ext2_file_seek;
 
     fp->buf = mm_mem_kalloc();
-    fp->buf_file_bno = 0xFFFFFFFF;
     fp->buf_size = PAGE_SIZE;
+    fp->buf_section = 0xFFFFFFFF;
 
     fp->file_part_info = NULL;
     fp->file_no = 0;
