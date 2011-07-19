@@ -208,8 +208,8 @@ Como consecuencia, hay una única TSS que se utiliza al mínimo: Sólo
 se utilizan el campo correspondiente al selector de segmento del
 stack en modo kernel (``SS0``) y el correspondiente al *stack pointer*
 en modo kernel (``ESP0``). Estos campos de la TSS son utilizados por el
-hardware para cargar los registros ``SS`` y ``ESP0`` respectivamente al
-ocurrir un cambio de nivel al nivel 0.
+*hardware* para cargar los registros ``SS`` y ``ESP0`` respectivamente
+al ocurrir un cambio de nivel al nivel 0.
 
 Los contextos de las tareas son resguardados en sus correspondientes
 stacks de kernel. Al ocurrir una interrupción mientras se está
@@ -395,7 +395,33 @@ utilizado y se encarga de liberar los recursos utilizados por el mismo.
 Las principales estructuras que derivan de ``device`` son ``chardev`` y
 ``blockdev``. La primera estructura representa un device que puede
 accederse comúnmente como una tira de bytes. La segunda representa uno
-que puede accederse de a porciones definidas (bloques).
+que puede acceders2e de a porciones definidas (bloques)::
+
+    struct chardev {
+        uint32_t clase;
+        uint32_t refcount;
+        chardev_flush_t *flush;
+        chardev_read_t *read;
+        chardev_write_t *write;
+        chardev_seek_t *seek;
+    };
+
+    struct blockdev {
+        uint32_t clase;
+        uint32_t refcount;
+        blockdev_flush_t *flush;
+        blockdev_read_t *read;
+        blockdev_write_t *write;
+        uint32_t size;
+    };
+
+Ambas respetan los campos de la estructura ``device`` por "derivar" de
+ella. La diferencia entre las funciones de lectura y escritura de los
+``chardev`` y los ``blockdev`` es, básicamente, que para los primeros
+se asume que existe una posición actual, fijada con ``seek``, (o que no
+es relevante especificar una posición) a partir de la cual leer,
+mientras que para los segundos la posición debe especificarse y
+normalmente indica un número de bloque.
 
 Las consolas
 ~~~~~~~~~~~~
@@ -438,8 +464,8 @@ desplazamiento de los datos que consiste en mover todo el contenido del
 buffer 80 caracteres (una línea) hacia atrás y limpiar los últimos 80
 caracteres del buffer.
 
-Si se llama a la función ``read`` de la consola, la tarea actual queda
-a la espera de que se oprima una tecla en el teclado. Cuando esto
+Si se llama a la función ``read`` de la consola, la tarea en ejecución
+queda a la espera de que se oprima una tecla en el teclado. Cuando esto
 ocurre, la rutina de atención de la interrupción del teclado avisa al
 módulo ``kb`` del evento, el cual se encarga de enviarle al módulo
 ``con`` el caracter recibido. La función ``con_put_to_kb_buf``
@@ -452,4 +478,85 @@ ejemplo, un buffer de usuario).
 El puerto serie
 ~~~~~~~~~~~~~~~
 
-El kernel incluye 
+El kernel incluye un controlador para UART (*Universal Asynchronous
+Receiver/Transmitter*), que permite leer de y escribir al conocido
+"puerto serie". Para representar al dispositivo se utiliza la estructura
+``serial_chardev``, definida en ``include/serial.h``.
+
+El funcionamiento para el caso de la lectura es similar al caso de la
+consola. La tarea queda bloqueada a la espera de la llegada de un byte.
+Cuando este llega, se almacena en el buffer del dispositivo y se
+despierta a la tarea para que esta pueda tomar el dato. Para el caso de
+la escritura, simplemente se envían al dispositivo uno a uno los bytes
+a transmitir, esperando entre cada envío que el dispositivo se
+encuentre listo.
+
+Disco rígido ATA IDE
+~~~~~~~~~~~~~~~~~~~~
+
+El módulo ``hdd`` se encarga del manejo de los discos ATA IDE. El modo
+de acceso a los discos es el de entrada/salida programada. De momento
+sólo se ha implementado la funcionalidad de lectura de disco, sin tener
+en cuenta los permisos de usuario.
+
+La estructura ``hdd_blockdev`` representa al disco rígido. Respetando
+los prototipos de las funciones de los ``blockdev``, la función de
+lectura recibe, además de un buffer con su respectivo tamaño, la
+posición del bloque a leer, expresada como una dirección LBA (Logical
+Block Addressing) de 28 bits. La operatoria es similar a los demás
+dispositivos: Se envía el pedido de sectores al disco y se bloquea la
+tarea a la espera de recibir los datos en un buffer. El buffer es
+llenado (y la tarea desbloqueada) cuando la rutina de atención de la
+interrupción del disco se encarga de obtener los datos.
+
+El sistema de archivos virtual
+------------------------------
+
+El nombre "sistema de archivos virtual" quizás le queda algo grande a
+la rústica implementación que llevamos a cabo, en el módulo ``fs`` para
+tener un manejo mínimo de los archivos en el *filesystem* físico y de
+los dispositivos de hardware.
+
+La llamada al sistema ``open()`` permite la apertura de un archivo para
+su posterior lectura o escritura. La implementación de esta llamada es
+la siguiente::
+
+    int sys_open(char *path, uint32_t mode) {
+        chardev *cdev;
+        if (!(cdev = fs_open(path, mode)))
+            return -ENOFILE;
+        else {
+            cdev->refcount++;
+            return loader_add_file(cdev);
+        }
+    }
+
+Simplemente, la llamada recibe una ruta y un modo de apertura. Ambos
+datos se pasan a la función ``fs_open()``, que se encarga de encontrar
+un ``chardev`` correspondiente a esa ruta, si lo hay, o devolver
+``NULL``. Una vez que se obtuvo el ``chardev`` correspondiente a la
+ruta, la función ``loader_add_file()`` agrega el ``chardev`` a la lista
+de dispositivos abiertos por la tarea y devuelve un nuevo *file
+descriptor*.
+
+Para encontrar el ``chardev``, ``fs_open()`` simplemente respeta
+algunas reglas:
+
+* ``/serial0`` y ``/serial1`` representan los ``chardev``
+  correspondientes a los "puertos serie";
+* ``/console`` representa una nueva consola, y ``/console<i>`` siendo
+  ``<i>`` un entero no negativo representa la consola número ``<i>``;
+* por último, ``/disk/<ruta>`` representa el archivo en la ruta
+  ``<ruta>`` en el filesystem existente en el disco rígido.
+
+Sistema de archivos ext2
+~~~~~~~~~~~~~~~~~~~~~~~~
+
+El único sistema de archivos implementado para el disco rígido es ext2,
+en su primera versión. Se lo implementó de manera rudimentaria, con
+soporte para lectura y sin tener en cuenta permisos.
+
+La primera implementación leía el archivo entero y lo almacenaba en un
+buffer al momento de la apertura. La versión actual permite la lectura
+y almacenamiento de los datos del archivo de a secciones y bajo
+demanda.

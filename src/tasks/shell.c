@@ -17,7 +17,7 @@
 char *shell_commands[] = { CMD_ECHO, CMD_GETPID, CMD_EXIT, CMD_HELP, CMD_CAT };
 
 char shell_buf[SHELL_BUF_SIZE] = { 0 };
-char cat_buf[CAT_BUF_SIZE] = { 0 };
+char cat_buf[CAT_BUF_SIZE + 1] = { 0 };
 
 static char *skip_spaces(char* str);
 static char *get_word(char** str);
@@ -115,11 +115,9 @@ static void cat_file(int console, char* file_name) {
     int chars;
 
     if (fd >= 0) {
-        do {
-            chars = read(fd, cat_buf, CAT_BUF_SIZE);
-
+        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE)))
             write(console, cat_buf, chars);
-        } while (chars == CAT_BUF_SIZE);
+
         close(fd);
     } else
         printf(console, "No existe el archivo %s", file_name);

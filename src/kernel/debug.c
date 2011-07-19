@@ -8,6 +8,8 @@
 #include <i386.h>
 #include <stdarg.h>
 
+#define DEBUG_MODE 0
+
 const char* exp_name[] = {
 	"Divide Error",
 	"Debug Interrupt",
@@ -200,6 +202,8 @@ static void debug_printx(uint32_t n) {
 
 
 void debug_printf(const char* format, ...) {
+    if (!DEBUG_MODE)
+        return;
     va_list vargs;
     va_start(vargs, format);
 
@@ -213,12 +217,14 @@ void debug_printf(const char* format, ...) {
                 debug_printx((uint32_t)va_arg(vargs, int));
             else if (c == 'd')
                 debug_printd((int)va_arg(vargs, int));
+            else if (c == 's')
+                debug_prints((char *)va_arg(vargs, char *));
         }
     }
 
     va_end(vargs);
 }
-                
+
 
 void debug_init(void) {
     // __asm__ __volatile__("mov $0x12345678, %eax; int $0x80");
