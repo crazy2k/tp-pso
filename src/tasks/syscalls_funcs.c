@@ -60,3 +60,11 @@ void con_ctl(uint32_t con, uint32_t oper) {
 int run(const char* path) {
     return syscall(SYSCALLS_NUM_RUN, (uint32_t)path, 0, 0, 0, 0);
 }
+
+int pipe(int fds[2]) {
+    return syscall(SYSCALLS_NUM_PIPE, (uint32_t)fds, 0, 0, 0, 0);
+}
+
+int share_page(void* page) {
+    return syscall(SYSCALLS_NUM_SHARE_PAGE, (uint32_t)page, 0, 0, 0, 0);
+}

@@ -13,7 +13,13 @@
 #include <kb.h>
 #include <serial.h>
 #include <hdd.h>
+#include <mm.h>
 
+#define PF_ISR_P 0x1
+#define PF_ISR_WR 0x2
+#define PF_ISR_US 0x4
+#define PF_ISR_RSVD 0x8
+#define PF_ISR_ID 0xC
 
 typedef void (*isr_t)(uint32_t index, uint32_t error_code, task_state_t *st);
 
@@ -33,7 +39,8 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
     *st);
 static void primary_hdd_isr(uint32_t index, uint32_t error_code, task_state_t
     *st);
-
+static void page_fault_isr(uint32_t index, uint32_t error_code, 
+    task_state_t *st);
 
 void idt_init(void) {
     // Configuramos los handlers en la IDT
@@ -53,6 +60,8 @@ void idt_init(void) {
     register_isr(IDT_INDEX_COM13, serial_isr);
     register_isr(IDT_INDEX_SYSC, syscall_caller);
     register_isr(IDT_INDEX_HDD_PRIMARY, primary_hdd_isr);
+    register_isr(IDT_INDEX_PF, page_fault_isr);
+
 
     // Cargamos la IDT
     lidt(&idtr);
@@ -172,6 +181,15 @@ static void syscall_caller(uint32_t index, uint32_t error_code, task_state_t
         case SYSCALLS_NUM_RUN:
             st->eax = sys_run((char *)st->ebx);
             break;
+        case SYSCALLS_NUM_PIPE:
+            st->eax = sys_pipe((int *)st->ebx);
+            break;
+        case SYSCALLS_NUM_FORK:
+            st->eax = sys_fork(st);
+            break;
+        case SYSCALLS_NUM_SHARE_PAGE:
+            st->eax = sys_share_page((void *)st->ebx);
+            break;
     }
 }
 
@@ -194,3 +212,20 @@ static void primary_hdd_isr(uint32_t index, uint32_t error_code,
 
     hdd_recv_primary();
 }
+
+static void page_fault_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
+    void* page = (void *) rcr2();
+
+    if (!(error_code & PF_ISR_P) && mm_is_requested_page(page)) {
+        if (mm_load_requested_page(page) == NULL)
+            loader_exit();
+    } else if (!(error_code & PF_ISR_WR) && mm_is_cow_page(page)) {
+        if (mm_load_cow_page(page) < 0)
+            loader_exit();
+    } else {
+        debug_printf("Page Fault ejecutando el proceso %d para la pagina %x",
+            sched_get_current_pid(), page);
+        debug_kernelpanic(st, index, error_code);
+    }
+}
+

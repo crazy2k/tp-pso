@@ -69,6 +69,7 @@ typedef struct str_mm_page {
 // page_t Table Entry
 
 #define PTE_PAGE_BASE(dir) ((uint32_t)(dir) & __12_31_BITS__)
+#define PTE_AVL(bits) ((uint32_t)(bits) << 9)
 #define PTE_G (((uint32_t) 1) << 8)
 #define PTE_PAT (((uint32_t) 1) << 7)
 #define PTE_D (((uint32_t) 1) << 6)
@@ -79,10 +80,19 @@ typedef struct str_mm_page {
 #define PTE_RW PDE_RW
 #define PTE_P PDE_P
 
+#define PTE_AVL_BITS PTE_AVL(0x7)
+
+#define PTE_ASSIGNED_PAGE PTE_AVL(0)
+#define PTE_REQUESTED_PAGE PTE_AVL(1)
+#define PTE_SHARED_PAGE PTE_AVL(2)
+#define PTE_COW_PAGE PTE_AVL(3)
+
 
 #define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
 #define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
 
+#define PD_ENTRIES 1024
+#define PT_ENTRIES PD_ENTRIES
 
 #define PAGE_SIZE 0x1000ul
 #define PAGE_4MB_SIZE 0x400000ul
@@ -114,9 +124,18 @@ void* mm_mem_alloc();
 void* mm_mem_kalloc();
 void mm_mem_free(void* page);
 
+void* mm_request_mem_alloc();
+void* mm_load_requested_page(void* vaddr);
+int mm_load_cow_page(void* vaddr);
+bool mm_is_requested_page(void* vaddr);
+bool mm_is_cow_page(void* vaddr);
+
+int mm_share_page(void* vaddr);
+
 /* Manejador de directorios de página */
 mm_page* mm_dir_new(void);
 void mm_dir_free(mm_page* d);
+uint32_t *mm_clone_pd(uint32_t pd[]);
 
 void* new_user_page(uint32_t pd[], void* vaddr);
 

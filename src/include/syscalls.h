@@ -14,6 +14,9 @@
 #define SYSCALLS_NUM_OPEN 8
 #define SYSCALLS_NUM_CON_CTL 9
 #define SYSCALLS_NUM_RUN 10
+#define SYSCALLS_NUM_PIPE 11
+#define SYSCALLS_NUM_FORK 12
+#define SYSCALLS_NUM_SHARE_PAGE 13
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -25,6 +28,7 @@
 
 #ifdef __KERNEL__
 // Sólo se compila en modo "kernel"
+    #include "isr.h"
 
     void sys_exit();
     uint32_t sys_getpid();
@@ -34,7 +38,10 @@
     int sys_seek(int fd, uint32_t size);
     int sys_close(int fd);
     int sys_open(char* path, uint32_t mode);
+    int sys_pipe(int fds[2]);
     int sys_run(const char* path);
+    int sys_fork(task_state_t* st);
+    int sys_share_page(void *page);
 
 
 #else
@@ -56,8 +63,11 @@
     int seek(int fd, uint32_t size);
     int close(int fd);
     int open(const char* path, uint32_t mode);
+    int pipe(int fds[2]);
     void con_ctl(uint32_t con, uint32_t oper);
     int run(const char* path);
+    int fork();
+    int share_page(void *page);
 
 
 #endif

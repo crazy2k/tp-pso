@@ -1,5 +1,6 @@
 #include <syscalls.h>
 #include <mm.h>
+#include <pipe.h>
 #include <fs.h>
 #include <loader.h>
 #include <sched.h>
@@ -21,7 +22,7 @@ uint32_t sys_getpid() {
 }
 
 void *sys_palloc() {
-    return mm_mem_alloc();
+    return mm_request_mem_alloc();
 }
 
 int sys_read(int fd, void *buf, uint32_t size) {
@@ -82,6 +83,25 @@ int sys_open(char *path, uint32_t mode) {
     }
 }
 
+
+int sys_pipe(int fds[2]) {
+    chardev* pipes[2];
+    int result = pipe_open(pipes);
+
+    fds[0] = loader_add_file(pipes[0]);
+    fds[1] = loader_add_file(pipes[1]);
+
+    return result; 
+}
+
+int sys_fork(task_state_t* st) {
+    return loader_fork(st);
+}
+
+int sys_share_page(void *page) {
+    return mm_share_page(page);
+}
+
 int sys_run(const char *path) {
     chardev *cdev;
     if (!(cdev = fs_open(path, FS_OPEN_RDONLY)))
@@ -92,3 +112,5 @@ int sys_run(const char *path) {
 
     return loader_load(file, 3);
 }
+
+

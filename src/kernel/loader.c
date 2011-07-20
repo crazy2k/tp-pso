@@ -98,6 +98,8 @@ static pcb *get_current_pcb();
 static int get_pid(pcb *pcb);
 static void kill_zoombies();
 static void setup_tss(uint32_t kernel_stack);
+static void copy_fds(pcb* dest, pcb* src);
+static void copy_task_state(task_state_t *new_st, task_state_t *old_st);
 
 static pcb pcbs[MAX_PID];
 static pcb *free_pcbs = NULL;
@@ -156,7 +158,7 @@ pid loader_load(pso_file* f, int pl) {
         pcb->kernel_stack_pointer = pcb->kernel_stack_limit;
 
         pcb->last_fd = 0;
-        memset(pcb->fds, 0,sizeof(pcb->fds));
+        memset(pcb->fds, 0, sizeof(pcb->fds));
 
         // Escribimos el estado inicial
         pcb->kernel_stack_pointer -= sizeof(task_state_t);
@@ -327,6 +329,35 @@ int loader_remove_file(uint32_t fd) {
     return 0;
 }
 
+int loader_fork(task_state_t *parent_st) {
+    pcb *current = get_current_pcb();
+
+    // Obtenemos un nuevo PCB
+    pcb *pcb = POP(&free_pcbs);
+
+    /*
+     * Cargamos los datos en el PCB
+     */
+    pcb->pd = (void *) mm_clone_pd(current->pd);
+
+    pcb->kernel_stack = mm_mem_kalloc();
+    pcb->kernel_stack_limit = pcb->kernel_stack + PAGE_SIZE;
+    pcb->kernel_stack_pointer = pcb->kernel_stack_limit;
+
+    copy_fds(pcb, current);
+
+    // Escribimos el estado inicial
+    pcb->kernel_stack_pointer -= sizeof(task_state_t);
+    task_state_t *st = (task_state_t *)pcb->kernel_stack_pointer;
+    copy_task_state(st, parent_st);
+    st->eax = 0;
+
+    sched_load(get_pid(pcb));
+
+    return get_pid(pcb);
+}
+
+
 chardev *loader_get_file(uint32_t fd) {
     if (fd > MAX_FD)
         return NULL;
@@ -419,4 +450,20 @@ static void setup_tss(uint32_t kernel_stack) {
     // Cargamos el Task Register con un selector para la TSS
     uint16_t segsel = GDT_SEGSEL(0x0, GDT_INDEX_TSS);
     ltr(segsel);
+}
+
+static void copy_fds(pcb* dest, pcb* src) {
+    int i;
+    for (i = 0; i <= src->last_fd; i++) {
+        if (src->fds[i])
+           src->fds[i]->refcount++;
+    }
+    
+    memcpy(dest->fds, src->fds, sizeof(chardev*) * MAX_FD);
+
+    dest->last_fd = src->last_fd;
+}
+
+static void copy_task_state(task_state_t *new_st, task_state_t *old_st) {
+    memcpy((void*)new_st, (void*)old_st, sizeof(task_state_t));
 }
