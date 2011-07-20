@@ -20,6 +20,7 @@
 extern void loader_switch_stack_pointers(void **old_stack_top, void
     **new_stack_top);
 extern void initialize_task(pso_file *f);
+extern void load_state();
 
 extern func_main idle_main;
 extern pso_file task_task1_pso, task_shell_pso;
@@ -351,6 +352,16 @@ int loader_fork(task_state_t *parent_st) {
     task_state_t *st = (task_state_t *)pcb->kernel_stack_pointer;
     copy_task_state(st, parent_st);
     st->eax = 0;
+
+    pcb->kernel_stack_pointer -= 4;
+    *((void **)pcb->kernel_stack_pointer) = load_state;
+
+    // El valor de esta entrada en el stack no deberia tener ninguna
+    // importancia. Es el valor que adquiere ebp al cambiar el contexto al
+    // de la tarea nueva. Este registro no es usado hasta que adquiere el
+    // valor que indica el task_state_t inicial de la tarea.
+    pcb->kernel_stack_pointer -= 4;
+    *((void **)pcb->kernel_stack_pointer) = NULL;
 
     sched_load(get_pid(pcb));
 
