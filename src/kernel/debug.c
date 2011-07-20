@@ -8,7 +8,7 @@
 #include <i386.h>
 #include <stdarg.h>
 
-#define DEBUG_MODE 0
+#define DEBUG_MODE 1
 
 const char* exp_name[] = {
 	"Divide Error",
