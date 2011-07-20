@@ -175,33 +175,47 @@ bool mm_is_requested_page(void* vaddr) {
     return IS_REQUESTED_PAGE(*pte);
 }
 
-uint32_t *mm_clone_pd(uint32_t pd[]) {
-    int i;
+uint32_t *mm_clone_pd(uint32_t src_pd[]) {
+    // Creamos un nuevo PD vacio
+    uint32_t *dest_pd = (uint32_t*)mm_dir_new();
 
-    uint32_t *new_pd = (uint32_t*) mm_dir_new();
-    void *vaddr, *src;
-
+    void *vaddr;
     for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_4MB_SIZE) {
-        if (pd[PDI(vaddr)] & PDE_P) {
-            for (src = vaddr, i = 0; i < PT_ENTRIES; src += PAGE_SIZE, i++) {
-                uint32_t *src_pte = get_pte(kernel_pd, src);
-                if ((*src_pte & PTE_P) || IS_REQUESTED_PAGE(*src_pte)) {
-                    uint32_t *new_pte = get_pte_table_alloc(new_pd, src);
+        // Si no hay ninguna tabla en el src, pasamos a los siguientes 4MB
+        if (!(src_pd[PDI(vaddr)] & PDE_P))
+            continue;
 
-                    if (IS_REQUESTED_PAGE(*src_pte))
-                        *new_pte = *src_pte;
-                    else { // PTE_ASSIGNED_PAGE || PTE_COW_PAGE || PTE_SHARED_PAGE
-                        *new_pte = IS_ASSIGNED_PAGE(*src_pte) ? 
-                            ((*src_pte & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW : *src_pte;
-                        reserve_page(&free_user_pages, PHADDR_TO_PAGE(PTE_PAGE_BASE(*src_pte)));
-                    }
+        // Recorremos la tabla del src
+        uint32_t offset;
+        for (offset = 0; offset < PAGE_4MB_SIZE; offset += PAGE_SIZE) {
+            uint32_t *src_pte = get_pte(src_pd, vaddr + offset);
 
-                }
+            // La PTE puede estar marcada como:
+            //  1. presente (asignada, COW, shared)
+            //  2. no presente (pedida, simplemente invalida)
+
+           // Si la PTE esta marcada como invalida pasamos a la siguiente
+            if (!(*src_pte & PTE_P) && !(IS_REQUESTED_PAGE(*src_pte)))
+                continue;
+
+            uint32_t *dest_pte = get_pte_table_alloc(dest_pd, vaddr + offset);
+
+            // Inicialmente copiamos la entrada (es lo que hay que hacer en
+            // cualquier caso, excepto si esta asignada)
+            *dest_pte = *src_pte;
+            if (*src_pte & PTE_P) {
+                // Si la pagina estaba asignada en el src, la marcamos COW
+                if (IS_ASSIGNED_PAGE(*src_pte))
+                    *dest_pte = ((*src_pte & ~PTE_AVL_BITS) | PTE_COW_PAGE) &
+                        ~PTE_RW;
+                // XXX: Es esto necesario?
+                reserve_page(&free_user_pages,
+                    PHADDR_TO_PAGE(PTE_PAGE_BASE(*src_pte)));
             }
         }
     }
 
-    return new_pd;
+    return dest_pd;
 }
 
 int mm_share_page(void* vaddr) {
