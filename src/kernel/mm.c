@@ -150,13 +150,21 @@ int mm_load_cow_page(void* vaddr) {
     void *avl_addr = seek_unused_vaddr(pd);
 
     uint32_t *pte = get_pte(pd, vaddr);
+    debug_printf("mm_load_cow_page: PTE: %x\n", *pte);
     if (*pte && IS_COW_PAGE(*pte)) {
         page_t *mapped_page = PHADDR_TO_PAGE(PTE_PAGE_BASE(*pte));
+        debug_printf("mm_load_cow_page: mapped_page: count: %x, phaddr: %x\n",
+            mapped_page->count, PAGE_TO_PHADDR(mapped_page));
         if (mapped_page->count > 1) {
-            *pte = clone_pte(pd, pte, avl_addr);
+            debug_printf("mm_load_cow_page: mapped_page->count > 1\n");
+            *pte = clone_pte(pd, ALIGN_TO_PAGE_START(vaddr), avl_addr);
             return_page(&free_user_pages, mapped_page);
-        } else 
+        } else {
+            debug_printf("mm_load_cow_page: mapped_page->count <= 1\n");
             *pte = (*pte | PTE_RW) & ~PTE_AVL_BITS;
+        }
+
+        debug_printf("mm_load_cow_page: new PTE: %x\n", *pte);
 
         return 0;
     } else
