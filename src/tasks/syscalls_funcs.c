@@ -65,7 +65,7 @@ int pipe(int fds[2]) {
     return syscall(SYSCALLS_NUM_PIPE, (uint32_t)fds, 0, 0, 0, 0);
 }
 
-int fork(const char* path) {
+int fork() {
     return syscall(SYSCALLS_NUM_FORK, 0, 0, 0, 0, 0);
 }
 

@@ -43,14 +43,6 @@
 #define CR4_PVI    0x00000002    // Protected-Mode Virtual Interrupts
 #define CR4_VME    0x00000001    // V86 Mode Extensions
 
-typedef struct str_mm_page {
-    uint_32 attr:12;
-    uint_32 base:20;
-}  __attribute__((__packed__, aligned (4))) mm_page;
-
-#define make_mm_entry(base, attr) (mm_page){(uint_32)(attr), (uint_32)(base)}
-#define make_mm_entry_addr(addr, attr) (mm_page){(uint_32)(attr), (uint_32)(addr) >> 12}
-
 
 #define PD_MASK __12_31_BITS__
 
@@ -133,8 +125,8 @@ bool mm_is_cow_page(void* vaddr);
 int mm_share_page(void* vaddr);
 
 /* Manejador de directorios de página */
-mm_page* mm_dir_new(void);
-void mm_dir_free(mm_page* d);
+uint32_t* mm_dir_new(void);
+void mm_dir_free(uint32_t* d);
 uint32_t *mm_clone_pd(uint32_t pd[]);
 
 void* new_user_page(uint32_t pd[], void* vaddr);
