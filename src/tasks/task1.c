@@ -13,5 +13,6 @@ int main(void) {
     else
         println(con, "soy un padre");
 
+    while (1) ;
     return 0;
 }
