@@ -98,14 +98,14 @@ void mm_mem_free(void* vaddr) {
     }
 }
 
-mm_page* mm_dir_new(void) {
+uint32_t* mm_dir_new(void) {
 	uint32_t *pd = mm_mem_kalloc();
-    mm_page *new_dir =(mm_page *) initialize_pd(pd);
+    uint32_t *new_dir =(uint32_t *) initialize_pd(pd);
     return new_dir;
 }
 
-void mm_dir_free(mm_page* mm_page) {
-	uint32_t i, j, *pd = (uint32_t*)mm_page;
+void mm_dir_free(uint32_t* pd) {
+	uint32_t i, j;
     void *phaddr, *vaddr;
 
     phaddr = (void*) PDE_PT_BASE(pd[0]);
