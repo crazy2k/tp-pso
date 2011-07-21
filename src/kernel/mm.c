@@ -184,6 +184,9 @@ bool mm_is_requested_page(void* vaddr) {
 }
 
 uint32_t *mm_clone_pd(uint32_t src_pd[]) {
+
+    debug_printf("mm_clone_pd: start\n");
+
     // Creamos un nuevo PD vacio
     uint32_t *dest_pd = (uint32_t*)mm_dir_new();
 
@@ -223,6 +226,7 @@ uint32_t *mm_clone_pd(uint32_t src_pd[]) {
         }
     }
 
+    debug_printf("mm_clone_pd: end\n");
     return dest_pd;
 }
 
@@ -334,6 +338,8 @@ static void add_page_to_list(page_t* head, page_t* new) {
 
 
 static void return_page(page_t** page_list_ptr, page_t* reserved) {
+    debug_printf("return_page: count: %x, phaddr: %x\n", reserved->count,
+        PAGE_TO_PHADDR(reserved));
     if (reserved->count > 0) {
 
         if (--reserved->count == 0) {
@@ -356,6 +362,9 @@ static page_t *reserve_page(page_t** page_list_ptr, page_t* page) {
 
     page->count++;
     page->next = page->prev = NULL;
+
+    debug_printf("reserve_page: count: %x phaddr: %x\n",
+        page->count, PAGE_TO_PHADDR(page));
 
     return page;
 }
@@ -451,7 +460,11 @@ void* new_user_page(uint32_t pd[], void* vaddr) {
 }
 
 static uint32_t clone_pte(uint32_t pd[], void* from, void* avl_addr) {
+    debug_printf("clone_pte: before new_user_page: from %x, avl_addr: %x\n",
+        from, avl_addr);
     avl_addr = new_user_page(pd, avl_addr);
+    debug_printf("clone_pte: after new_user_page: from %x, avl_addr: %x\n",
+        from, avl_addr);
     memcpy(avl_addr, from, PAGE_SIZE);
 
     int result = *get_pte(pd, avl_addr);
