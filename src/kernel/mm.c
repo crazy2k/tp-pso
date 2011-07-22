@@ -13,6 +13,8 @@
 #define IS_COW_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_COW_PAGE) \
     && ((pte) & PTE_P) && !((pte) & PDE_RW))
 
+#define MARK_AS_COW(pte) ((((pte) & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW)
+
 typedef struct page_t page_t;
 
 /*Podria reducirse el tamaño eliminando prev y usando un contador de 16 bits*/
@@ -215,10 +217,11 @@ uint32_t *mm_clone_pd(uint32_t src_pd[]) {
             // cualquier caso, excepto si esta asignada)
             *dest_pte = *src_pte;
             if (*src_pte & PTE_P) {
-                // Si la pagina estaba asignada en el src, la marcamos COW
-                if (IS_ASSIGNED_PAGE(*src_pte))
-                    *dest_pte = ((*src_pte & ~PTE_AVL_BITS) | PTE_COW_PAGE) &
-                        ~PTE_RW;
+                // Si la pagina estaba asignada en el src, la marcamos COW en
+                // el src y en el dest
+                if (IS_ASSIGNED_PAGE(*src_pte)) {
+                    *src_pte = *dest_pte = MARK_AS_COW(*src_pte);
+                }
                 // XXX: Es esto necesario?
                 reserve_page(&free_user_pages,
                     PHADDR_TO_PAGE(PTE_PAGE_BASE(*src_pte)));
