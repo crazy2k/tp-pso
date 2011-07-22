@@ -17,7 +17,9 @@ ata3: enabled=0
 parport1: enabled=1, file=""
 parport2: enabled=0
 #com1: enabled=1, mode=socket-server, dev=localhost:1235
-com1: enabled=1, mode=null, dev=""
+com1: enabled=1, mode=file, dev=serial_output
+#com1: enabled=1, mode=term, dev=/dev/pts/4
+#com1: enabled=1, mode=null, dev=""
 com2: enabled=0
 com3: enabled=0
 com4: enabled=0
