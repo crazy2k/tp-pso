@@ -14,6 +14,7 @@
     && ((pte) & PTE_P) && !((pte) & PDE_RW))
 
 #define MARK_AS_COW(pte) ((((pte) & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW)
+#define MARK_AS_SHARED(pte) (((pte) & ~PTE_AVL_BITS) | PTE_SHARED_PAGE)
 
 typedef struct page_t page_t;
 
