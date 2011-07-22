@@ -207,6 +207,10 @@ void debug_printf(const char* format, ...) {
     va_list vargs;
     va_start(vargs, format);
 
+    debug_printd(sched_get_current_pid());
+    DEBUG_PRINTCHAR('>');
+    DEBUG_PRINTCHAR(' ');
+
     char c;
     while ((c = *format++) != '\0') {
         if (c != '%')
