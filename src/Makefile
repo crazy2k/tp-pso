@@ -35,14 +35,14 @@ DUMP_KERN=$(DIROUT)kernel.bin.asm $(DIROUT)kernel.bin.elf $(DIROUT)kernel.bin.db
 SYM_KERN=$(DIROUT)kernel.sym
 
 # Tareas
-TASKS=tasks/task1.pso tasks/shell.pso
+TASKS=tasks/task1.pso tasks/shell.pso tasks/krypto.pso
 TASKS_ELF:=$(TASKS:.pso=.elf)
 OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
 BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
 # Archivos de texto
-TEXTFILES=kernel/sem.c tasks/shell.c kernel/hdd.c kernel/ext2.c
+TEXTFILES=kernel/sem.c tasks/shell.c kernel/ext2.c bin/kernel.bin
 
 # Imagenes
 DISK_LABEL="KERNEL  PSO"
