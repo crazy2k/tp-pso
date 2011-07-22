@@ -13,8 +13,9 @@
 #define IS_COW_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_COW_PAGE) \
     && ((pte) & PTE_P) && !((pte) & PDE_RW))
 
-#define MARK_AS_COW(pte) ((((pte) & ~PTE_AVL_BITS) | PTE_COW_PAGE) & ~PTE_RW)
-#define MARK_AS_SHARED(pte) (((pte) & ~PTE_AVL_BITS) | PTE_SHARED_PAGE)
+#define MARK_AS_COW(pte) ((CLEAR_PTE_AVL_BITS(pte) | PTE_COW_PAGE) & ~PTE_RW)
+#define MARK_AS_SHARED(pte) (CLEAR_PTE_AVL_BITS(pte) | PTE_SHARED_PAGE)
+#define CLEAR_PTE_AVL_BITS(pte) ((pte) & ~PTE_AVL_BITS)
 
 typedef struct page_t page_t;
 
@@ -164,7 +165,7 @@ int mm_load_cow_page(void* vaddr) {
             return_page(&free_user_pages, mapped_page);
         } else {
             debug_printf("mm_load_cow_page: mapped_page->count <= 1\n");
-            *pte = (*pte | PTE_RW) & ~PTE_AVL_BITS;
+            *pte = CLEAR_PTE_AVL_BITS(*pte) | PTE_RW;
         }
 
         debug_printf("mm_load_cow_page: new PTE: %x\n", *pte);
