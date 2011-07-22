@@ -248,7 +248,7 @@ int mm_share_page(void* vaddr) {
     else if (!(*pte & PTE_US))
         return -ENOPERM;
     else {
-        *pte |= PTE_SHARED_PAGE;
+        *pte = MARK_AS_SHARED(*pte);
         return 0;
     }
 }
