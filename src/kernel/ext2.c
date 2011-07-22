@@ -195,6 +195,8 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
 
     ext2_file_chardev *fp = (ext2_file_chardev *)this;
 
+    debug_printf("ext2_file_read: file_size: %x, file_offset: %x\n",
+        fp->file_size, fp->file_offset);
     int n = min(size, fp->file_size - fp->file_offset);
     int result = n;
 
@@ -213,6 +215,8 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
         uint32_t buf_offset = fp->file_offset % fp->buf_size;
         uint32_t read = min(n, fp->buf_size - buf_offset);
 
+        debug_printf("ext2_file_read: buf_offset: %x, read: %x\n", buf_offset,
+            read);
         memcpy(buf, fp->buf + buf_offset, read);
 
         buf += read;
