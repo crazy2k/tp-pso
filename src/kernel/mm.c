@@ -17,6 +17,9 @@
 #define MARK_AS_SHARED(pte) (CLEAR_PTE_AVL_BITS(pte) | PTE_SHARED_PAGE)
 #define CLEAR_PTE_AVL_BITS(pte) ((pte) & ~PTE_AVL_BITS)
 
+#define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
+#define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
+
 typedef struct page_t page_t;
 
 /*Podria reducirse el tamaño eliminando prev y usando un contador de 16 bits*/

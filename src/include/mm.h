@@ -79,10 +79,6 @@
 #define PTE_SHARED_PAGE PTE_AVL(2)
 #define PTE_COW_PAGE PTE_AVL(3)
 
-
-#define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
-#define PAGE_TO_PHADDR(page) ((void*) ((page - (page_t*)FIRST_FREE_KERNEL_PAGE) * PAGE_SIZE) )
-
 #define PD_ENTRIES 1024
 #define PT_ENTRIES PD_ENTRIES
 
