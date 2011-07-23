@@ -246,6 +246,10 @@ int mm_share_page(void* vaddr) {
         if (mm_load_requested_page(vaddr) == NULL)
             return -ENOMEM;
 
+    if (IS_COW_PAGE(*pte))
+        if (mm_load_cow_page(vaddr) == -1)
+            return -EINVALID;
+
     if (pte == NULL || !(*pte & PTE_P))
         return -EINVALID;
     else if (!(*pte & PTE_US))
