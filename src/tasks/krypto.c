@@ -1,19 +1,46 @@
 #include <user/syscalls.h>
 #include <user/io.h>
 #include <fs.h>
+#include <utils_common.h>
 
 #define PAGE_SIZE 4096
 
+#define IN_PATH "/disk/kernel.bin"
+#define OUT_PATH "/serial0"
+
+void reader(int to_encrypt) {
+    char *buf = palloc();
+    int fd = open(IN_PATH, FS_OPEN_RDWR);
+    int n;
+    while ((n = read(fd, buf, PAGE_SIZE)))
+        write(to_encrypt, buf, n);
+}
+
+void encrypt(int from_reader, int to_writer) {
+    char *key_buf = "soyunaclaveredificildedescifrar!";
+
+    char *buf = palloc();
+    int n;
+    while ((n = read(from_reader, buf, PAGE_SIZE))) {
+        int i;
+        for (i = 0; i < n; i++)
+            buf[i] = buf[i] ^ key_buf[i % strlen(key_buf)];
+
+        write(to_writer, buf, n);
+    }
+}
+
+void writer(int from_encrypt) {
+    char *buf = palloc();
+    int fd = open(OUT_PATH, FS_OPEN_RDWR);
+    int n;
+    while ((n = read(from_encrypt, buf, PAGE_SIZE)))
+        write(fd, buf, n);
+}
+
+
 int main(void) {
 
-/*
-    char *buf = palloc();
-    int fd = open("/disk/kernel.bin", FS_OPEN_RDONLY);
-    int serial_fd = open("/serial0", FS_OPEN_RDWR);
-    int chars;
-    while (chars = read(fd, buf, PAGE_SIZE))
-        write(serial_fd, buf, chars);
-*/
     int pipe_re[2];
     pipe(pipe_re);
 
@@ -22,11 +49,7 @@ int main(void) {
         // Reader
         close(pipe_re[0]);
 
-        char *buf = palloc();
-        int fd = open("/disk/kernel.bin", FS_OPEN_RDWR);
-        int n;
-        while (n = read(fd, buf, PAGE_SIZE))
-            write(pipe_re[1], buf, n);
+        reader(pipe_re[1]);
     }
     else {
         close(pipe_re[1]);
@@ -39,29 +62,14 @@ int main(void) {
             // Encrypt
             close(pipe_ew[0]);
 
-            char *key_buf = "soyunaclaveredificildedescifrar!";
-
-            char *buf = palloc();
-            int n;
-            while (n = read(pipe_re[0], buf, PAGE_SIZE)) {
-                int i;
-                for (i = 0; i < n; i++)
-                    buf[i] = buf[i] ^ key_buf[i % strlen(key_buf)];
-                    
-                write(pipe_ew[1], buf, n);
-            }
+            encrypt(pipe_re[0], pipe_ew[1]);
         }
         else {
             // Writer
-
             close(pipe_re[0]);
             close(pipe_ew[1]);
 
-            char *buf = palloc();
-            int fd = open("/serial0", FS_OPEN_RDWR);
-            int n;
-            while (n = read(pipe_ew[0], buf, PAGE_SIZE))
-                write(fd, buf, n);
+            writer(pipe_ew[0]);
         }
     }
     return 0;
