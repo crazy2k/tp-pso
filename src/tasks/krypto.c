@@ -39,7 +39,7 @@ int main(void) {
             // Encrypt
             close(pipe_ew[0]);
 
-            char *key_buf = "miabuelasellamaanita";
+            char *key_buf = "soyunaclaveredificildedescifrar!";
 
             char *buf = palloc();
             int n;

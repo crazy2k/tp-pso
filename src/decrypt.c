@@ -2,10 +2,11 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <fcntl.h>
+#include <stdio.h>
 
 #define BUF_SIZE 1024
 
-char *key_buf = "miabuelasellamaanita";
+char *key_buf = "soyunaclaveredificildedescifrar!";
 char buf[BUF_SIZE];
 
 int main(int argc, char *argv[]) {
