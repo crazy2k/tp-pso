@@ -3,6 +3,7 @@
 #include <ext2.h>
 #include <utils.h>
 #include <mm.h>
+#include <errors.h>
 #include <debug.h>
 
 #define MAX_EXT2_FILE_CHARDEVS 20
@@ -187,6 +188,28 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     fp->file_part_info = part_info;
 
     return (chardev *)fp;
+}
+
+
+
+int ext2_stat(ext2 *part_info, const char *filename, stat_t* st) {
+    if (strncmp(filename, "/disk/", 6))
+        return -ENOFILE;
+
+    if (!(part_info->initialized))
+        initialize_part_info(part_info);
+
+    uint32_t no = path2inode(part_info, 2, filename + 6);
+    if (no == 0)
+        return -ENOFILE;
+
+    ext2_inode inode;
+    get_inode(part_info, no, &inode);
+
+    st->inode = no;
+    st->size = inode.size;
+
+    return 0;
 }
 
 static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {

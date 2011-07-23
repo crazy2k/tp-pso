@@ -53,6 +53,10 @@ int open(const char* path, uint32_t mode) {
     return syscall(SYSCALLS_NUM_OPEN, (uint32_t)path, mode, 0, 0, 0);
 }
 
+int stat(const char* path, stat_t* st) {
+    return syscall(SYSCALLS_NUM_STAT, (uint32_t)path, (uint32_t)st, 0, 0, 0);
+}
+
 void con_ctl(uint32_t con, uint32_t oper) {
     syscall(SYSCALLS_NUM_CON_CTL, con, oper, 0, 0, 0);
 }

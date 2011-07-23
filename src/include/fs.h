@@ -12,9 +12,17 @@
 // Syscalls
 // int open(const char*, uint_32)
 
+
+typedef struct {
+      uint32_t inode;
+      uint32_t size;
+} stat_t;
+
+
 #ifdef __KERNEL__
 
 void fs_init(void);
+int fs_stat(const char *filename, stat_t* st);
 
 chardev* fs_open(const char* filename, uint_32 flags);
 

@@ -2,6 +2,7 @@
 #define __SYSCALLS_H__
 
 #include <tipos.h>
+#include <fs.h>
 
 
 #define SYSCALLS_NUM_EXIT 1
@@ -17,6 +18,7 @@
 #define SYSCALLS_NUM_PIPE 11
 #define SYSCALLS_NUM_FORK 12
 #define SYSCALLS_NUM_SHARE_PAGE 13
+#define SYSCALLS_NUM_STAT 14
 
 #define SYSCALLS_INTERRUPT 0x30ul
 
@@ -63,6 +65,7 @@
     int seek(int fd, uint32_t size);
     int close(int fd);
     int open(const char* path, uint32_t mode);
+    int stat(const char *path, stat_t *buf);
     int pipe(int fds[2]);
     void con_ctl(uint32_t con, uint32_t oper);
     int run(const char* path);

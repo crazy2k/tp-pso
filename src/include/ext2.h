@@ -2,6 +2,7 @@
 
 #define __EXT2_H__
 
+#include <fs.h>
 
 /*
  * Superblock
@@ -96,6 +97,7 @@ struct ext2_file_chardev {
 void ext2_init();
 void ext2_create(ext2 *part_info, blockdev *part);
 chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags);
+int ext2_stat(ext2 *part_info, const char *filename, stat_t* st);
 
 
 #endif

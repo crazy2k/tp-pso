@@ -64,6 +64,13 @@ chardev *fs_open(const char *filename, uint32_t flags) {
 	return NULL;
 }
 
+int fs_stat(const char *filename, stat_t* st) {
+    if (!strncmp(filename, "/disk/", 6))
+        return ext2_stat(&disk, filename, st);
+    else
+        return -ENOFILE;
+}
+
 // Syscalls:
 // int open(const char* filename, uint_32 flags);
 
