@@ -18,13 +18,15 @@ void reader(int to_encrypt) {
 
 void encrypt(int from_reader, int to_writer) {
     char *key_buf = "soyunaclaveredificildedescifrar!";
+    uint32_t key_buf_len = strlen(key_buf);
+    int key_buf_idx = 0;
 
     char *buf = palloc();
     int n;
     while ((n = read(from_reader, buf, PAGE_SIZE))) {
         int i;
-        for (i = 0; i < n; i++)
-            buf[i] = buf[i] ^ key_buf[i % strlen(key_buf)];
+        for (i = 0; i < n; i++, key_buf_idx = (key_buf_idx + 1) % key_buf_len)
+            buf[i] ^= key_buf[key_buf_idx];
 
         write(to_writer, buf, n);
     }
