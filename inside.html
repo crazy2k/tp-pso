@@ -60,6 +60,8 @@ este documento, son:</p>
 <li><strong>carga de programas</strong> desde ejecutables con un formato propio (PSO)</li>
 <li><strong>protección de memoria</strong> utilizando paginación y espacios de memoria
 diferentes para las tareas</li>
+<li>mecanismos eficientes de asignación de memoria a los procesos:
+copy-on-write, memoria bajo demanda</li>
 <li>manejador de interrupciones que permite el <strong>registro de
 handlers en tiempo de ejecución</strong></li>
 <li><strong>scheduling de procesos utilizando round-robin</strong> con <em>quantum</em> fijo</li>
@@ -68,6 +70,7 @@ handlers en tiempo de ejecución</strong></li>
 <li><strong>controladores</strong> de consolas, puerto serie y disco rígido ATA</li>
 <li><strong>sistema de archivos virtual</strong> (primitivo) y soporte para lectura de
 ext2</li>
+<li><strong>comunicación entre procesos</strong> mediante <em>pipes</em> y memoria compartida</li>
 </ul>
 <p>En este documento se describen estas y otras características del sistema.</p>
 <div class="section" id="la-estructura-de-directorios">
@@ -108,7 +111,7 @@ directorios que facilita su búsqueda.</p>
 </tr>
 </thead>
 <tbody valign="top">
-<tr><td><a href="#id1"><span class="problematic" id="id2">**</span></a>raíz</td>
+<tr><td><strong>raíz</strong></td>
 <td>representa la base de la estructura de directorios. Además
 de contener al resto de los directorios, posee archivos de
 alcance global en el proyecto.</td>
@@ -148,17 +151,17 @@ utilidades para construirla.</td>
 </div>
 <div class="section" id="manejo-de-procesos">
 <h2>Manejo de procesos<a class="headerlink" href="#manejo-de-procesos" title="Permalink to this headline">¶</a></h2>
-<p>La ejecución y el manejo de tareas (o procesos <a class="footnote-reference" href="#id4" id="id3">[1]</a>) es una parte
+<p>La ejecución y el manejo de tareas (o procesos <a class="footnote-reference" href="#id2" id="id1">[1]</a>) es una parte
 importante de cualquier sistema operativo. Este sistema no es la excepción.</p>
 <p>El manejo de las tareas se encuentra repartido en los módulos <tt class="docutils literal"><span class="pre">sched</span></tt>
 (<tt class="docutils literal"><span class="pre">src/kernel/sched.c</span></tt>) y <tt class="docutils literal"><span class="pre">loader</span></tt> (<tt class="docutils literal"><span class="pre">src/kernel/loader.c</span></tt>). El primero se
 ocupa estrictamente del algoritmo de <em>scheduling</em>, mientras que el segundo se
 encarga de la creación efectiva de los procesos, de los cambios de contexto,
 entre otras cosas.</p>
-<table class="docutils footnote" frame="void" id="id4" rules="none">
+<table class="docutils footnote" frame="void" id="id2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id3">[1]</a></td><td>Usamos los términos &#8220;tarea&#8221; y &#8220;proceso&#8221; de manera
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Usamos los términos &#8220;tarea&#8221; y &#8220;proceso&#8221; de manera
 intercambiable.</td></tr>
 </tbody>
 </table>
@@ -258,6 +261,20 @@ correspondiente, se realiza recién cuando a esta le toca ejecutarse por
 primera vez. La función <tt class="docutils literal"><span class="pre">initialize_task</span></tt> es justamente la encargada
 de realizar esto. El código de dicha función se encuentra en
 <tt class="docutils literal"><span class="pre">kernel/loader_helpers.asm</span></tt>.</p>
+<p>La creación de tareas en espacio de usuario se realiza mediante las
+llamadas al sistema <tt class="docutils literal"><span class="pre">run()</span></tt> y <tt class="docutils literal"><span class="pre">fork()</span></tt>. La primera recibe una ruta
+en el filesystem donde buscará el ejecutable del programa que luego
+pondrá en ejecución. Este proceso es un proceso nuevo, con ningún
+archivo abierto y con su espacio de memoria virtual vacío, excepto por
+el código y los datos del programa.</p>
+<p>La llamada <tt class="docutils literal"><span class="pre">fork()</span></tt> crea una copia del proceso en ejecución. El nuevo
+proceso recibe como retorno de esta llamada el número cero, mientras
+que el proceso &#8220;padre&#8221; (el que hizo la llamada) recibe como retorno el
+identificador de proceso de su &#8220;hijo&#8221;. La implementación de <tt class="docutils literal"><span class="pre">fork()</span></tt>
+es sencilla: Los pasos son similares a los que se realizan en
+<tt class="docutils literal"><span class="pre">loader_load()</span></tt>, con la diferencia de que se lleva a cabo una &#8220;copia&#8221;
+del mapa de memoria virtual de la tarea padre, sacando provecho del
+mecanismo de copy-on-write explicado más adelante en <a class="reference external" href="#la-memoria">La memoria</a>.</p>
 </div>
 <div class="section" id="cambios-de-contexto">
 <h3>Cambios de contexto<a class="headerlink" href="#cambios-de-contexto" title="Permalink to this headline">¶</a></h3>
@@ -272,7 +289,7 @@ al ocurrir un cambio de nivel al nivel 0.</p>
 stacks de kernel. Al ocurrir una interrupción mientras se está
 ejecutando una tarea, el <em>handler</em> de la interrupción toma el control.
 Si se precisa un cambio de contexto o si el kernel precisará el estado
-actual de la tarea para algo <a class="footnote-reference" href="#id6" id="id5">[2]</a>, el handler almacena el contexto de
+actual de la tarea para algo <a class="footnote-reference" href="#id4" id="id3">[2]</a>, el handler almacena el contexto de
 la tarea en el stack de modo kernel y luego llama a la rutina de
 atención correspondiente (ver la sección <a class="reference external" href="#manejo-de-interrupciones">Manejo de interrupciones</a>).</p>
 <p>Si la interrupción no deriva en un cambio de contexto, al terminar de
@@ -300,10 +317,10 @@ tarea nueva, su stack fue armado cuidadosamente de manera que al retornar de
 la función se ejecute el código del label <tt class="docutils literal"><span class="pre">initialize_task</span></tt>. Esta porción de
 código es la encargada de reservar memoria y realizar los mapeos que ya se
 nombraron antes en <a class="reference external" href="#creacion-de-tareas">Creación de tareas</a>.</p>
-<table class="docutils footnote" frame="void" id="id6" rules="none">
+<table class="docutils footnote" frame="void" id="id4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id5">[2]</a></td><td>En el estado actual del código, <em>siempre</em> se resguarda el estado de la
+<tr><td class="label"><a class="fn-backref" href="#id3">[2]</a></td><td>En el estado actual del código, <em>siempre</em> se resguarda el estado de la
 tarea independientemente de si el kernel lo precisará o no.</td></tr>
 </tbody>
 </table>
@@ -345,8 +362,8 @@ invocada con los parámetros pasados.</p>
 <p>Las llamadas al sistema implementadas hasta ahora son:</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="10%" />
-<col width="22%" />
+<col width="9%" />
+<col width="23%" />
 <col width="68%" />
 </colgroup>
 <thead valign="bottom">
@@ -400,6 +417,23 @@ que ya no se precisen</td>
 <td><tt class="docutils literal"><span class="pre">run()</span></tt></td>
 <td>pone un programa en ejecución</td>
 </tr>
+<tr><td>11</td>
+<td><tt class="docutils literal"><span class="pre">pipe()</span></tt></td>
+<td>crea un <em>pipe</em></td>
+</tr>
+<tr><td>12</td>
+<td><tt class="docutils literal"><span class="pre">fork()</span></tt></td>
+<td>crea un nuevo proceso</td>
+</tr>
+<tr><td>13</td>
+<td><tt class="docutils literal"><span class="pre">share_page()</span></tt></td>
+<td>marca una página de memoria como &#8220;compartida&#8221;</td>
+</tr>
+<tr><td>14</td>
+<td><tt class="docutils literal"><span class="pre">stat()</span></tt></td>
+<td>provee información sobre un archivo en el
+<em>filesystem</em></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -433,6 +467,54 @@ referencias de la página.</p>
 <p>En el módulo <tt class="docutils literal"><span class="pre">mm</span></tt> se encuentran todas las funciones que se ocupan
 de gestionar las páginas físicas libres y de mapearlas a los espacios
 de direcciones virtuales.</p>
+<div class="section" id="mecanismos-eficientes-de-asignacion-de-memoria-a-los-procesos">
+<h4>Mecanismos eficientes de asignación de memoria a los procesos<a class="headerlink" href="#mecanismos-eficientes-de-asignacion-de-memoria-a-los-procesos" title="Permalink to this headline">¶</a></h4>
+<p>El sistema posee algunos mecanismos que permiten un manejo eficiente de
+la memoria otorgada a las tareas:</p>
+<ul class="simple">
+<li><strong>memoria bajo demanda</strong>: este mecanismo permite retrasar la asignación
+de una página física al proceso hasta el momento en que este la
+necesita, posibilitando así que esa memoria sea utilizada por otros
+procesos mientras tanto.</li>
+<li><strong>copy-on-write</strong>: esta técnica permite &#8220;copiar&#8221; grandes áreas de memoria
+en tiempos extremadamente cortos, ya que se vale de la idea de que no
+es necesaria la copia de datos hasta tanto no ocurra una escritura.</li>
+</ul>
+<p>Además, provee a los procesos de un mecanismo sencillo y rápido de
+comunicación: <strong>memoria compartida</strong>.</p>
+<p>Para implementar esto, cada página en el espacio de memoria lineal es
+considerada en alguno de los siguientes estados:</p>
+<ul>
+<li><p class="first"><strong>presente</strong>, en cuyo caso puede hallarse marcada como:</p>
+<blockquote>
+<ul class="simple">
+<li><strong>asignada</strong>: en posesión y uso de un único proceso</li>
+<li><strong>copy-on-write</strong>: marcada con permisos de sólo lectura, de modo
+que al ocurrir un intento de escritura se producirá una copia de
+la página entera</li>
+<li><strong>compartida</strong>: en posesión de uno o más procesos que la
+comparten y pueden utilizarla en simultáneo</li>
+</ul>
+</blockquote>
+</li>
+<li><p class="first"><strong>no presente</strong>, en cuyo caso la página es considerada en uno de los
+siguientes estados:</p>
+<blockquote>
+<ul class="simple">
+<li><strong>pedida</strong>: a la espera de que el proceso intente utilizarla para
+así luego asignarle una página física</li>
+<li><strong>inválida</strong>: simplemente una página de direcciones no
+utilizables</li>
+</ul>
+</blockquote>
+</li>
+</ul>
+<p>Para guardar esta información sobre el estado de las páginas se
+utilizan los bits disponibles en las entradas de las tablas de páginas
+del mecanismo de paginación que provee el procesador. El manejador de
+memoria toma las acciones correspondientes cuando ocurren escrituras
+y/o lecturas sobre cada página teniendo en cuenta su estado actual.</p>
+</div>
 </div>
 <div class="section" id="direccionamiento">
 <h3>Direccionamiento<a class="headerlink" href="#direccionamiento" title="Permalink to this headline">¶</a></h3>
@@ -589,7 +671,7 @@ interrupción del disco se encarga de obtener los datos.</p>
 <h2>El sistema de archivos virtual<a class="headerlink" href="#el-sistema-de-archivos-virtual" title="Permalink to this headline">¶</a></h2>
 <p>El nombre &#8220;sistema de archivos virtual&#8221; quizás le queda algo grande a
 la rústica implementación que llevamos a cabo, en el módulo <tt class="docutils literal"><span class="pre">fs</span></tt> para
-tener un manejo mínimo de los archivos en el <em>filesystem</em> físico y de
+tener un manejo mínimo de los archivos en el filesystem físico y de
 los dispositivos de hardware.</p>
 <p>La llamada al sistema <tt class="docutils literal"><span class="pre">open()</span></tt> permite la apertura de un archivo para
 su posterior lectura o escritura. La implementación de esta llamada es
@@ -632,6 +714,29 @@ y almacenamiento de los datos del archivo de a secciones y bajo
 demanda.</p>
 </div>
 </div>
+<div class="section" id="comunicacion-entre-procesos-ipc">
+<h2>Comunicación entre procesos (IPC)<a class="headerlink" href="#comunicacion-entre-procesos-ipc" title="Permalink to this headline">¶</a></h2>
+<p>El sistema permite la comunicación entre procesos mediante <em>pipes</em> y
+memoria compartida.</p>
+<p>Para crear un pipe, debe utilizarse la llamada al sistema <tt class="docutils literal"><span class="pre">pipe()</span></tt>,
+pasándole como parámetro un arreglo de dos enteros. La llamada creará
+el pipe y escribirá en las posiciones del arreglo dos <em>file
+descriptors</em>: Uno para el extremo de lectura y otro para el extremo de
+escritura respectivamente.</p>
+<p>Las llamadas al sistema <tt class="docutils literal"><span class="pre">read()</span></tt> y <tt class="docutils literal"><span class="pre">write()</span></tt> son utilizadas para
+leer y escribir en el pipe. Una llamada a <tt class="docutils literal"><span class="pre">read()</span></tt> bloqueará al
+proceso si no hay datos que leer. Debido a que el pipe cuenta con un
+buffer de tamaño acotado, una llamada a <tt class="docutils literal"><span class="pre">write()</span></tt> con el buffer lleno
+también bloqueará al proceso que la haga.</p>
+<p>La utilización del mecanismo de memoria compartida es muy sencilla. El
+proceso que desea compartir memoria con sus descendientes (creados
+mediante <tt class="docutils literal"><span class="pre">fork()</span></tt>), debe primero utilizar la llamada al sistema
+<tt class="docutils literal"><span class="pre">palloc()</span></tt> para pedir al kernel una página de memoria. Luego debe
+marcar esa página de memoria como &#8220;compartida&#8221;, a través de la llamada
+al sistema <tt class="docutils literal"><span class="pre">share_mem()</span></tt>. Una vez hecho esto, los procesos que cree
+luego utilizando <tt class="docutils literal"><span class="pre">fork()</span></tt> tendrán la página asignada en la misma
+dirección virtual que el padre.</p>
+</div>
 </div>
 
 
@@ -654,7 +759,10 @@ demanda.</p>
 <li><a class="reference internal" href="#manejo-de-interrupciones">Manejo de interrupciones</a></li>
 <li><a class="reference internal" href="#atencion-de-llamadas-al-sistema">Atención de llamadas al sistema</a></li>
 <li><a class="reference internal" href="#la-memoria">La memoria</a><ul>
-<li><a class="reference internal" href="#gestion-de-la-memoria">Gestión de la memoria</a></li>
+<li><a class="reference internal" href="#gestion-de-la-memoria">Gestión de la memoria</a><ul>
+<li><a class="reference internal" href="#mecanismos-eficientes-de-asignacion-de-memoria-a-los-procesos">Mecanismos eficientes de asignación de memoria a los procesos</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#direccionamiento">Direccionamiento</a></li>
 </ul>
 </li>
@@ -668,6 +776,7 @@ demanda.</p>
 <li><a class="reference internal" href="#sistema-de-archivos-ext2">Sistema de archivos ext2</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#comunicacion-entre-procesos-ipc">Comunicación entre procesos (IPC)</a></li>
 </ul>
 </li>
 </ul>
