@@ -10,6 +10,8 @@ este documento, son:
 * **carga de programas** desde ejecutables con un formato propio (PSO)
 * **protección de memoria** utilizando paginación y espacios de memoria
   diferentes para las tareas
+* mecanismos eficientes de asignación de memoria a los procesos:
+  copy-on-write, memoria bajo demanda
 * manejador de interrupciones que permite el **registro de
   handlers en tiempo de ejecución**
 * **scheduling de procesos utilizando round-robin** con *quantum* fijo
@@ -18,6 +20,7 @@ este documento, son:
 * **controladores** de consolas, puerto serie y disco rígido ATA
 * **sistema de archivos virtual** (primitivo) y soporte para lectura de
   ext2
+* **comunicación entre procesos** mediante *pipes* y memoria compartida
 
 En este documento se describen estas y otras características del sistema.
 
@@ -55,7 +58,7 @@ Esta es una síntesis de la estructura de directorios del proyecto:
 ================ ==========================================================
 Directorio       Contenido
 ================ ==========================================================
-**raíz           representa la base de la estructura de directorios. Además
+**raíz**         representa la base de la estructura de directorios. Además
                  de contener al resto de los directorios, posee archivos de
                  alcance global en el proyecto.
 **src/**         posee todos los archivos y directorios referidos al
@@ -200,6 +203,22 @@ primera vez. La función ``initialize_task`` es justamente la encargada
 de realizar esto. El código de dicha función se encuentra en
 ``kernel/loader_helpers.asm``.
 
+La creación de tareas en espacio de usuario se realiza mediante las
+llamadas al sistema ``run()`` y ``fork()``. La primera recibe una ruta
+en el filesystem donde buscará el ejecutable del programa que luego
+pondrá en ejecución. Este proceso es un proceso nuevo, con ningún
+archivo abierto y con su espacio de memoria virtual vacío, excepto por
+el código y los datos del programa.
+
+La llamada ``fork()`` crea una copia del proceso en ejecución. El nuevo
+proceso recibe como retorno de esta llamada el número cero, mientras
+que el proceso "padre" (el que hizo la llamada) recibe como retorno el
+identificador de proceso de su "hijo". La implementación de ``fork()``
+es sencilla: Los pasos son similares a los que se realizan en
+``loader_load()``, con la diferencia de que se lleva a cabo una "copia"
+del mapa de memoria virtual de la tarea padre, sacando provecho del
+mecanismo de copy-on-write explicado más adelante en `La memoria`_.
+
 Cambios de contexto
 ~~~~~~~~~~~~~~~~~~~
 
@@ -289,24 +308,29 @@ invocada con los parámetros pasados.
 
 Las llamadas al sistema implementadas hasta ahora son:
 
-======= =============== ===============================================
-Número  Nombre          Función
-======= =============== ===============================================
-1       ``exit()``      finaliza el proceso en ejecución y libera todos
+====== ================ ===============================================
+Número  Nombre           Función
+====== ================ ===============================================
+1      ``exit()``       finaliza el proceso en ejecución y libera todos
                         los recursos utilizados por este
-2       ``getpid()``    devuelve el identificador de proceso de la
+2      ``getpid()``     devuelve el identificador de proceso de la
                         tarea
-3       ``palloc()``    reserva una página de memoria para la tarea
-4       ``read()``      lee de un archivo abierto
-5       ``write()``     escribe en un archivo abierto
-6       ``seek()``      traslada el puntero del archivo a una posición
+3      ``palloc()``     reserva una página de memoria para la tarea
+4      ``read()``       lee de un archivo abierto
+5      ``write()``      escribe en un archivo abierto
+6      ``seek()``       traslada el puntero del archivo a una posición
                         dada
-7       ``close()``     cierra el archivo y libera los recursos
+7      ``close()``      cierra el archivo y libera los recursos
                         que ya no se precisen
-8       ``open()``      abre un archivo para lectura y/o escritura
-9       ``con_ctl()``   envía comandos de control a una consola
-10      ``run()``       pone un programa en ejecución
-======= =============== ===============================================
+8      ``open()``       abre un archivo para lectura y/o escritura
+9      ``con_ctl()``    envía comandos de control a una consola
+10     ``run()``        pone un programa en ejecución
+11     ``pipe()``       crea un *pipe*
+12     ``fork()``       crea un nuevo proceso
+13     ``share_page()`` marca una página de memoria como "compartida"
+14      ``stat()``      provee información sobre un archivo en el
+                        *filesystem*
+====== ================ ===============================================
 
 La memoria
 ----------
@@ -343,6 +367,50 @@ referencias de la página.
 En el módulo ``mm`` se encuentran todas las funciones que se ocupan
 de gestionar las páginas físicas libres y de mapearlas a los espacios
 de direcciones virtuales.
+
+Mecanismos eficientes de asignación de memoria a los procesos
+`````````````````````````````````````````````````````````````
+
+El sistema posee algunos mecanismos que permiten un manejo eficiente de
+la memoria otorgada a las tareas:
+
+- **memoria bajo demanda**: este mecanismo permite retrasar la asignación
+  de una página física al proceso hasta el momento en que este la
+  necesita, posibilitando así que esa memoria sea utilizada por otros
+  procesos mientras tanto.
+- **copy-on-write**: esta técnica permite "copiar" grandes áreas de memoria
+  en tiempos extremadamente cortos, ya que se vale de la idea de que no
+  es necesaria la copia de datos hasta tanto no ocurra una escritura.
+
+Además, provee a los procesos de un mecanismo sencillo y rápido de
+comunicación: **memoria compartida**.
+
+Para implementar esto, cada página en el espacio de memoria lineal es
+considerada en alguno de los siguientes estados:
+
+- **presente**, en cuyo caso puede hallarse marcada como:
+
+    - **asignada**: en posesión y uso de un único proceso
+    - **copy-on-write**: marcada con permisos de sólo lectura, de modo
+      que al ocurrir un intento de escritura se producirá una copia de
+      la página entera
+    - **compartida**: en posesión de uno o más procesos que la
+      comparten y pueden utilizarla en simultáneo
+
+- **no presente**, en cuyo caso la página es considerada en uno de los
+  siguientes estados:
+
+    - **pedida**: a la espera de que el proceso intente utilizarla para
+      así luego asignarle una página física
+    - **inválida**: simplemente una página de direcciones no
+      utilizables
+
+Para guardar esta información sobre el estado de las páginas se
+utilizan los bits disponibles en las entradas de las tablas de páginas
+del mecanismo de paginación que provee el procesador. El manejador de
+memoria toma las acciones correspondientes cuando ocurren escrituras
+y/o lecturas sobre cada página teniendo en cuenta su estado actual.
+
 
 Direccionamiento
 ~~~~~~~~~~~~~~~~
@@ -514,7 +582,7 @@ El sistema de archivos virtual
 
 El nombre "sistema de archivos virtual" quizás le queda algo grande a
 la rústica implementación que llevamos a cabo, en el módulo ``fs`` para
-tener un manejo mínimo de los archivos en el *filesystem* físico y de
+tener un manejo mínimo de los archivos en el filesystem físico y de
 los dispositivos de hardware.
 
 La llamada al sistema ``open()`` permite la apertura de un archivo para
@@ -560,3 +628,31 @@ La primera implementación leía el archivo entero y lo almacenaba en un
 buffer al momento de la apertura. La versión actual permite la lectura
 y almacenamiento de los datos del archivo de a secciones y bajo
 demanda.
+
+Comunicación entre procesos (IPC)
+---------------------------------
+
+El sistema permite la comunicación entre procesos mediante *pipes* y
+memoria compartida.
+
+Para crear un pipe, debe utilizarse la llamada al sistema ``pipe()``,
+pasándole como parámetro un arreglo de dos enteros. La llamada creará
+el pipe y escribirá en las posiciones del arreglo dos *file
+descriptors*: Uno para el extremo de lectura y otro para el extremo de
+escritura respectivamente.
+
+Las llamadas al sistema ``read()`` y ``write()`` son utilizadas para
+leer y escribir en el pipe. Una llamada a ``read()`` bloqueará al
+proceso si no hay datos que leer. Debido a que el pipe cuenta con un
+buffer de tamaño acotado, una llamada a ``write()`` con el buffer lleno
+también bloqueará al proceso que la haga.
+
+La utilización del mecanismo de memoria compartida es muy sencilla. El
+proceso que desea compartir memoria con sus descendientes (creados
+mediante ``fork()``), debe primero utilizar la llamada al sistema
+``palloc()`` para pedir al kernel una página de memoria. Luego debe
+marcar esa página de memoria como "compartida", a través de la llamada
+al sistema ``share_mem()``. Una vez hecho esto, los procesos que cree
+luego utilizando ``fork()`` tendrán la página asignada en la misma
+dirección virtual que el padre.
+
