@@ -144,6 +144,7 @@ void mm_dir_free(uint32_t* pd) {
 void* mm_request_mem_alloc() {
     uint32_t *pd = current_pd();
     void *vaddr = seek_unused_vaddr(pd);
+    debug_printf("mm_request_mem_alloc: vaddr: %x\n", vaddr);
 
     return set_page_as_requested(vaddr);
 }
@@ -242,19 +243,24 @@ int mm_share_page(void* vaddr) {
     vaddr = ALIGN_TO_PAGE_START(vaddr);
     uint32_t *pte = get_pte(current_pd(), vaddr);
 
-    if (IS_REQUESTED_PAGE(*pte))
+    if (IS_REQUESTED_PAGE(*pte)) {
+        debug_printf("mm_share_page: mm_load_requested_page\n");
         if (mm_load_requested_page(vaddr) == NULL)
             return -ENOMEM;
+    }
 
-    if (IS_COW_PAGE(*pte))
+    if (IS_COW_PAGE(*pte)) {
+        debug_printf("mm_share_page: mm_load_cow_page\n");
         if (mm_load_cow_page(vaddr) == -1)
             return -EINVALID;
+    }
 
     if (pte == NULL || !(*pte & PTE_P))
         return -EINVALID;
     else if (!(*pte & PTE_US))
         return -ENOPERM;
     else {
+        debug_printf("mm_share_page: MARK_AS_SHARED()\n");
         *pte = MARK_AS_SHARED(*pte);
         return 0;
     }
@@ -439,9 +445,11 @@ static void* set_page_as_requested(void *vaddr) {
     uint32_t *pte = get_pte_table_alloc(current_pd(), vaddr);
 
     // Si la direccion ya fue mapeada retornar NULL
-    if (*pte & PDE_P)
+    if (*pte & PDE_P) {
+        debug_printf("set_page_as_requested: page present\n");
         custom_kpanic_msg("La direccion virtual que se intentaba asignar"
             " ya estaba mapeada en el directorio");
+    }
 
 
     *pte = PTE_REQUESTED_PAGE;

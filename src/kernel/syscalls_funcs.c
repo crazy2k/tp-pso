@@ -22,7 +22,9 @@ uint32_t sys_getpid() {
 }
 
 void *sys_palloc() {
-    return mm_request_mem_alloc();
+    void *vaddr = mm_request_mem_alloc();
+    debug_printf("sys_palloc: vaddr: %x\n", vaddr);
+    return vaddr;
 }
 
 int sys_read(int fd, void *buf, uint32_t size) {
@@ -75,9 +77,12 @@ int sys_close(int fd) {
 
 int sys_open(char *path, uint32_t mode) {
     chardev *cdev; 
-    if (!(cdev = fs_open(path, mode)))
+    if (!(cdev = fs_open(path, mode))) {
+        debug_printf("sys_open: -ENOFILE\n");
         return -ENOFILE;
+    }
     else {
+        debug_printf("sys_open: loader_add_file()\n");
         cdev->refcount++;
         return loader_add_file(cdev);
     }
