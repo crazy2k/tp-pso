@@ -507,9 +507,12 @@ static void free_user_page(uint32_t pd[], void* vaddr) {
 static void* seek_unused_vaddr(uint32_t pd[]) {
     void *vaddr;
     for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
-        uint32_t *pte = get_pte(kernel_pd, vaddr);
-        if (!pte || (*pte & PTE_P) == 0)
-            return (void*)PTE_PAGE_BASE(*pte);
+        uint32_t *pte = get_pte_table_alloc(pd, vaddr);
+        debug_printf("seek_unused_vaddr: vaddr: %x, pte: %x\n", vaddr, *pte);
+        debug_printf("seek_unused_vaddr: pte present: %x, "
+            "pte requested: %x\n", (*pte & PTE_P), IS_REQUESTED_PAGE(*pte));
+        if (!(*pte))
+            return vaddr;
     }
 
     return NULL;
