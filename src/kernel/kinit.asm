@@ -17,6 +17,7 @@ global start
 global debug_backtrace_limit
 ; start MUST be at the very begining of this file
 start: 
+	xchg bx, bx
 	call enable_A20
 
 	lgdt [GDT_DESC]

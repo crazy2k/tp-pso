@@ -109,7 +109,7 @@ $(IMG_FLOPPY): $(BIN_BOOT) $(BIN_KERN) $(IMG_BASE) $(TASKS)
 
 $(IMG_TESTHDD): $(TASKS) $(TEXTFILES)
 	rm -f $@
-	bximage -q -hd -mode=flat -size=$(IMG_TESTHDD_SIZE) $@
+	bximage -q -hd=$(IMG_TESTHDD_SIZE) -mode=create $@
 	mke2fs -F -q $@
 	for T in $(TASKS); do \
 		debugfs -w -R "write $$T `basename $$T`" $@ ; \
