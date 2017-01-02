@@ -32,6 +32,7 @@ extern idtr_t idtr;
 #define IDT_DESC_P ((uint64_t)0x1 << (32 + 15))
 #define IDT_DESC_DPL(dpl) ((uint64_t)(__LOW2_BITS__ & (dpl)) << (32 + 13))
 #define IDT_DESC_D ((uint64_t)0x1 << (32 + 11))
+// Interupt Gate: Limpia el IF, y este vuelve a su valor original en el iret
 #define IDT_DESC_INT ((uint64_t)0x6 << (32 + 8))
 #define IDT_DESC_TRAP ((uint64_t)0x7 << (32 + 8))
 #define IDT_DESC_SEL(segsel) ((__LOW16_BITS__ & (uint64_t)(segsel)) << 16)
