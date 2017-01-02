@@ -111,6 +111,7 @@ static tss_t tss_struct;
 static tss_t *tss = NULL;
 
 void loader_setup_task_memory(pso_file *f);
+int init_main();
 
 void loader_init(void) {
     CREATE_FREE_OBJS_LIST(free_pcbs, pcbs, MAX_PID);
@@ -135,12 +136,56 @@ void loader_init(void) {
     sti();
 
     // Comienzo de la ejecucion de la tarea idle
-    sys_run("/disk/shell.pso");
-    sys_run("/disk/shell.pso");
-    sys_run("/disk/shell.pso");
-    sys_run("/disk/shell.pso");
+    //sys_run("/disk/shell.pso");
+    //sys_run("/disk/shell.pso");
+    //sys_run("/disk/shell.pso");
+    loader_load_main(init_main);
     idle_main();
 }
+
+int init_main() {
+    debug_printf("Loading initial tasks\n");
+    sys_run("/disk/shell.pso");
+    while (1) ;
+}
+
+pid loader_load_main(func_main *main) {
+    // Obtenemos un nuevo PCB
+    pcb *pcb = POP(&free_pcbs);
+
+    /*
+     * Cargamos los datos en el PCB
+     */
+
+    pcb->pd = (void *)mm_dir_new();
+
+    pcb->kernel_stack = mm_mem_kalloc();
+    pcb->kernel_stack_limit = pcb->kernel_stack + PAGE_SIZE;
+    pcb->kernel_stack_pointer = pcb->kernel_stack_limit;
+
+    pcb->last_fd = 0;
+    memset(pcb->fds, 0, sizeof(pcb->fds));
+
+    // Escribimos el estado inicial
+    pcb->kernel_stack_pointer -= sizeof(task_state_t);
+    task_state_t *st = (task_state_t *)pcb->kernel_stack_pointer;
+    initialize_task_state(st, (void *)main, pcb->kernel_stack, 0);
+
+    pcb->kernel_stack_pointer -= 4;
+    *((void **)pcb->kernel_stack_pointer) = load_state;
+
+    // El valor de esta entrada en el stack no deberia tener ninguna
+    // importancia. Es el valor que adquiere ebp al cambiar el contexto al
+    // de la tarea nueva. Este registro no es usado hasta que adquiere el
+    // valor que indica el task_state_t inicial de la tarea.
+    pcb->kernel_stack_pointer -= 4;
+    *((void **)pcb->kernel_stack_pointer) = NULL;
+
+    sched_load(get_pid(pcb));
+
+    return get_pid(pcb);
+}
+
 
 
 pid loader_load(pso_file* f, int pl) {
