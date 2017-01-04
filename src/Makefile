@@ -23,6 +23,9 @@ DIRTMP=/tmp/
 # Boot loader
 BIN_BOOT=$(DIRBOOT)floppyboot.bin
 
+# Swap file
+SWAP_FILENAME=psoswap
+
 # Kernel
 OBJS_KERN=kernel/kinit.o kernel/gdt.o kernel/a20.o kernel/kernel.o kernel/idt.o \
   kernel/isr.o kernel/pic.o kernel/vga.o kernel/sched.o \
@@ -50,7 +53,7 @@ DISK_LABEL="KERNEL  PSO"
 IMG_BASE=$(DIROUT)base.img
 IMG_FLOPPY=$(DIROUT)floppy.img
 IMG_TESTHDD=$(DIROUT)testhdd.img
-IMG_TESTHDD_SIZE=10
+IMG_TESTHDD_SIZE=128
 
 .PHONY: all clean
 
@@ -117,6 +120,9 @@ $(IMG_TESTHDD): $(TASKS) $(TEXTFILES)
 	for F in $(TEXTFILES); do \
 		debugfs -w -R "write $$F `basename $$F`" $@ ; \
 	done
+	dd if=/dev/zero of=$(DIRTMP)$(SWAP_FILENAME) bs=1024 count=65536
+	debugfs -w -R "write $(DIRTMP)$(SWAP_FILENAME) $(SWAP_FILENAME)" $@
+	rm $(DIRTMP)$(SWAP_FILENAME)
 
 # Otros
 clean:
