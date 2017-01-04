@@ -34,6 +34,7 @@
 #define PORT_COMMAND        7
 
 #define COMMAND_READ_SECTORS    0x20
+#define COMMAND_WRITE_SECTORS   0x30
 
 // Puertos de los Control Registers/Alternate Status (segun se lea o se
 // escriba)
@@ -48,7 +49,9 @@
 
 static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t id, uint32_t sector_size);
 static void hdd_recv(hdd_blockdev *hbdev);
+static void hdd_send(hdd_blockdev *hbdev);
 static sint_32 hdd_block_read_sectors(hdd_blockdev *this, uint32_t pos, void *buf, uint32_t size);
+static sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *buf, uint32_t size);
 
 static hdd_blockdev hdd_blockdevs[MAX_HDD_BLOCKDEVS];
 
@@ -61,7 +64,25 @@ void hdd_init(void) {
 }
 
 sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 size) {
-    return -1; //Opcional
+    if (this->clase != DEVICE_HDD_BLOCKDEV)
+        return -1;
+
+    hdd_blockdev *hbdev = (hdd_blockdev *)this;
+
+    sint_32 written_chars = 0;
+
+    debug_printf("** hdd_block_write: start\n");
+
+    sem_wait(&hbdev->sem);
+        while (written_chars < size)
+            written_chars += hdd_block_write_sectors(hbdev,
+                pos + (written_chars/hbdev->size),
+                buf + written_chars, size - written_chars);
+    sem_signaln(&hbdev->sem);
+
+    debug_printf("** hdd_block_write: read: %x\n", written_chars);
+
+    return size;
 }
 
 
@@ -125,7 +146,8 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     return size;
 }
-/* Lee una cantidad de sectores especificada en sectors, si estos no caben en el 
+
+/* Lee la cantidad de bytes especificados en size; si estos no caben en el 
  * buffer solo lee hasta llenar el buffer del dispositivo.
  */
 sint_32 hdd_block_read_sectors(hdd_blockdev *hbdev, uint32_t pos, void *buf,
@@ -164,6 +186,45 @@ sint_32 hdd_block_read_sectors(hdd_blockdev *hbdev, uint32_t pos, void *buf,
     return read_from_circ_buff((char *)buf, &hbdev->buf, size, BUF_SIZE);
 }
 
+sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *buf,
+    uint32_t size) {
+
+    size = min(BUF_SIZE, size);
+
+    uint32_t lba = pos & __LOW28_BITS__;
+    uint16_t base = GET_BASE(hbdev);
+
+    uint32_t drive_data = (IS_MASTER(hbdev)) ? 0xE0 : 0xF0;
+    outb(base + PORT_DRIVE, LBA_HIGHEST_4BITS(lba) | drive_data);
+
+    outb(base + PORT_FEATURES, NULL);
+
+    outb(base + PORT_SECTOR_COUNT, size/hbdev->size);
+
+    outb(base + PORT_SECTOR_NUMBER, (uint8_t)lba);
+    outb(base + PORT_CYLINDER_LO, (uint8_t)(lba >> 8));
+    outb(base + PORT_CYLINDER_HI, (uint8_t)(lba >> 16));
+
+    outb(base + PORT_COMMAND, COMMAND_WRITE_SECTORS);
+
+    debug_printf("hdd_block_write_sectors: request\n");
+
+    debug_printf("** hdd_block_write_sectors: t = %x\n",
+        (uint32_t)hbdev - (uint32_t)hdd_blockdevs);
+
+    write_to_circ_buff(&hbdev->buf, (char *)buf, size, BUF_SIZE);
+
+    while (hbdev->buf.remaining != 0) {
+        debug_printf("hdd_block_write_sectors: loop\n");
+        loader_enqueue(&hbdev->waiting_process);
+    }
+
+    debug_printf("hdd_block_write_sectors: awake\n");
+
+    return size;
+	
+}
+
 blockdev *hdd_open(int no) {
     if (no < 0 || no > 3)
         return NULL;
@@ -188,7 +249,8 @@ static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t
     hbdev->sem = SEM_NEW(1);
 }
 
-void hdd_recv_primary() {
+
+void hdd_primary_isr() {
     uint8_t drive = inb(PRIMARY_BASE + PORT_DRIVE);
 
     enum type t;
@@ -197,15 +259,21 @@ void hdd_recv_primary() {
     else
         t = PRIMARY_MASTER;
 
-    debug_printf("** hdd_recv_primary: t = %x\n", t);
+    hdd_blockdev *hbdev = &hdd_blockdevs[t];
 
-    hdd_recv(&hdd_blockdevs[t]);
+    debug_printf("** hdd_primary_isr: t = %x\n", t);
+    uint16_t base = GET_BASE(hbdev);
+
+    uint8_t cmd = inb(base + PORT_COMMAND);
+    if (cmd == COMMAND_READ_SECTORS) {
+        hdd_recv(hbdev);
+    } else if (cmd == COMMAND_WRITE_SECTORS) {
+        hdd_send(hbdev);
+    }
 }
 
 static void hdd_recv(hdd_blockdev *hbdev) {
     uint16_t base = GET_BASE(hbdev);
-
-    inb(base + PORT_COMMAND);
 
     int i;
     for (i = 0; i < (hbdev->size/sizeof(uint16_t)); i++) {
@@ -215,6 +283,25 @@ static void hdd_recv(hdd_blockdev *hbdev) {
     }
 
     debug_printf("hdd_recv: unqueue\n");
+
+    loader_unqueue(&hbdev->waiting_process);
+}
+
+static void hdd_send(hdd_blockdev *hbdev) {
+    uint16_t base = GET_BASE(hbdev);
+
+    uint16_t *buf = mm_mem_kalloc();
+
+    // Escribimos un sector al disco
+    int i;
+    for (i = 0; i < (hbdev->size/sizeof(uint16_t)); i++) {
+        read_from_circ_buff((char *)buf, &hbdev->buf, sizeof(uint16_t), sizeof(uint16_t));
+        outw(base + PORT_DATA, *buf);
+    }
+
+    mm_mem_free(buf);
+
+    debug_printf("hdd_send: unqueue\n");
 
     loader_unqueue(&hbdev->waiting_process);
 }

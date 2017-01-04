@@ -39,7 +39,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
 void hdd_init(void);
 
-void hdd_recv_primary();
+void hdd_primary_isr();
 
 #endif
 
