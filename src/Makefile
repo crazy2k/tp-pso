@@ -55,7 +55,7 @@ IMG_FLOPPY=$(DIROUT)floppy.img
 IMG_TESTHDD=$(DIROUT)testhdd.img
 IMG_TESTHDD_SIZE=128
 
-.PHONY: all clean
+.PHONY: all clean run
 
 all: $(IMG_FLOPPY) $(IMG_TESTHDD) $(DUMP_KERN) $(SYM_KERN)
 
@@ -130,6 +130,9 @@ clean:
 		$(SYM_KERN) $(OBJS_TASKS) $(TASKS) $(TASKS:.pso=.elf) $(BIN_LIB) \
 		$(IMG_TESTHDD)
 	#rm -f deps
+
+run:
+	( cd bin/ ; bochs -q )
 
 # Dependencias
 deps: Makefile
