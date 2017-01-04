@@ -74,6 +74,7 @@ sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 si
     debug_printf("** hdd_block_write: start\n");
 
     sem_wait(&hbdev->sem);
+        hbdev->current_command = COMMAND_WRITE_SECTORS;
         while (written_chars < size)
             written_chars += hdd_block_write_sectors(hbdev,
                 pos + (written_chars/hbdev->size),
@@ -136,6 +137,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
     debug_printf("** hdd_block_read: start\n");
 
     sem_wait(&hbdev->sem);
+        hbdev->current_command = COMMAND_READ_SECTORS;
         while (read_chars < size)
             read_chars += hdd_block_read_sectors(hbdev,
                 pos + (read_chars/hbdev->size),
@@ -247,6 +249,7 @@ static void initialize_hdd_blockdev(hdd_blockdev *hbdev, uint32_t type, uint32_t
         .remaining = 0
     });
     hbdev->sem = SEM_NEW(1);
+    hbdev->current_command = NULL;
 }
 
 
@@ -264,7 +267,8 @@ void hdd_primary_isr() {
     debug_printf("** hdd_primary_isr: t = %x\n", t);
     uint16_t base = GET_BASE(hbdev);
 
-    uint8_t cmd = inb(base + PORT_COMMAND);
+    uint8_t cmd = hbdev->current_command;
+    debug_printf("** hdd_primary_isr: cmd = %x\n", cmd);
     if (cmd == COMMAND_READ_SECTORS) {
         hdd_recv(hbdev);
     } else if (cmd == COMMAND_WRITE_SECTORS) {

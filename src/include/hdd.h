@@ -25,6 +25,7 @@ struct hdd_blockdev {
 	uint_32 size;
 
     sem_t sem;
+    uint8_t current_command;
 
     enum type type;
 
