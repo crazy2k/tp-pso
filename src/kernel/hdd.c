@@ -134,7 +134,7 @@ sint_32 hdd_block_read(blockdev *this, uint32_t pos, void *buf,
 
     sint_32 read_chars = 0;
 
-    debug_printf("** hdd_block_read: start\n");
+    debug_printf("** hdd_block_read: start; pos = %x\n", pos);
 
     sem_wait(&hbdev->sem);
         hbdev->current_command = COMMAND_READ_SECTORS;
@@ -277,6 +277,7 @@ void hdd_primary_isr() {
 }
 
 static void hdd_recv(hdd_blockdev *hbdev) {
+    debug_printf("hdd_recv: reading\n");
     uint16_t base = GET_BASE(hbdev);
 
     int i;
@@ -292,6 +293,7 @@ static void hdd_recv(hdd_blockdev *hbdev) {
 }
 
 static void hdd_send(hdd_blockdev *hbdev) {
+    debug_printf("hdd_send: writing\n");
     uint16_t base = GET_BASE(hbdev);
 
     uint16_t *buf = mm_mem_kalloc();

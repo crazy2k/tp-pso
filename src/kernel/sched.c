@@ -47,6 +47,7 @@ void sched_load(pid pd) {
 }
 
 void sched_unblock(pid pd) {
+    debug_printf("sched_unblock: Unblocking %d\n", pd);
     tasks[pd].blocked = FALSE;
 }
 
@@ -62,10 +63,12 @@ int sched_exit() {
 }
 
 int sched_block() {
+    debug_printf("sched_block: before\n");
     sched_task *task = current_task();
     sched_task *next_task = task_list = next_executable_task(task);
 
     task->blocked = TRUE;
+    debug_printf("sched_block: task blocked\n");
 
     return get_pid(next_task);
 }
@@ -73,7 +76,7 @@ int sched_block() {
 int sched_tick() {
     sched_task *current = current_task();
 
-    debug_printf("sched_tick: running before is %x\n", get_pid(current));
+    debug_printf("sched_tick: running before is %x, blocked: %x\n", get_pid(current), current->blocked);
 
     //vga_printf(0, 0, "pid = %x, rem_quantum = %x", 0x0F, sched_get_current_pid(),
     //    current_task()->rem_quantum);
@@ -97,8 +100,10 @@ int sched_get_current_pid() {
 static sched_task *next_executable_task(sched_task *task) {
     sched_task *candidate = task->next;
     //Siempre existe un candidate sin bloquear (debido a la presencia de idle)
-    while (candidate->blocked)
+    while (candidate->blocked) {
+//        debug_printf("next_executable_task: cycle: current is %d, and next is %d\n", get_pid(candidate), get_pid(candidate->next));
         candidate = candidate->next;
+    }
 
 /*  debug_printf("Proceso candidato #%x seleccionado esta ", get_pid(candidate));
     debug_printf(candidate->blocked ? "Bloqueado\n" : "Desbloqueado\n");*/

@@ -28,6 +28,7 @@ void *sys_palloc() {
 }
 
 int sys_read(int fd, void *buf, uint32_t size) {
+    debug_printf("sys_read\n");
     chardev *cdev;
     if (!(cdev = loader_get_file(fd)))
         return -ENOFILE;
@@ -50,6 +51,7 @@ int sys_write(int fd, const void *buf, uint32_t size) {
 }
 
 int sys_seek(int fd, uint32_t size) {
+    debug_printf("sys_seek: size = %x\n", size);
     chardev *cdev;
     if (!(cdev = loader_get_file(fd)))
         return -ENOFILE;
@@ -112,10 +114,16 @@ int sys_run(const char *path) {
     if (!(cdev = fs_open(path, FS_OPEN_RDONLY)))
         return -ENOFILE;
 
+    debug_printf("sys_run: file open\n");
     pso_file *file = (pso_file *) run_buf;
     cdev->read(cdev, file, RUN_BUF_LEN);
+    debug_printf("sys_run: file read\n");
 
     return loader_load(file, 3);
+}
+
+int sys_exec(const char *path) {
+    
 }
 
 

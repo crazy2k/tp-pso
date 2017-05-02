@@ -270,8 +270,8 @@ static sint_32 ext2_file_seek(chardev *this, uint32_t pos) {
 
     ext2_file_chardev *fp = (ext2_file_chardev *)this;
 
-    if (pos >= fp->buf_size)
-        return -1;
+    //if (pos >= fp->buf_size)
+    //    return -1;
 
     fp->file_offset = pos;
     return 0;

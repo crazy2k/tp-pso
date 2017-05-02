@@ -334,12 +334,16 @@ void loader_switchto(pid pd) {
     lcr3((uint32_t)(new_pcb->pd));
     setup_tss((uint32_t)new_pcb->kernel_stack_limit);
 
+    debug_printf("loader_switchto: switching stack pointers: %x -> %x\n", &old_pcb->kernel_stack_pointer,
+        &new_pcb->kernel_stack_pointer);
     loader_switch_stack_pointers(&old_pcb->kernel_stack_pointer,
         &new_pcb->kernel_stack_pointer);
 
     kill_zoombies();
+    debug_printf("loader_switchto: zombies killed\n");
 
     restore_eflags(eflags);
+    debug_printf("loader_switchto: eflags restored\n");
 }
 
 int loader_add_file(chardev *cdev) {
@@ -387,8 +391,9 @@ int loader_fork(task_state_t *parent_st) {
     pcb->pd = (void *) mm_clone_pd(current->pd);
 
     pcb->kernel_stack = mm_mem_kalloc();
+    memcpy(pcb->kernel_stack, current->kernel_stack, PAGE_SIZE);
     pcb->kernel_stack_limit = pcb->kernel_stack + PAGE_SIZE;
-    pcb->kernel_stack_pointer = pcb->kernel_stack_limit;
+    pcb->kernel_stack_pointer = pcb->kernel_stack + (current->kernel_stack_pointer - current->kernel_stack);
 
     copy_fds(pcb, current);
 
@@ -509,6 +514,7 @@ static void setup_tss(uint32_t kernel_stack) {
 }
 
 static void copy_fds(pcb* dest, pcb* src) {
+    debug_printf("copy_fds\n");
     int i;
     for (i = 0; i <= src->last_fd; i++) {
         if (src->fds[i])
@@ -521,5 +527,6 @@ static void copy_fds(pcb* dest, pcb* src) {
 }
 
 static void copy_task_state(task_state_t *new_st, task_state_t *old_st) {
+    debug_printf("copy_task_state\n");
     memcpy((void*)new_st, (void*)old_st, sizeof(task_state_t));
 }

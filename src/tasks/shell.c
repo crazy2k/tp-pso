@@ -24,6 +24,8 @@ static char *get_word(char** str);
 static void print_help(int fd);
 static void cat_file(int console, char* file_name);
 static void cat(int console, char* files);
+static void specialcat_file(int console, char* file_name);
+static void specialcat(int console, char* files);
 
 
 int main(void) {
@@ -51,6 +53,8 @@ int main(void) {
                 exit();
             } else if (strcmp(command, CMD_CAT) == 0) {
                 cat(con, rest);
+            } else if (strcmp(command, "sc") == 0) {
+                specialcat(con, rest);
             } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
             } else if (strlen(command)) {
@@ -109,6 +113,33 @@ static void cat(int console, char* files) {
 
     write_str(console, "\n");
 }
+
+static void specialcat(int console, char* files) {
+    char *file_name;
+
+    while(strlen(files) && (file_name = get_word(&files))) {
+        specialcat_file(console, file_name);
+
+        files = skip_spaces(files);
+    }
+
+    write_str(console, "\n");
+}
+
+static void specialcat_file(int console, char* file_name) {
+    int fd = open(file_name, FS_OPEN_RDONLY);
+    int chars;
+
+    if (fd >= 0) {
+        seek(fd, 1024*(65000));
+        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE)))
+            write(console, cat_buf, chars);
+
+        close(fd);
+    } else
+        printf(console, "No existe el archivo %s", file_name);
+}
+
 
 static void cat_file(int console, char* file_name) {
     int fd = open(file_name, FS_OPEN_RDONLY);
