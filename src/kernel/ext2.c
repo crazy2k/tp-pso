@@ -220,26 +220,39 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
 
     debug_printf("ext2_file_read: file_size: %x, file_offset: %x\n",
         fp->file_size, fp->file_offset);
+
+    // `n` represents the bytes still to be read and copied to the user's buffer
+    // for this operation to complete
     int n = min(size, fp->file_size - fp->file_offset);
     int result = n;
 
+    // Get the inode
     ext2_inode inode;
     get_inode(fp->file_part_info, fp->file_no, &inode);
 
+    // While there's more to be read
     while (n > 0) {
+        // A section is a window the size of our buffer that contains blocks. It's
+        // a window we move forward as we need, and starts at the first block that's
+        // needed for this read
+
+        // Ordinal number of the first data block that contains data we care
+        // about for this offset
         uint32_t section_first_bno = fp->file_offset/(GET_BLOCK_SIZE(fp->file_part_info));
 
+        // Do we have everything we need in the buffer/section?
         if (fp->buf_section != (section_first_bno/GET_BLOCKS_PER_SECTION(fp))) {
             get_data_for_file(fp->file_part_info, &inode, section_first_bno, 
                 fp->buf, fp->buf_size);
             fp->buf_section = section_first_bno/GET_BLOCKS_PER_SECTION(fp);
         }
 
-        uint32_t buf_offset = fp->file_offset % fp->buf_size;
+        uint32_t skipped_bytes = section_first_bno*GET_BLOCK_SIZE(fp->file_part_info);
+        uint32_t buf_offset = (fp->file_offset - skipped_bytes) % fp->buf_size;
         uint32_t read = min(n, fp->buf_size - buf_offset);
 
-        debug_printf("ext2_file_read: buf_offset: %x, read: %x\n", buf_offset,
-            read);
+        debug_printf("ext2_file_read: file_offset: %x, buf_size: %x, buf_offset: %x, read: %x\n", 
+            fp->file_offset, fp->buf_size, buf_offset, read);
         memcpy(buf, fp->buf + buf_offset, read);
 
         buf += read;
@@ -389,8 +402,9 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
     return get_data_for_file(part_info, inode, 0, buf, inode->size);
 }
 
-/* Por ahora solo soporta archivos de 12 bloques (si los bloques son de 1024,
- * son 12KB).
+/*
+ * Reads buf_size bytes of data into the buf buffer, from the file represented
+ * by inode
  */
 static int get_data_for_file(ext2 *part_info, ext2_inode *inode,
     uint32_t first_bno, void *buf, uint32_t buf_size) {
@@ -429,6 +443,7 @@ static int get_data_for_file(ext2 *part_info, ext2_inode *inode,
 }
 
 static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level, int *bno_offset, uint32_t *remaining, void **buf) {
+    debug_printf("** ext2: get_indirect_data_for_file: remaining : %x\n", remaining);
     uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     if (level > 0) {
