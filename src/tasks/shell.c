@@ -4,7 +4,7 @@
 #include <fs.h>
 #include <errors.h>
 
-#define SHELL_BUF_SIZE 160
+#define SHELL_BUF_SIZE 1024
 #define CAT_BUF_SIZE SHELL_BUF_SIZE
 #define PROMTP "shell> "
 
@@ -131,9 +131,26 @@ static void specialcat_file(int console, char* file_name) {
     int chars;
 
     if (fd >= 0) {
-        seek(fd, 1024*(65000));
-        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE)))
-            write(console, cat_buf, chars);
+//        seek(fd, 1024);
+//        chars = read(fd, cat_buf, CAT_BUF_SIZE);
+//        write(console, cat_buf, chars);
+//        printf(console, "Found signature %x\n", cat_buf[0]);
+        
+        char block_signature = 0;
+        int block = 0;
+
+        // cat_buf is one block
+        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE))) {
+            if (cat_buf[0] != block_signature) {
+                printf(console, "Mismatch in block %x. Found %x\n", block, cat_buf[0]);
+                break;
+            }
+            printf(console, "Pass: %d\n", block);
+
+            block_signature += 100;
+            block += 100;
+            seek(fd, block*1024);
+        }
 
         close(fd);
     } else

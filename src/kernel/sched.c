@@ -76,7 +76,7 @@ int sched_block() {
 int sched_tick() {
     sched_task *current = current_task();
 
-    debug_printf("sched_tick: running before is %x, blocked: %x\n", get_pid(current), current->blocked);
+//    debug_printf("sched_tick: running before is %x, blocked: %x\n", get_pid(current), current->blocked);
 
     //vga_printf(0, 0, "pid = %x, rem_quantum = %x", 0x0F, sched_get_current_pid(),
     //    current_task()->rem_quantum);
@@ -86,7 +86,7 @@ int sched_tick() {
         task_list = current = next_executable_task(current);
     }
 
-    debug_printf("sched_tick: running after is %x\n", get_pid(current));
+//    debug_printf("sched_tick: running after is %x\n", get_pid(current));
 
     // Si la tarea actual aun tiene quantum o no encontramos otra tarea a
     // ejecutar, seguimos con la misma

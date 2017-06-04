@@ -320,9 +320,9 @@ void loader_exit(void) {
 }
 
 void loader_switchto(pid pd) {
-    debug_printf("loader_switchto: pid %x\n", pd);
-    debug_printf("loader_switchto: get_pid(get_current_pcb()) %x\n",
-        get_pid(get_current_pcb()));
+//    debug_printf("loader_switchto: pid %x\n", pd);
+//    debug_printf("loader_switchto: get_pid(get_current_pcb()) %x\n",
+//        get_pid(get_current_pcb()));
     if (get_pid(get_current_pcb()) == pd)
         return;
 
@@ -334,16 +334,16 @@ void loader_switchto(pid pd) {
     lcr3((uint32_t)(new_pcb->pd));
     setup_tss((uint32_t)new_pcb->kernel_stack_limit);
 
-    debug_printf("loader_switchto: switching stack pointers: %x -> %x\n", &old_pcb->kernel_stack_pointer,
-        &new_pcb->kernel_stack_pointer);
+//    debug_printf("loader_switchto: switching stack pointers: %x -> %x\n", &old_pcb->kernel_stack_pointer,
+//        &new_pcb->kernel_stack_pointer);
     loader_switch_stack_pointers(&old_pcb->kernel_stack_pointer,
         &new_pcb->kernel_stack_pointer);
 
     kill_zoombies();
-    debug_printf("loader_switchto: zombies killed\n");
+//    debug_printf("loader_switchto: zombies killed\n");
 
     restore_eflags(eflags);
-    debug_printf("loader_switchto: eflags restored\n");
+//    debug_printf("loader_switchto: eflags restored\n");
 }
 
 int loader_add_file(chardev *cdev) {

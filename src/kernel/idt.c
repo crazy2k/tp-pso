@@ -138,7 +138,7 @@ static void default_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
 }
 
 void idt_handle(uint32_t index, uint32_t error_code, task_state_t *st) {
-    debug_printf("Code: %d\n", index);
+//    debug_printf("Code: %d\n", index);
     outb(PIC1_COMMAND, OCW2);
     outb(PIC2_COMMAND, OCW2);
 

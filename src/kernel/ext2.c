@@ -116,7 +116,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no,
     const char *relpath);
 
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf);
-static int get_data_for_file(ext2 *part_info, ext2_inode *inode, uint32_t first_bno, void *buf, uint32_t buf_size);
+static int operate_data_with_file(ext2 *part_info, ext2_inode *inode, uint32_t first_bno, void *buf, uint32_t buf_size, bool write);
 static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level, int *bno_offset, uint32_t *remaining, void **buf);
 
 static int indirect_block_count(ext2 *part_info, int level);
@@ -212,16 +212,20 @@ int ext2_stat(ext2 *part_info, const char *filename, stat_t* st) {
     return 0;
 }
 
-static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
+/*
+ * Read/write from/to file. Write operation does not support file growing.
+ */
+static sint_32 ext2_file_operate(chardev *this, void *buf, uint32_t size, bool write) {
     if (this->clase != DEVICE_EXT2_FILE_CHARDEV)
         return -1;
 
     ext2_file_chardev *fp = (ext2_file_chardev *)this;
 
-    debug_printf("ext2_file_read: file_size: %x, file_offset: %x\n",
+    debug_printf("ext2_file_operate: %s : file_size: %x, file_offset: %x\n",
+        write == TRUE ? "write" : "read",
         fp->file_size, fp->file_offset);
 
-    // `n` represents the bytes still to be read and copied to the user's buffer
+    // `n` represents the bytes still to be read/written
     // for this operation to complete
     int n = min(size, fp->file_size - fp->file_offset);
     int result = n;
@@ -230,40 +234,57 @@ static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
     ext2_inode inode;
     get_inode(fp->file_part_info, fp->file_no, &inode);
 
-    // While there's more to be read
+    // While there's more to be read/written
     while (n > 0) {
         // A section is a window the size of our buffer that contains blocks. It's
         // a window we move forward as we need, and starts at the first block that's
-        // needed for this read
+        // needed for this read/write
 
         // Ordinal number of the first data block that contains data we care
         // about for this offset
         uint32_t section_first_bno = fp->file_offset/(GET_BLOCK_SIZE(fp->file_part_info));
+        uint32_t skipped_bytes = section_first_bno*GET_BLOCK_SIZE(fp->file_part_info);
+        uint32_t buf_offset = (fp->file_offset - skipped_bytes) % fp->buf_size;
+        uint32_t operated = min(n, fp->buf_size - buf_offset);
+
+        if (write == TRUE) {
+            memcpy(fp->buf, buf, operated);
+        }
 
         // Do we have everything we need in the buffer/section?
         if (fp->buf_section != (section_first_bno/GET_BLOCKS_PER_SECTION(fp))) {
-            get_data_for_file(fp->file_part_info, &inode, section_first_bno, 
-                fp->buf, fp->buf_size);
+            operate_data_with_file(fp->file_part_info, &inode, section_first_bno, 
+                fp->buf, fp->buf_size, write);
             fp->buf_section = section_first_bno/GET_BLOCKS_PER_SECTION(fp);
         }
-
-        uint32_t skipped_bytes = section_first_bno*GET_BLOCK_SIZE(fp->file_part_info);
-        uint32_t buf_offset = (fp->file_offset - skipped_bytes) % fp->buf_size;
-        uint32_t read = min(n, fp->buf_size - buf_offset);
-
+                
         debug_printf("ext2_file_read: file_offset: %x, buf_size: %x, buf_offset: %x, read: %x\n", 
-            fp->file_offset, fp->buf_size, buf_offset, read);
-        memcpy(buf, fp->buf + buf_offset, read);
+                    fp->file_offset, fp->buf_size, buf_offset, operated);
 
-        buf += read;
-        n -= read;
-        fp->file_offset += read;
+        if (write != TRUE) {
+            memcpy(buf, fp->buf + buf_offset, operated);
+        }
+
+        
+//        debug_printf("File's buffer: ");
+//
+//        uint32_t *buf32 = fp->buf;
+//        int i;
+//        for (i = 0; i < size/4; i++) {
+//            debug_printf("%x ", *(buf32 + i));
+//        }
+
+        buf += operated;
+        n -= operated;
+        fp->file_offset += operated;
     }
 
     debug_printf("Leyo %d bytes en el buffer %x\n", result, (uint32_t)buf);
 
     return result;
 }
+
+
 
 static uint_32 ext2_file_flush(chardev *this) {
     if (this->clase != DEVICE_EXT2_FILE_CHARDEV)
@@ -293,7 +314,7 @@ static sint_32 ext2_file_seek(chardev *this, uint32_t pos) {
 static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
     fp->clase = DEVICE_EXT2_FILE_CHARDEV;
     fp->refcount = 0;
-    fp->read = ext2_file_read;
+    fp->read = ext2_file_operate;
     fp->flush = ext2_file_flush;
     fp->seek = ext2_file_seek;
 
@@ -310,9 +331,9 @@ static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
 static void initialize_part_info(ext2 *part_info) {
     // El superblock ocupa 1024 bytes, por lo que entra en una pagina
     part_info->superblock = mm_mem_kalloc();
-    read_from_bdev(part_info->part, 
+    operate_with_bdev(part_info->part, 
         OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET),
-        part_info->superblock, EXT2_SUPERBLOCK_SIZE);
+        part_info->superblock, EXT2_SUPERBLOCK_SIZE, FALSE);
 
     ext2_superblock *sb = part_info->superblock;
 
@@ -324,10 +345,11 @@ static void initialize_part_info(ext2 *part_info) {
         bg_count += 1;
 
     part_info->bgd_table = mm_mem_kalloc();
-    read_from_bdev(part_info->part,
+    operate_with_bdev(part_info->part,
         OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET + EXT2_SUPERBLOCK_SIZE),
         part_info->bgd_table,
-        bg_count*sizeof(ext2_block_group_descriptor));
+        bg_count*sizeof(ext2_block_group_descriptor),
+        FALSE);
 }
 
 static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
@@ -349,9 +371,9 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
         ((inode_index*inode_size) / block_size);
     uint32_t offset = (inode_index*inode_size) % block_size;
 
-    read_from_bdev(part_info->part,
+    operate_with_bdev(part_info->part,
         baddr2bdaddr(part_info, bn, offset),
-        inode, inode_size);
+        inode, inode_size, FALSE);
 
     return NULL;
 }
@@ -399,15 +421,15 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
 }
 
 static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
-    return get_data_for_file(part_info, inode, 0, buf, inode->size);
+    return operate_data_with_file(part_info, inode, 0, buf, inode->size, FALSE);
 }
 
 /*
  * Reads buf_size bytes of data into the buf buffer, from the file represented
  * by inode
  */
-static int get_data_for_file(ext2 *part_info, ext2_inode *inode,
-    uint32_t first_bno, void *buf, uint32_t buf_size) {
+static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
+    uint32_t first_bno, void *buf, uint32_t buf_size, bool write) {
 
     uint32_t /*blocks_read = 0,*/ block_size = GET_BLOCK_SIZE(part_info);
 
@@ -426,9 +448,9 @@ static int get_data_for_file(ext2 *part_info, ext2_inode *inode,
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
 
-        read_from_bdev(part_info->part, 
+        operate_with_bdev(part_info->part, 
             baddr2bdaddr(part_info, bno, 0), 
-            buf_pos, block_size);
+            buf_pos, block_size, FALSE);
     }
     
     int bno_offset = first_bno - EXT2_INODE_DIRECT_COUNT;
@@ -452,9 +474,9 @@ static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level,
 
         int blocks_next_level = indirect_block_count(part_info, level-1);
 
-        read_from_bdev(part_info->part,
+        operate_with_bdev(part_info->part,
             baddr2bdaddr(part_info, bno, 0), 
-            (void *) blocks, block_size);
+            (void *) blocks, block_size, FALSE);
 
         for (i = 0; i < total_blocks; i++) {
             if (blocks_next_level > *bno_offset)
@@ -467,9 +489,9 @@ static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level,
     } else if (*remaining > 0) {
         if (*bno_offset <= 0) {
             int read = min(*remaining, block_size);
-            read_from_bdev(part_info->part,
+            operate_with_bdev(part_info->part,
                 baddr2bdaddr(part_info, bno, 0), 
-                *buf, read);
+                *buf, read, FALSE);
            *remaining -= read;
            *buf += read;
         } else

@@ -63,7 +63,7 @@ void device_init(void);
 
 int device_descriptor(chardev* dev);
 
-void* read_from_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size);
+void* operate_with_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size, bool write);
 
 
 #endif
