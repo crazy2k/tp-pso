@@ -81,7 +81,7 @@ sint_32 hdd_block_write(blockdev* this, uint_32 pos, const void* buf, uint_32 si
                 buf + written_chars, size - written_chars);
     sem_signaln(&hbdev->sem);
 
-    debug_printf("** hdd_block_write: read: %x\n", written_chars);
+    debug_printf("** hdd_block_write: written: %x\n", written_chars);
 
     return size;
 }
@@ -190,8 +190,13 @@ sint_32 hdd_block_read_sectors(hdd_blockdev *hbdev, uint32_t pos, void *buf,
 
 sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *buf,
     uint32_t size) {
+    
+    if ((size % hbdev->size) != 0) {
+        debug_printf("hdd_block_write_sectors: ERROR: Attempting to write unaligned to sectors. Some data will be discarded.\n");
+    }
 
-    size = min(BUF_SIZE, size);
+    int sectors_to_write = size/hbdev->size;
+    size = sectors_to_write*hbdev->size;
 
     uint32_t lba = pos & __LOW28_BITS__;
     uint16_t base = GET_BASE(hbdev);
@@ -201,7 +206,7 @@ sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *b
 
     outb(base + PORT_FEATURES, NULL);
 
-    outb(base + PORT_SECTOR_COUNT, size/hbdev->size);
+    outb(base + PORT_SECTOR_COUNT, sectors_to_write);
 
     outb(base + PORT_SECTOR_NUMBER, (uint8_t)lba);
     outb(base + PORT_CYLINDER_LO, (uint8_t)(lba >> 8));
@@ -214,14 +219,27 @@ sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *b
     debug_printf("** hdd_block_write_sectors: t = %x\n",
         (uint32_t)hbdev - (uint32_t)hdd_blockdevs);
 
-    write_to_circ_buff(&hbdev->buf, (char *)buf, size, BUF_SIZE);
-
-    while (hbdev->buf.remaining != 0) {
-        debug_printf("hdd_block_write_sectors: loop\n");
-        loader_enqueue(&hbdev->waiting_process);
+    while (inb(base + PORT_COMMAND) == 0x58) {
+        debug_printf("hdd_block_write_sectors: waiting\n");
     }
 
-    debug_printf("hdd_block_write_sectors: awake\n");
+    debug_printf("hdd_block_write_sectors: done waiting\n");
+
+    debug_printf("hdd_block_write_sectors: going to write %d bytes: ", size);
+
+    uint32_t *buf32 = buf;
+    int i;
+    for (i = 0; i < size/4; i++)
+        debug_printf("%x ", *(buf32 + i));
+    debug_printf("\n");
+
+    int out_calls_per_sector = hbdev->size/sizeof(uint16_t); 
+    for (int i = 0; i < sectors_to_write*out_calls_per_sector; i++) {
+        uint16_t *buf16 = buf; 
+        uint16_t data = *(buf16 + i);
+        debug_printf("hdd_block_write_sectors: writing %x\n", data);
+        outw(base + PORT_DATA, data);
+    }
 
     return size;
 	
@@ -271,8 +289,6 @@ void hdd_primary_isr() {
     debug_printf("** hdd_primary_isr: cmd = %x\n", cmd);
     if (cmd == COMMAND_READ_SECTORS) {
         hdd_recv(hbdev);
-    } else if (cmd == COMMAND_WRITE_SECTORS) {
-        hdd_send(hbdev);
     }
 }
 
@@ -302,12 +318,12 @@ static void hdd_send(hdd_blockdev *hbdev) {
     int i;
     for (i = 0; i < (hbdev->size/sizeof(uint16_t)); i++) {
         read_from_circ_buff((char *)buf, &hbdev->buf, sizeof(uint16_t), sizeof(uint16_t));
+        debug_printf("hdd_send: writing %x\n", *buf);
         outw(base + PORT_DATA, *buf);
     }
 
     mm_mem_free(buf);
 
-    debug_printf("hdd_send: unqueue\n");
+    debug_printf("hdd_send: done writing\n");
 
-    loader_unqueue(&hbdev->waiting_process);
 }

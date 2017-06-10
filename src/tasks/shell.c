@@ -127,32 +127,38 @@ static void specialcat(int console, char* files) {
 }
 
 static void specialcat_file(int console, char* file_name) {
-    int fd = open(file_name, FS_OPEN_RDONLY);
+    int fd = open(file_name, FS_OPEN_WRONLY);
     int chars;
 
     if (fd >= 0) {
-//        seek(fd, 1024);
-//        chars = read(fd, cat_buf, CAT_BUF_SIZE);
-//        write(console, cat_buf, chars);
-//        printf(console, "Found signature %x\n", cat_buf[0]);
-        
-        char block_signature = 0;
-        int block = 0;
-
-        // cat_buf is one block
-        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE))) {
-            if (cat_buf[0] != block_signature) {
-                printf(console, "Mismatch in block %x. Found %x\n", block, cat_buf[0]);
-                break;
-            }
-            printf(console, "Pass: %d\n", block);
-
-            block_signature += 100;
-            block += 100;
-            seek(fd, block*1024);
-        }
+        seek(fd, 3*1024);
+        // 1KB
+        char *buf = "1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwerty";
+        write(fd, buf, 1024);
+//        
+//        char block_signature = 0;
+//        int block = 0;
+//        int step = 50;
+//
+//        // cat_buf is one block
+//        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE))) {
+//            if (cat_buf[0] != block_signature) {
+//                printf(console, "Mismatch in block %x. Found %x\n", block, cat_buf[0]);
+//                break;
+//            }
+//            printf(console, "Pass: %d\n", block);
+//
+//            block_signature += step;
+//            block += step;
+//            seek(fd, block*1024);
+//        }
 
         close(fd);
+
+        fd = open(file_name, FS_OPEN_RDONLY);
+        seek(fd, 3*1024);
+        chars = read(fd, cat_buf, CAT_BUF_SIZE);
+        write(console, cat_buf, chars);
     } else
         printf(console, "No existe el archivo %s", file_name);
 }

@@ -284,6 +284,14 @@ static sint_32 ext2_file_operate(chardev *this, void *buf, uint32_t size, bool w
     return result;
 }
 
+static sint_32 ext2_file_read(chardev *this, void *buf, uint32_t size) {
+    return ext2_file_operate(this, buf, size, FALSE);
+}
+
+static sint_32 ext2_file_write(chardev *this, const void *buf, uint32_t size) {
+    return ext2_file_operate(this, buf, size, TRUE);
+}
+
 
 
 static uint_32 ext2_file_flush(chardev *this) {
@@ -314,7 +322,8 @@ static sint_32 ext2_file_seek(chardev *this, uint32_t pos) {
 static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
     fp->clase = DEVICE_EXT2_FILE_CHARDEV;
     fp->refcount = 0;
-    fp->read = ext2_file_operate;
+    fp->read = ext2_file_read;
+    fp->write = ext2_file_write;
     fp->flush = ext2_file_flush;
     fp->seek = ext2_file_seek;
 
@@ -450,7 +459,7 @@ static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
 
         operate_with_bdev(part_info->part, 
             baddr2bdaddr(part_info, bno, 0), 
-            buf_pos, block_size, FALSE);
+            buf_pos, block_size, write);
     }
     
     int bno_offset = first_bno - EXT2_INODE_DIRECT_COUNT;
