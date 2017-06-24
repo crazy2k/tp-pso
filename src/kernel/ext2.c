@@ -253,19 +253,19 @@ static sint_32 ext2_file_operate(chardev *this, void *buf, uint32_t size, bool w
 
         // Do we have everything we need in the buffer/section?
         if (fp->buf_section != (section_first_bno/GET_BLOCKS_PER_SECTION(fp))) {
-            operate_data_with_file(fp->file_part_info, &inode, section_first_bno, 
+            operate_data_with_file(fp->file_part_info, &inode, section_first_bno,
                 fp->buf, fp->buf_size, write);
             fp->buf_section = section_first_bno/GET_BLOCKS_PER_SECTION(fp);
         }
-                
-        debug_printf("ext2_file_read: file_offset: %x, buf_size: %x, buf_offset: %x, read: %x\n", 
+
+        debug_printf("ext2_file_read: file_offset: %x, buf_size: %x, buf_offset: %x, read: %x\n",
                     fp->file_offset, fp->buf_size, buf_offset, operated);
 
         if (write != TRUE) {
             memcpy(buf, fp->buf + buf_offset, operated);
         }
 
-        
+
 //        debug_printf("File's buffer: ");
 //
 //        uint32_t *buf32 = fp->buf;
@@ -340,7 +340,7 @@ static void initialize_ext2_file_chardev(ext2_file_chardev *fp) {
 static void initialize_part_info(ext2 *part_info) {
     // El superblock ocupa 1024 bytes, por lo que entra en una pagina
     part_info->superblock = mm_mem_kalloc();
-    operate_with_bdev(part_info->part, 
+    operate_with_bdev(part_info->part,
         OFFSET_TO_BD_ADDR(part_info->part, EXT2_SUPERBLOCK_OFFSET),
         part_info->superblock, EXT2_SUPERBLOCK_SIZE, FALSE);
 
@@ -392,7 +392,7 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
 static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath) {
     uint32_t offset = 0, next_inode = 0;
     ext2_inode *dir_inode = (ext2_inode *) inode_buf;
-    
+
     // Si el path es vacio devolver el propio dir
     if (!relpath || relpath[0] == '\0')
         return dir_no;
@@ -421,7 +421,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
         else
             offset += entry->direntry_length;
     }
-    
+
     // La direccion del fs debe corresponder a un archivo existente
     if (next_inode == 0)
         return 0;
@@ -442,7 +442,9 @@ static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
 
     uint32_t /*blocks_read = 0,*/ block_size = GET_BLOCK_SIZE(part_info);
 
+    /* Total bytes to read */
     uint32_t remaining = min(inode->size, buf_size);
+    /* If bytes is not a multiple of the block size, align to the next block size multiple */
     if (remaining % block_size > 0)
         remaining += block_size - (remaining % block_size);
 
@@ -457,16 +459,16 @@ static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
 
-        operate_with_bdev(part_info->part, 
-            baddr2bdaddr(part_info, bno, 0), 
+        operate_with_bdev(part_info->part,
+            baddr2bdaddr(part_info, bno, 0),
             buf_pos, block_size, write);
     }
-    
+
     int bno_offset = first_bno - EXT2_INODE_DIRECT_COUNT;
     // Leemos los datos desde bloques indirectos, si los hay
     for (i = 1; (i < 4) && (remaining > 0); i++) {
-        get_indirect_data_for_file(part_info, 
-            inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], i, 
+        get_indirect_data_for_file(part_info,
+            inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], i,
             &bno_offset, &remaining, &buf_pos);
     }
 
@@ -484,7 +486,7 @@ static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level,
         int blocks_next_level = indirect_block_count(part_info, level-1);
 
         operate_with_bdev(part_info->part,
-            baddr2bdaddr(part_info, bno, 0), 
+            baddr2bdaddr(part_info, bno, 0),
             (void *) blocks, block_size, FALSE);
 
         for (i = 0; i < total_blocks; i++) {
@@ -499,13 +501,13 @@ static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level,
         if (*bno_offset <= 0) {
             int read = min(*remaining, block_size);
             operate_with_bdev(part_info->part,
-                baddr2bdaddr(part_info, bno, 0), 
+                baddr2bdaddr(part_info, bno, 0),
                 *buf, read, FALSE);
            *remaining -= read;
            *buf += read;
         } else
             (*bno_offset)--;
-    } else 
+    } else
         return;
 }
 
@@ -521,16 +523,16 @@ static bd_addr_t baddr2bdaddr(ext2 *part_info, uint32_t bno, uint32_t offset) {
     if (block_size >= sector_size) {
         c = block_size/sector_size;
 
-        return ((bd_addr_t) { 
+        return ((bd_addr_t) {
             .sector = bno*c + offset/sector_size,
             .offset = offset % sector_size
         });
     } else {
         c = sector_size/block_size;
-    
-        return ((bd_addr_t) { 
+
+        return ((bd_addr_t) {
             .sector = bno/c,
-            .offset = offset + (bno % c) * block_size 
+            .offset = offset + (bno % c) * block_size
         });
     }
 }
