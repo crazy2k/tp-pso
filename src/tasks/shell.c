@@ -131,6 +131,33 @@ static void specialcat_file(int console, char* file_name) {
     int chars;
 
     if (fd >= 0) {
+        char block_signature = 0;
+        int block = 0;
+        int step = 50;
+
+        // cat_buf is one block
+        while ((chars = read(fd, cat_buf, CAT_BUF_SIZE))) {
+            if (cat_buf[0] != block_signature) {
+                printf(console, "Mismatch in block %x. Found %x\n", block, cat_buf[0]);
+                break;
+            }
+            printf(console, "Pass: %d\n", block);
+
+            block_signature += step;
+            block += step;
+            seek(fd, block*1024);
+        }
+
+        close(fd);
+    } else
+        printf(console, "No existe el archivo %s", file_name);
+}
+
+static void specialcat2_file(int console, char* file_name) {
+    int fd = open(file_name, FS_OPEN_WRONLY);
+    int chars;
+
+    if (fd >= 0) {
         seek(fd, 3*1024);
         // 1KB
         char *buf = "1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwertyuiopasdfghjklzxcvbnm1234567890qwerty";
@@ -162,7 +189,6 @@ static void specialcat_file(int console, char* file_name) {
     } else
         printf(console, "No existe el archivo %s", file_name);
 }
-
 
 static void cat_file(int console, char* file_name) {
     int fd = open(file_name, FS_OPEN_RDONLY);
