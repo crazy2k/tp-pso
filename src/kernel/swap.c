@@ -3,11 +3,15 @@
 #include <debug.h>
 #include <utils.h>
 #include <i386.h>
+#include <fs.h>
 
-static uint32_t free_swapping_blocks = 1;
+// Swap file
+static chardev *sf;
 
 void swap_init(void) {
-    /* Checkear presencia de archivo swap */
-    /* Obtener tamaño de archivo */
-    /* ¿Solo hacer swap de paginas de usuario, las paginas de kernel son compartidas entre cada procesos */
+    debug_printf("* swap: init\n");
+    sf = fs_open("/disk/bleh", FS_OPEN_RDWR);
+    char c;
+    sf->read(sf, &c, 1);
+    debug_printf("* swap: data read: %x\n", c);
 }

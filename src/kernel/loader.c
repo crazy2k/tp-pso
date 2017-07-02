@@ -11,6 +11,7 @@
 #include <vga.h>
 #include <fs.h>
 #include <debug.h>
+#include <swap.h>
 
 #define COMMON_EFLAGS 0x3202
 #define USER_STACK 0xC0000000
@@ -139,7 +140,10 @@ void loader_init(void) {
     //sys_run("/disk/shell.pso");
     //sys_run("/disk/shell.pso");
     //sys_run("/disk/shell.pso");
+    swap_init();
+
     loader_load_main(init_main);
+    
     idle_main();
 }
 
@@ -271,11 +275,14 @@ void loader_setup_task_memory(pso_file *f) {
 void loader_enqueue(int *cola) {
     pcb *queue;
     if (*cola == -1) {
+        debug_printf("loader_enqueue: *cola == -1\n");
         queue = NULL;
         *cola = get_pid(get_current_pcb());
     }
-    else
+    else {
+        debug_printf("loader_enqueue: *cola != -1\n");
         queue = &pcbs[*cola];
+    }
 
     APPEND(&queue, get_current_pcb());
     debug_printf("loader_enqueue: enqueue pid: %x\n",

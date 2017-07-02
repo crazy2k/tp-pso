@@ -25,13 +25,13 @@ void kernel_init(void) {
     serial_init();
     debug_init();
     mm_init();
-    swap_init();
     sched_init();
     con_init();
 
     hdd_init();
     ext2_init();
     fs_init();
+//    swap_init();
     pipe_init();
 
     loader_init();
