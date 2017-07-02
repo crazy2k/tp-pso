@@ -26,6 +26,7 @@ static void cat_file(int console, char* file_name);
 static void cat(int console, char* files);
 static void specialcat_file(int console, char* file_name);
 static void specialcat(int console, char* files);
+static void multiread(int console, char *files);
 
 
 int main(void) {
@@ -55,6 +56,8 @@ int main(void) {
                 cat(con, rest);
             } else if (strcmp(command, "sc") == 0) {
                 specialcat(con, rest);
+            } else if (strcmp(command, "mr") == 0) {
+                multiread(con, rest);
             } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
             } else if (strlen(command)) {
@@ -112,6 +115,40 @@ static void cat(int console, char* files) {
     }
 
     write_str(console, "\n");
+}
+
+static void multiread_file(int console, char* file_name) {
+    printf(console, "starting tasks\n");
+    int pid = fork();
+    if (pid == 0) {
+        printf(console, "starting task 1\n");
+        int fd = open(file_name, FS_OPEN_WRONLY);
+        char c;
+        read(fd, &c, 1);
+        printf(console, "data read: %x\n", c);
+        close(fd);
+    } else {
+        printf(console, "starting task 2\n");
+        int fd = open(file_name, FS_OPEN_WRONLY);
+        seek(fd, 1024);
+        char c;
+        read(fd, &c, 1);
+        printf(console, "data read: %x\n", c);
+        close(fd);
+    }
+}
+
+static void multiread(int console, char *files) {
+    char *file_name;
+
+    while(strlen(files) && (file_name = get_word(&files))) {
+        multiread_file(console, file_name);
+
+        files = skip_spaces(files);
+    }
+
+    write_str(console, "\n");
+    
 }
 
 static void specialcat(int console, char* files) {

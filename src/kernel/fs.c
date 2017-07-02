@@ -58,8 +58,10 @@ chardev *fs_open(const char *filename, uint32_t flags) {
             return NULL;
     }        
 
-	if (!strncmp(filename, "/disk/", 6))
+	if (!strncmp(filename, "/disk/", 6)) {
+        debug_printf("fs_open: disk addr: %x\n" , &disk);
         return ext2_open(&disk, filename, flags);
+    }
 	
 	return NULL;
 }

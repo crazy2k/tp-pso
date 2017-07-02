@@ -359,10 +359,15 @@ static void initialize_part_info(ext2 *part_info) {
         part_info->bgd_table,
         bg_count*sizeof(ext2_block_group_descriptor),
         FALSE);
+    part_info->initialized = TRUE;
 }
 
 static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
     // Obtenemos el numero de Block Group
+    debug_printf("get_inode: part_info: %x\n", part_info);
+    debug_printf("get_inode: part_info->superblock: %x\n", part_info->superblock);
+    debug_printf("get_inode: Inodes count: %x\n", part_info->superblock->inodes_count);
+    debug_printf("get_inode: Inodes per group: %x\n", part_info->superblock->inodes_per_group);
     uint32_t bg_no = (no - 1)/part_info->superblock->inodes_per_group;
 
     // Obtenemos el descriptor correspondiente al Block Group
