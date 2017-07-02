@@ -36,6 +36,7 @@ void sched_init(void) {
 }
 
 void sched_load(pid pd) {
+    debug_printf("sched_load: Loading %d\n", pd);
     sched_task *task = POP(&free_tasks);
 
     // Llenar task

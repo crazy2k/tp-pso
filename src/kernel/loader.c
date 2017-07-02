@@ -312,6 +312,7 @@ void loader_unqueue(int *cola) {
 }
 
 void loader_exit(void) {
+    debug_printf("** loader_exit: exiting task\n");
     pcb* task = get_current_pcb();
     APPEND(&zoombie_tasks, task);
 
@@ -422,6 +423,7 @@ int loader_fork(task_state_t *parent_st) {
 
     sched_load(get_pid(pcb));
 
+    debug_printf("loader_fork: Finished\n");
     return get_pid(pcb);
 }
 

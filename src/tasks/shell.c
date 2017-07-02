@@ -127,6 +127,7 @@ static void multiread_file(int console, char* file_name) {
         read(fd, &c, 1);
         printf(console, "data read: %x\n", c);
         close(fd);
+        exit();
     } else {
         printf(console, "starting task 2\n");
         int fd = open(file_name, FS_OPEN_WRONLY);
