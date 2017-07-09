@@ -3,7 +3,7 @@
 
 #define COMMON_FLAGS (GDT_DESC_G | GDT_DESC_DB | GDT_DESC_P | GDT_DESC_S)
 
-uint64_t gdt[] __attribute__((aligned(0x8))) = {
+uint64_t gdt[] __attribute__((aligned(0x8), section (".text"))) = {
 
     [GDT_INDEX_NULL] = GDT_NULL,
 
@@ -23,7 +23,7 @@ uint64_t gdt[] __attribute__((aligned(0x8))) = {
     [GDT_INDEX_TSS] = GDT_NULL,
 };
 
-gdtr_t gdtr = { .size = sizeof(gdt) - 1, .addr = &gdt };
+gdtr_t gdtr __attribute__((section (".text"))) = { .size = sizeof(gdt) - 1, .addr = &gdt };
 
 
 void gdt_init(void) {
