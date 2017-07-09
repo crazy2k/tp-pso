@@ -3,6 +3,7 @@
 #include <debug.h>
 #include <utils.h>
 #include <i386.h>
+#include <swap.h>
 
 #define IS_ASSIGNED_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_ASSIGNED_PAGE) \
     && ((pte) & PTE_P))
@@ -12,9 +13,12 @@
     && ((pte) & PTE_P))
 #define IS_COW_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_COW_PAGE) \
     && ((pte) & PTE_P) && !((pte) & PDE_RW))
+#define IS_SWAPPED_PAGE(pte) ((((pte) & PTE_AVL_BITS) == PTE_SWAPPED_PAGE) \
+    && !((pte) & PTE_P))
 
 #define MARK_AS_COW(pte) ((CLEAR_PTE_AVL_BITS(pte) | PTE_COW_PAGE) & ~PTE_RW)
 #define MARK_AS_SHARED(pte) (CLEAR_PTE_AVL_BITS(pte) | PTE_SHARED_PAGE)
+#define MARK_AS_SWAPPED(pte) (CLEAR_PTE_AVL_BITS(pte) | PTE_SWAPPED_PAGE)
 #define CLEAR_PTE_AVL_BITS(pte) ((pte) & ~PTE_AVL_BITS)
 
 #define PHADDR_TO_PAGE(phaddr) (((page_t *)FIRST_FREE_KERNEL_PAGE) + ((uint32_t)phaddr/PAGE_SIZE))
@@ -189,6 +193,12 @@ bool mm_is_requested_page(void* vaddr) {
     uint32_t *pte = get_pte(current_pd(), vaddr);
 
     return IS_REQUESTED_PAGE(*pte);
+}
+
+bool mm_is_swapped_page(void* vaddr) {
+    uint32_t *pte = get_pte(current_pd(), vaddr);
+
+    return IS_SWAPPED_PAGE(*pte);
 }
 
 uint32_t *mm_clone_pd(uint32_t src_pd[]) {
@@ -457,11 +467,47 @@ static void* set_page_as_requested(void *vaddr) {
     return vaddr;
 }
 
+static void* get_victim_vaddr(uint32_t pd[]) {
+    void *vaddr;
+    for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
+        // Note that pte could be zero when there's no pte for this vaddr
+        uint32_t *pte = get_pte(pd, vaddr);
+        if (*pte && IS_ASSIGNED_PAGE(*pte)) {
+            return vaddr;
+        }
+    }
+
+    return NULL;
+}
+
+
+void mm_swap_page_in(void *vaddr) {
+    uint32_t *pd = current_pd();
+    uint32_t *pte = get_pte(pd, vaddr);
+    if (IS_SWAPPED_PAGE(*pte)) {
+        uint32_t id = PTE_NOT_PRESENT_SWAP_ID(*pte) >> 12;
+        void *aligned_vaddr = new_user_page(pd, vaddr);
+        swap_load(id, aligned_vaddr);
+    }
+}
+
+void mm_swap_page_out() {
+    uint32_t *pd = current_pd(); 
+    void *victim_vaddr = get_victim_vaddr(pd);
+    uint32_t id = swap_unload(victim_vaddr);
+    uint32_t *victim_pte = get_pte(pd, victim_vaddr);
+    page_t *mapped_page = PHADDR_TO_PAGE(PTE_PAGE_BASE(*victim_pte));
+    return_page(&free_user_pages, mapped_page);
+    *victim_pte = 0;
+    *victim_pte = MARK_AS_SWAPPED(*victim_pte) | (id << 12);
+}
+
 // Mapea una pagina fisica nueva para la direccion virtual pasada por parametro
 void* new_user_page(uint32_t pd[], void* vaddr) {
     // Si no hay mas memoria retornar NULL
-    if (!free_user_pages)
-        return NULL;
+    if (!free_user_pages) {
+        mm_swap_page_out();
+    }
 
     vaddr = ALIGN_TO_PAGE_START(vaddr);
 

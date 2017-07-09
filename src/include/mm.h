@@ -72,12 +72,15 @@
 #define PTE_RW PDE_RW
 #define PTE_P PDE_P
 
+#define PTE_NOT_PRESENT_SWAP_ID(dir) PTE_PAGE_BASE(dir)
+
 #define PTE_AVL_BITS PTE_AVL(0x7)
 
 #define PTE_ASSIGNED_PAGE PTE_AVL(0)
 #define PTE_REQUESTED_PAGE PTE_AVL(1)
 #define PTE_SHARED_PAGE PTE_AVL(2)
 #define PTE_COW_PAGE PTE_AVL(3)
+#define PTE_SWAPPED_PAGE PTE_AVL(4)
 
 #define PD_ENTRIES 1024
 #define PT_ENTRIES PD_ENTRIES
@@ -117,6 +120,7 @@ void* mm_load_requested_page(void* vaddr);
 int mm_load_cow_page(void* vaddr);
 bool mm_is_requested_page(void* vaddr);
 bool mm_is_cow_page(void* vaddr);
+bool mm_is_swapped_page(void* vaddr);
 
 int mm_share_page(void* vaddr);
 

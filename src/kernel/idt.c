@@ -222,7 +222,10 @@ static void primary_hdd_isr(uint32_t index, uint32_t error_code,
 static void page_fault_isr(uint32_t index, uint32_t error_code, task_state_t *st) {
     void* page = (void *) rcr2();
 
-    if (!(error_code & PF_ISR_P) && mm_is_requested_page(page)) {
+    if (!(error_code & PF_ISR_P) && mm_is_swapped_page(page)) {
+        debug_printf("page_fault_isr: swapped page\n");
+        mm_swap_page_in(page);
+    } else if (!(error_code & PF_ISR_P) && mm_is_requested_page(page)) {
         debug_printf("page_fault_isr: requested page\n");
         if (mm_load_requested_page(page) == NULL)
             loader_exit();
