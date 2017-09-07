@@ -27,6 +27,7 @@ static void cat(int console, char* files);
 static void specialcat_file(int console, char* file_name);
 static void specialcat(int console, char* files);
 static void multiread(int console, char *files);
+static void hogmem(int console, char *files);
 
 
 int main(void) {
@@ -58,6 +59,8 @@ int main(void) {
                 specialcat(con, rest);
             } else if (strcmp(command, "mr") == 0) {
                 multiread(con, rest);
+            } else if (strcmp(command, "hm") == 0) {
+                hogmem(con, rest);
             } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
             } else if (strlen(command)) {
@@ -137,6 +140,22 @@ static void multiread_file(int console, char* file_name) {
         printf(console, "data read: %x\n", c);
         close(fd);
     }
+}
+
+static void hogmem(int console, char *files) {
+    char *bufs[20];
+    for (int i = 0; i < 20; i++) {
+        bufs[i] = palloc();
+        bufs[i][0] = 'h';
+        printf(console, "Set: %x\n", bufs[i][0]);
+    }
+
+    for (int i = 0; i < 20; i++) {
+        printf(console, "Found: %x\n", bufs[i][0]);
+    }
+    
+    write_str(console, "Done\n");
+
 }
 
 static void multiread(int console, char *files) {

@@ -19,7 +19,7 @@ uint32_t swap_unload(void *vaddr) {
     uint32_t id = next_id;
     sf->seek(sf, id*PAGE_SIZE);
     sf->write(sf, vaddr, PAGE_SIZE);
-    debug_printf("* swap: data unloaded: %x\n");
+    debug_printf("* swap: data unloaded\n");
     next_id++;
     return id;
 }
@@ -27,5 +27,5 @@ uint32_t swap_unload(void *vaddr) {
 void swap_load(uint32_t id, void *vaddr) {
     sf->seek(sf, id*PAGE_SIZE);
     sf->read(sf, vaddr, PAGE_SIZE);
-    debug_printf("* swap: data loaded: %x\n");
+    debug_printf("* swap: data loaded: %x\n", vaddr);
 }

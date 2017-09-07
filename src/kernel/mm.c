@@ -74,6 +74,7 @@ static uint32_t clone_pte(uint32_t pd[], void* from, void* avl_addr);
 
 static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
+static void print_totals(uint32_t pd[]);
 
 void mm_init(void) {
     free_pages_list_setup();
@@ -149,6 +150,9 @@ void* mm_request_mem_alloc() {
     uint32_t *pd = current_pd();
     void *vaddr = seek_unused_vaddr(pd);
     debug_printf("mm_request_mem_alloc: vaddr: %x\n", vaddr);
+    debug_printf("mm_request_mem_alloc: free_user_pages size: %d\n", SIZE(free_user_pages));
+    print_totals(pd);
+    
 
     return set_page_as_requested(vaddr);
 }
@@ -311,7 +315,9 @@ static void user_pages_list_setup(void) {
 
     page_t *first = PHADDR_TO_PAGE(KERNEL_MEMORY_LIMIT);
     memset(first, 0, sizeof(page_t));
+
     APPEND(&free_user_pages, first);
+    uint32_t free_user_pages_count = 1;
 
     if (!valid_physical_page(KERNEL_MEMORY_LIMIT)) {
         custom_kpanic_msg("No hay suficiente memoria física "
@@ -324,6 +330,7 @@ static void user_pages_list_setup(void) {
         page_t *current = PHADDR_TO_PAGE(phaddr);
         memset(current, 0, sizeof(page_t));
         APPEND(&free_user_pages, current);
+        debug_printf("user_pages_list_setup: count: %d\n", ++free_user_pages_count);
     }
 
     reserve_pages(&free_kernel_pages, KERNEL_MEMORY_START,
@@ -352,11 +359,15 @@ static void activate_pagination(void) {
     lcr0(new_cr0);
 }
 
+static uint32_t valid_pages_count = 0;
+
 static bool valid_physical_page(void* phaddr) {
     volatile uint32_t* test_addr = ALIGN_TO_PAGE_START(phaddr);
     *test_addr = TEST_WORD;
 
-    return *test_addr == TEST_WORD;
+    debug_printf("valid_physical_page: phaddr: %x\n", phaddr);
+    valid_pages_count++;
+    return *test_addr == TEST_WORD && valid_pages_count < 20;
 }
 
 static void add_page_to_list(page_t* head, page_t* new) {
@@ -469,10 +480,11 @@ static void* set_page_as_requested(void *vaddr) {
 
 static void* get_victim_vaddr(uint32_t pd[]) {
     void *vaddr;
-    for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
+    for (vaddr = 0xC0000000 - PAGE_SIZE; vaddr != KERNEL_MEMORY_LIMIT; vaddr -= PAGE_SIZE) {
         // Note that pte could be zero when there's no pte for this vaddr
         uint32_t *pte = get_pte(pd, vaddr);
         if (*pte && IS_ASSIGNED_PAGE(*pte)) {
+            debug_printf("get_victim_vaddr: vaddr %x\n", vaddr);
             return vaddr;
         }
     }
@@ -482,6 +494,8 @@ static void* get_victim_vaddr(uint32_t pd[]) {
 
 
 void mm_swap_page_in(void *vaddr) {
+    debug_printf("mm_swap_page_in: vaddr %x\n", vaddr);
+
     uint32_t *pd = current_pd();
     uint32_t *pte = get_pte(pd, vaddr);
     if (IS_SWAPPED_PAGE(*pte)) {
@@ -492,6 +506,8 @@ void mm_swap_page_in(void *vaddr) {
 }
 
 void mm_swap_page_out() {
+    debug_printf("mm_swap_page_out:\n");
+
     uint32_t *pd = current_pd(); 
     void *victim_vaddr = get_victim_vaddr(pd);
     uint32_t id = swap_unload(victim_vaddr);
@@ -502,16 +518,45 @@ void mm_swap_page_out() {
     *victim_pte = MARK_AS_SWAPPED(*victim_pte) | (id << 12);
 }
 
+//uint32_t list_size(page_t *list_ptr) {
+//    page_t *tip = list_ptr;
+//    page_t *node = tip->next;
+//    if (node == tip) {
+//        return 1
+//    }
+//
+//    int size = 1;
+//    while (node != tip) {
+//        size++;
+//        node ->
+//    }
+//}
+//    ({ \
+//        typeof(list_ptr) _tip = (list_ptr); \
+//        typeof(list_ptr) _node = (_tip)->next; \
+//        int _size = 1; \
+//        while (_node != _tip) { \
+//            _size++; \
+//            _node = _tip->next; \
+//        } \
+//        _size; \
+//    })
+
 // Mapea una pagina fisica nueva para la direccion virtual pasada por parametro
 void* new_user_page(uint32_t pd[], void* vaddr) {
+    debug_printf("new_user_page:\n");
     // Si no hay mas memoria retornar NULL
-    if (!free_user_pages) {
+    if (SIZE(free_user_pages) < 10) {
+        debug_printf("new_user_page: NO hay pagina libre");
         mm_swap_page_out();
+    } else {
+        debug_printf("new_user_page: Hay pagina libre");
     }
 
     vaddr = ALIGN_TO_PAGE_START(vaddr);
 
     page_t *page = take_free_page(&free_user_pages);
+    debug_printf("new_user_page: page %x\n", page);
     uint32_t *pte = get_pte_table_alloc(pd, vaddr);
 
     // Si la direccion ya fue mapeada retornar NULL
@@ -562,4 +607,21 @@ static void* seek_unused_vaddr(uint32_t pd[]) {
     }
 
     return NULL;
+}
+static void print_totals(uint32_t pd[]) {
+    uint32_t present_count = 0;
+    uint32_t swapped_count = 0;
+    void *vaddr;
+    for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
+        uint32_t *pte = get_pte(pd, vaddr);
+        if (pte != NULL) {
+            if (*pte & PDE_P) {
+                present_count++;
+            }
+            if (mm_is_swapped_page(vaddr)) {
+                swapped_count++;
+            }
+        }
+    }
+    debug_printf("print_totals: present = %d, swapped = %d\n", present_count, swapped_count);
 }

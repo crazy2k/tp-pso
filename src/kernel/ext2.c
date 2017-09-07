@@ -481,7 +481,7 @@ static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
 }
 
 static void get_indirect_data_for_file(ext2 *part_info, uint32_t bno, int level, int *bno_offset, uint32_t *remaining, void **buf) {
-    debug_printf("** ext2: get_indirect_data_for_file: remaining : %x\n", remaining);
+//    debug_printf("** ext2: get_indirect_data_for_file: remaining : %x\n", remaining);
     uint32_t block_size = GET_BLOCK_SIZE(part_info);
 
     if (level > 0) {

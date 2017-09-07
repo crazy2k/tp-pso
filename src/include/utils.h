@@ -80,6 +80,18 @@ void put_char_to_circ_buff(circular_buf_t *cbuf, char src, uint32_t buf_size);
         _node; \
     })
 
+#define SIZE(list_ptr) \
+    ({ \
+        typeof(list_ptr) _tip = (list_ptr); \
+        typeof(list_ptr) _node = (_tip)->next; \
+        int _size = 1; \
+        while (_node != _tip) { \
+            _size++; \
+            _node = _node->next; \
+        } \
+        _size; \
+    })
+
 // NODES_ARRAY_TO_LIST(<node type> *list, <node type> array[], int size);
 #define NODES_ARRAY_TO_LIST(list, array, size) \
     ({ \

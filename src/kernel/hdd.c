@@ -237,7 +237,7 @@ sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *b
     for (int i = 0; i < sectors_to_write*out_calls_per_sector; i++) {
         uint16_t *buf16 = buf; 
         uint16_t data = *(buf16 + i);
-        debug_printf("hdd_block_write_sectors: writing %x\n", data);
+//        debug_printf("hdd_block_write_sectors: writing %x\n", data);
         outw(base + PORT_DATA, data);
     }
 
