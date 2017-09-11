@@ -144,14 +144,16 @@ static void multiread_file(int console, char* file_name) {
 
 static void hogmem(int console, char *files) {
     char *bufs[20];
-    for (int i = 0; i < 20; i++) {
+    for (int i = 0; i < 15; i++) {
+//        __asm __volatile("xchg %%bx, %%bx" : :);
         bufs[i] = palloc();
         bufs[i][0] = 'h';
-        printf(console, "Set: %x\n", bufs[i][0]);
+        printf(console, "Set: %x -> %x\n", bufs[i], bufs[i][0]);
     }
 
-    for (int i = 0; i < 20; i++) {
-        printf(console, "Found: %x\n", bufs[i][0]);
+    for (int i = 0; i < 15; i++) {
+//        __asm __volatile("xchg %%bx, %%bx" : :);
+        printf(console, "Found: %x -> %x\n", bufs[i], bufs[i][0]);
     }
     
     write_str(console, "Done\n");

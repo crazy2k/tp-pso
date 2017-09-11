@@ -24,7 +24,10 @@ DIRTMP=/tmp/
 BIN_BOOT=$(DIRBOOT)floppyboot.bin
 
 # Swap file
-SWAP_FILENAME=psoswap
+SWAP_FILE_LAST=86
+SWAP_PREFIX=psoswap
+SWAP_NUMBERS=$(shell seq 0 ${SWAP_FILE_LAST})
+SWAP_FILENAMES=$(addprefix ${SWAP_PREFIX},${SWAP_NUMBERS})
 
 # Kernel
 OBJS_KERN=kernel/kinit.o kernel/gdt.o kernel/a20.o kernel/kernel.o kernel/idt.o \
@@ -120,9 +123,12 @@ $(IMG_TESTHDD): $(TASKS) $(TEXTFILES)
 	for F in $(TEXTFILES); do \
 		debugfs -w -R "write $$F `basename $$F`" $@ ; \
 	done
-	dd if=/dev/zero of=$(DIRTMP)$(SWAP_FILENAME) bs=1024 count=65536
-	debugfs -w -R "write $(DIRTMP)$(SWAP_FILENAME) $(SWAP_FILENAME)" $@
-	rm $(DIRTMP)$(SWAP_FILENAME)
+	
+	for S in $(SWAP_FILENAMES); do \
+    	dd if=/dev/zero of=$(DIRTMP)$$S bs=4096 count=3 ; \
+        debugfs -w -R "write $(DIRTMP)$$S $$S" $@ ; \
+        #rm $(DIRTMP)$$S ; \
+    done
 
 # Otros
 clean:

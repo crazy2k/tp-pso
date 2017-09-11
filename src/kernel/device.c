@@ -33,8 +33,8 @@ void* operate_with_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size, boo
             memcpy(buf, read_buf + addr.offset, min(first_remainder, size));
         }
         size -= first_remainder;
-        debug_printf("** read_from_bdev(): first_remainder > 0: "
-            "first_rem: %x, size: %x\n", first_remainder, size);
+//        debug_printf("** operate_with_bdev: first_remainder > 0: "
+//            "first_rem: %x, size: %x\n", first_remainder, size);
     }
     if (size > 0 && lineal_sectors_size > 0) {
         if (write == TRUE) {
@@ -43,8 +43,8 @@ void* operate_with_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size, boo
             bdev->read(bdev, first_lineal_sector, buf + first_remainder, lineal_sectors_size);
         }
         size -= lineal_sectors_size;
-        debug_printf("** read_from_bdev(): size > 0 && lineal ... > 0: "
-            "size: %x\n", size);
+//        debug_printf("** operate_with_bdev: size > 0 && lineal ... > 0: "
+//            "size: %x\n", size);
     }
     if (size > 0) {
         if (write == TRUE) {
@@ -54,11 +54,11 @@ void* operate_with_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size, boo
             memcpy(buf + first_remainder + lineal_sectors_size, read_buf, size);
         }
 
-        debug_printf("** read_from_bdev(): size > 0: "
-            "size: %x\n", size);
+//        debug_printf("** operate_with_bdev: size > 0: "
+//            "size: %x\n", size);
     }
 
-    debug_printf("** read_from_bdev(): buffer: ");
+    debug_printf("** operate_with_bdev: buffer: ");
     uint32_t *buf32 = buf;
     int i;
     for (i = 0; i < 128/4; i++)

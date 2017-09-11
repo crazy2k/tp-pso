@@ -6,7 +6,7 @@
 #include <errors.h>
 #include <debug.h>
 
-#define MAX_EXT2_FILE_CHARDEVS 20
+#define MAX_EXT2_FILE_CHARDEVS 30
 
 #define EXT2_SUPERBLOCK_OFFSET      1024
 #define EXT2_SUPERBLOCK_SIZE        1024
@@ -236,6 +236,7 @@ static sint_32 ext2_file_operate(chardev *this, void *buf, uint32_t size, bool w
 
     // While there's more to be read/written
     while (n > 0) {
+        debug_printf("ext2_file_operate: (%s) In loop\n", write == TRUE ? "write" : "read");
         // A section is a window the size of our buffer that contains blocks. It's
         // a window we move forward as we need, and starts at the first block that's
         // needed for this read/write
@@ -258,7 +259,8 @@ static sint_32 ext2_file_operate(chardev *this, void *buf, uint32_t size, bool w
             fp->buf_section = section_first_bno/GET_BLOCKS_PER_SECTION(fp);
         }
 
-        debug_printf("ext2_file_read: file_offset: %x, buf_size: %x, buf_offset: %x, read: %x\n",
+        debug_printf("ext2_file_operate: (%s) file_offset: %x, buf_size: %x, buf_offset: %x, operated: %x\n",
+                    write == TRUE ? "write" : "read",
                     fp->file_offset, fp->buf_size, buf_offset, operated);
 
         if (write != TRUE) {
@@ -279,7 +281,7 @@ static sint_32 ext2_file_operate(chardev *this, void *buf, uint32_t size, bool w
         fp->file_offset += operated;
     }
 
-    debug_printf("Leyo %d bytes en el buffer %x\n", result, (uint32_t)buf);
+    debug_printf("ext2_file_operate: (%s) Did operate %d bytes\n", write == TRUE ? "write" : "read", result);
 
     return result;
 }
@@ -439,11 +441,13 @@ static int get_data(ext2 *part_info, ext2_inode *inode, void *buf) {
 }
 
 /*
- * Reads buf_size bytes of data into the buf buffer, from the file represented
+ * Reads/writes buf_size bytes of data into/from the buf buffer, from the file represented
  * by inode
  */
 static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
     uint32_t first_bno, void *buf, uint32_t buf_size, bool write) {
+    debug_printf("** operate_data_with_file: (%s) first_bno: %x, buf: %x, buf_size: %x\n",
+                 write == TRUE ? "write" : "read", first_bno, buf, buf_size);
 
     uint32_t /*blocks_read = 0,*/ block_size = GET_BLOCK_SIZE(part_info);
 
@@ -459,7 +463,7 @@ static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
         (i < EXT2_INODE_DIRECT_COUNT) && (remaining > 0);
         i++, buf_pos += block_size, remaining -= block_size) {
 
-        debug_printf("** ext2: get_data: remaining: %x\n", remaining);
+        debug_printf("** operate_data_with_file: remaining: %x\n", remaining);
 
         // Obtenemos el numero del bloque en el que se hallan los datos
         uint32_t bno = inode->blocks[i];
@@ -472,6 +476,7 @@ static int operate_data_with_file(ext2 *part_info, ext2_inode *inode,
     int bno_offset = first_bno - EXT2_INODE_DIRECT_COUNT;
     // Leemos los datos desde bloques indirectos, si los hay
     for (i = 1; (i < 4) && (remaining > 0); i++) {
+        debug_printf("** operate_data_with_file: indirect remaining: %x\n", remaining);
         get_indirect_data_for_file(part_info,
             inode->blocks[EXT2_INODE_DIRECT_COUNT - 1 + i], i,
             &bno_offset, &remaining, &buf_pos);

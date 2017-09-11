@@ -481,9 +481,10 @@ static void* set_page_as_requested(void *vaddr) {
 static void* get_victim_vaddr(uint32_t pd[]) {
     void *vaddr;
     for (vaddr = 0xC0000000 - PAGE_SIZE; vaddr != KERNEL_MEMORY_LIMIT; vaddr -= PAGE_SIZE) {
+//    for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
         // Note that pte could be zero when there's no pte for this vaddr
         uint32_t *pte = get_pte(pd, vaddr);
-        if (*pte && IS_ASSIGNED_PAGE(*pte)) {
+        if (pte != NULL && *pte && IS_ASSIGNED_PAGE(*pte) && !IS_SWAPPED_PAGE(*pte)) {
             debug_printf("get_victim_vaddr: vaddr %x\n", vaddr);
             return vaddr;
         }
