@@ -5,6 +5,7 @@
 #include <errors.h>
 
 #define SHELL_BUF_SIZE 1024
+#define PAGE_SIZE 4096
 #define CAT_BUF_SIZE SHELL_BUF_SIZE
 #define PROMTP "shell> "
 
@@ -18,6 +19,9 @@ char *shell_commands[] = { CMD_ECHO, CMD_GETPID, CMD_EXIT, CMD_HELP, CMD_CAT };
 
 char shell_buf[SHELL_BUF_SIZE] = { 0 };
 char cat_buf[CAT_BUF_SIZE + 1] = { 0 };
+//int *pages[1536];
+char *bufs[1500];
+
 
 static char *skip_spaces(char* str);
 static char *get_word(char** str);
@@ -28,15 +32,18 @@ static void specialcat_file(int console, char* file_name);
 static void specialcat(int console, char* files);
 static void multiread(int console, char *files);
 static void hogmem(int console, char *files);
+static void swaptest(int console, char *files);
 
 
 int main(void) {
+//    __asm __volatile("xchg %%bx, %%bx" : :);
 
     char *rest, *command;
     int con = open("/console", FS_OPEN_RDWR);
     int res;
 
     while (TRUE) {
+//        __asm __volatile("xchg %%bx, %%bx" : :);
 
         write_str(con, PROMTP);
 
@@ -61,6 +68,8 @@ int main(void) {
                 multiread(con, rest);
             } else if (strcmp(command, "hm") == 0) {
                 hogmem(con, rest);
+//            } else if (strcmp(command, "st") == 0) {
+//                swaptest(con, rest);
             } else if (strcmp(command, CMD_HELP) == 0) {
                 print_help(con);
             } else if (strlen(command)) {
@@ -143,22 +152,69 @@ static void multiread_file(int console, char* file_name) {
 }
 
 static void hogmem(int console, char *files) {
-    char *bufs[20];
-    for (int i = 0; i < 15; i++) {
+    char *s = "holitas";
+    for (int i = 0; i < 1000; i++) {
 //        __asm __volatile("xchg %%bx, %%bx" : :);
         bufs[i] = palloc();
-        bufs[i][0] = 'h';
-        printf(console, "Set: %x -> %x\n", bufs[i], bufs[i][0]);
+        bufs[i][0] = s[i % 7];
+        printf(console, "%d - Set: %x -> %x\n", i, bufs[i], bufs[i][0]);
     }
 
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 1000; i++) {
 //        __asm __volatile("xchg %%bx, %%bx" : :);
-        printf(console, "Found: %x -> %x\n", bufs[i], bufs[i][0]);
+        char expected = s[i % 7];
+        char found = bufs[i][0];
+        if (expected != found) {
+            printf(console, "%x - Expected: %x; Found %x\n", bufs[i], s[i % 7], bufs[i][0]);
+        }
     }
     
     write_str(console, "Done\n");
-
 }
+
+static void swaptest_file(int console, char* file_name) {
+//    char filename_buf[40];
+//    char num_buf[20];
+//    int fds[262];
+//    for (int i = 0; i < 262; i++) {
+//        strcpy(filename_buf, file_name);
+//        itostr(i, num_buf);
+//        strcat(filename_buf, num_buf);
+//        fds[i] = open(file_name, FS_OPEN_WRONLY);
+//    }
+//    
+//    int sum = 0;
+//    int i = 0;
+//    printf(console, "Num is %s\n", num_buf);
+
+//    int fd = open(file_name, FS_OPEN_WRONLY);
+//    if (fd >= 0) {
+//        printf(console, "Empezando a leer\n");
+//        for (int i = 0; i < 262; i++) {
+//            printf(console, "Pagina %d\n", i);
+//            pages[i] = palloc();
+//            seek(fd, i*PAGE_SIZE);
+//            read(fd, pages[i], PAGE_SIZE);
+//            printf(console, "v = %d\n", pages[i][0]);
+//            sum += pages[i][0];
+//        }
+//        close(fd);
+//        printf(console, "Sum is %d\n", sum);
+//    } else
+//        printf(console, "No existe el archivo %s\n", file_name);
+}
+
+//static void swaptest(int console, char *files) {
+//    char *file_name;
+//
+//    while(strlen(files) && (file_name = get_word(&files))) {
+//        swaptest_file(console, file_name);
+//
+//        files = skip_spaces(files);
+//    }
+//
+//    write_str(console, "\n");
+//}
 
 static void multiread(int console, char *files) {
     char *file_name;

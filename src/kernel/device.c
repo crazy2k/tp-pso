@@ -58,12 +58,12 @@ void* operate_with_bdev(blockdev *bdev, bd_addr_t addr, void *buf, int size, boo
 //            "size: %x\n", size);
     }
 
-    debug_printf("** operate_with_bdev: buffer: ");
-    uint32_t *buf32 = buf;
-    int i;
-    for (i = 0; i < 128/4; i++)
-        debug_printf("%x ", *(buf32 + i));
-    debug_printf("\n");
+//    debug_printf("** operate_with_bdev: buffer: ");
+//    uint32_t *buf32 = buf;
+//    int i;
+//    for (i = 0; i < 128/4; i++)
+//        debug_printf("%x ", *(buf32 + i));
+//    debug_printf("\n");
 
     return buf;
 }

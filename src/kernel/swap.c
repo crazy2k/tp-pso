@@ -10,8 +10,8 @@ chardev *get_cdev_for_id(uint32_t id);
 uint32_t get_pos_for_id(uint32_t id);
 
 // Swap file
-static SWAP_FILES_COUNT = 50;
-static chardev *sf[50];
+static SWAP_FILES_COUNT = 512;
+static chardev *sf[512];
 static char filename_buf[20];
 static char num_buf[20];
 static uint32_t next_id = 0;

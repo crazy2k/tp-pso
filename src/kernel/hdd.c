@@ -227,11 +227,11 @@ sint_32 hdd_block_write_sectors(hdd_blockdev *hbdev, uint32_t pos, const void *b
 
     debug_printf("hdd_block_write_sectors: going to write %d bytes: ", size);
 
-    uint32_t *buf32 = buf;
-    int i;
-    for (i = 0; i < size/4; i++)
-        debug_printf("%x ", *(buf32 + i));
-    debug_printf("\n");
+//    uint32_t *buf32 = buf;
+//    int i;
+//    for (i = 0; i < size/4; i++)
+//        debug_printf("%x ", *(buf32 + i));
+//    debug_printf("\n");
 
     int out_calls_per_sector = hbdev->size/sizeof(uint16_t); 
     for (int i = 0; i < sectors_to_write*out_calls_per_sector; i++) {

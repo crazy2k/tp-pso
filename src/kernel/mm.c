@@ -76,6 +76,8 @@ static void free_user_page(uint32_t pd[], void* vaddr);
 static void* seek_unused_vaddr(uint32_t pd[]);
 static void print_totals(uint32_t pd[]);
 
+static void *last_unused_vaddr = KERNEL_MEMORY_LIMIT;
+
 void mm_init(void) {
     free_pages_list_setup();
     initialize_pd(kernel_pd);
@@ -151,7 +153,7 @@ void* mm_request_mem_alloc() {
     void *vaddr = seek_unused_vaddr(pd);
     debug_printf("mm_request_mem_alloc: vaddr: %x\n", vaddr);
     debug_printf("mm_request_mem_alloc: free_user_pages size: %d\n", SIZE(free_user_pages));
-    print_totals(pd);
+//    print_totals(pd);
     
 
     return set_page_as_requested(vaddr);
@@ -598,13 +600,15 @@ static void free_user_page(uint32_t pd[], void* vaddr) {
 
 static void* seek_unused_vaddr(uint32_t pd[]) {
     void *vaddr;
-    for (vaddr = KERNEL_MEMORY_LIMIT; vaddr != NULL; vaddr += PAGE_SIZE) {
+    for (vaddr = last_unused_vaddr; vaddr != NULL; vaddr += PAGE_SIZE) {
         uint32_t *pte = get_pte_table_alloc(pd, vaddr);
         debug_printf("seek_unused_vaddr: vaddr: %x, pte: %x\n", vaddr, *pte);
         debug_printf("seek_unused_vaddr: pte present: %x, "
             "pte requested: %x\n", (*pte & PTE_P), IS_REQUESTED_PAGE(*pte));
-        if (!(*pte))
+        if (!(*pte)) {
+            last_unused_vaddr = vaddr;
             return vaddr;
+        }
     }
 
     return NULL;

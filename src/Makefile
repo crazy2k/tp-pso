@@ -24,10 +24,15 @@ DIRTMP=/tmp/
 BIN_BOOT=$(DIRBOOT)floppyboot.bin
 
 # Swap file
-SWAP_FILE_LAST=86
+SWAP_FILE_LAST=512
 SWAP_PREFIX=psoswap
 SWAP_NUMBERS=$(shell seq 0 ${SWAP_FILE_LAST})
 SWAP_FILENAMES=$(addprefix ${SWAP_PREFIX},${SWAP_NUMBERS})
+
+#BLEH_FILE_LAST=512
+#BLEH_PREFIX=bleh
+#BLEH_NUMBERS=$(shell seq 0 ${BLEH_FILE_LAST})
+#BLEH_FILENAMES=$(addprefix ${BLEH_PREFIX},${BLEH_NUMBERS})
 
 # Kernel
 OBJS_KERN=kernel/kinit.o kernel/gdt.o kernel/a20.o kernel/kernel.o kernel/idt.o \
@@ -49,7 +54,7 @@ OBJS_TASKS:=$(TASKS:.pso=.o) tasks/pso_head.o tasks/pso_tail.o tasks/syscalls.o 
 BIN_LIB:=tasks/syscalls_funcs.o tasks/io.o kernel/utils_common.o
 
 # Archivos de texto
-TEXTFILES=kernel/sem.c tasks/shell.c kernel/ext2.c bin/kernel.bin
+TEXTFILES=kernel/sem.c tasks/shell.c kernel/ext2.c bin/kernel.bin bleh
 
 # Imagenes
 DISK_LABEL="KERNEL  PSO"

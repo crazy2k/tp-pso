@@ -6,7 +6,7 @@
 #include <errors.h>
 #include <debug.h>
 
-#define MAX_EXT2_FILE_CHARDEVS 100
+#define MAX_EXT2_FILE_CHARDEVS 600
 
 #define EXT2_SUPERBLOCK_OFFSET      1024
 #define EXT2_SUPERBLOCK_SIZE        1024
