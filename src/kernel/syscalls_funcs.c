@@ -111,8 +111,11 @@ int sys_share_page(void *page) {
 
 int sys_run(const char *path) {
     chardev *cdev;
-    if (!(cdev = fs_open(path, FS_OPEN_RDONLY)))
+    debug_printf("sys_run: Opening file\n");
+    if (!(cdev = fs_open(path, FS_OPEN_RDONLY))) {
+        debug_printf("sys_run: Couldn't open file\n");
         return -ENOFILE;
+    }
 
     debug_printf("sys_run: file open\n");
     pso_file *file = (pso_file *) run_buf;

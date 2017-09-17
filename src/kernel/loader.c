@@ -140,7 +140,6 @@ void loader_init(void) {
     //sys_run("/disk/shell.pso");
     //sys_run("/disk/shell.pso");
     //sys_run("/disk/shell.pso");
-    swap_init();
 
     loader_load_main(init_main);
     
@@ -148,6 +147,12 @@ void loader_init(void) {
 }
 
 int init_main() {
+    swap_init();
+//    for (int i = 0; i < 1000000000000; i++) ;
+//    for (int i = 0; i < 1000000000000; i++) ;
+//    for (int i = 0; i < 1000000000000; i++) ;
+//    for (int i = 0; i < 1000000000000; i++) ;
+//    for (int i = 0; i < 1000000000000; i++) ;
     debug_printf("Loading initial tasks\n");
     sys_run("/disk/shell.pso");
     while (1) ;

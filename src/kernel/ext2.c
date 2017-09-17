@@ -6,7 +6,7 @@
 #include <errors.h>
 #include <debug.h>
 
-#define MAX_EXT2_FILE_CHARDEVS 30
+#define MAX_EXT2_FILE_CHARDEVS 100
 
 #define EXT2_SUPERBLOCK_OFFSET      1024
 #define EXT2_SUPERBLOCK_SIZE        1024
@@ -170,23 +170,30 @@ chardev *ext2_open(ext2 *part_info, const char *filename, uint32_t flags) {
     if (strncmp(filename, "/disk/", 6))
         return NULL;
 
-    if (!(part_info->initialized))
+    if (!(part_info->initialized)) {
+        debug_printf("ext2_open: Initiliazing part_info\n");
         initialize_part_info(part_info);
+    }
 
+    debug_printf("ext2_open: Gathering inode number\n");
     uint32_t no = path2inode(part_info, 2, filename + 6);
     if (no == 0)
         return NULL;
 
+    debug_printf("ext2_open: Getting inode\n");
     ext2_inode inode;
     get_inode(part_info, no, &inode);
 
     ext2_file_chardev *fp = POP(&free_ext2_file_chardevs);
+    debug_printf("ext2_open: Initiliazing ext2 file chardev\n");
     initialize_ext2_file_chardev(fp);
+    debug_printf("ext2_open: ext2 file chardev initialized\n");
 
     fp->file_size = inode.size;
     fp->file_no = no;
     fp->file_part_info = part_info;
 
+    debug_printf("ext2_open: fp is %x\n", fp);
     return (chardev *)fp;
 }
 
@@ -371,6 +378,7 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
     debug_printf("get_inode: Inodes count: %x\n", part_info->superblock->inodes_count);
     debug_printf("get_inode: Inodes per group: %x\n", part_info->superblock->inodes_per_group);
     uint32_t bg_no = (no - 1)/part_info->superblock->inodes_per_group;
+    debug_printf("get_inode: bg_no: %x\n", bg_no);
 
     // Obtenemos el descriptor correspondiente al Block Group
     ext2_block_group_descriptor *bgd = part_info->bgd_table + bg_no;
@@ -380,12 +388,15 @@ static int get_inode(ext2 *part_info, uint32_t no, ext2_inode *inode) {
 
     // Calculamos el indice del inodo en la tabla de inodos
     uint32_t inode_index = (no - 1) % part_info->superblock->inodes_per_group;
+    debug_printf("get_inode: inode_index: %x\n", inode_index);
 
     // Calculamos la direccion en el blockdev del inodo
     uint16_t inode_size = GET_INODE_SIZE(part_info);
     uint32_t bn = bgd->inode_table_bno +
         ((inode_index*inode_size) / block_size);
+    debug_printf("get_inode: bn: %x\n", bn);
     uint32_t offset = (inode_index*inode_size) % block_size;
+    debug_printf("get_inode: offset: %x\n", offset);
 
     operate_with_bdev(part_info->part,
         baddr2bdaddr(part_info, bn, offset),
@@ -405,7 +416,9 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
         return dir_no;
 
     // Cargar el inode
+    debug_printf("path2inode: Getting inode\n");
     get_inode(part_info, dir_no, dir_inode);
+    debug_printf("path2inode: Got inode\n");
 
     // Un nodo intermedio debe ser un directorio
     if (TYPE_FROM_MODE(dir_inode->mode) != EXT2_INODE_TYPE_DIR)
@@ -415,6 +428,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     int name_size = next_path ? next_path - relpath: strlen(relpath);
 
     // Cargar datos para el inode
+    debug_printf("path2inode: Getting inode data\n");
     get_data(part_info, dir_inode, file_data_buf);
 
     // Buscar un entry dentro del directorio que corresponde con el path actual
@@ -433,6 +447,7 @@ static uint32_t path2inode(ext2 *part_info, uint32_t dir_no, const char *relpath
     if (next_inode == 0)
         return 0;
 
+    debug_printf("path2inode: Final return\n");
     return next_path ? path2inode(part_info, next_inode, next_path + 1) : next_inode;
 }
 
