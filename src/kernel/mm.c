@@ -369,7 +369,7 @@ static bool valid_physical_page(void* phaddr) {
 
     debug_printf("valid_physical_page: phaddr: %x\n", phaddr);
     valid_pages_count++;
-    return *test_addr == TEST_WORD && valid_pages_count < 20;
+    return *test_addr == TEST_WORD;
 }
 
 static void add_page_to_list(page_t* head, page_t* new) {
